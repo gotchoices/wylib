@@ -1,0 +1,269 @@
+package provide wylib 0.20	;#Apr 2003
+#Improved dialog utilities
+#------------------------------------------
+#Copyright (C) 1999-2003 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software. You can redistribute it and/or modify it under the terms of the Open Public License as published by PIC Development Group and the Open Solutions Group.
+#The program is distributed with the hope that it will be useful and beneficial, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCAHANTABILLITY or FITNESS FOR A PARTICULAR PURPOSE. See the license agreement for further details.
+#You should have received a copy of the Open Public License along with this program. If you did not, please visit www.opl.org to obtain a copy.
+
+#TODO:
+#- can we stuff any arbitrary widget into the dialog (how to reference variables?)
+#- modify label font size according to display size (link with prefs)
+#- 
+
+option add *Dia*Entry.wrapLength 6i widgetDefault
+option add *Dia*Label.wrapLength 6i widgetDefault
+option add *Dia*Label.font {Times 18} widgetDefault
+option add *Dia.title {User dialog} widgetDefault
+option add *Dia.grab local widgetDefault
+option add *Dia.place default widgetDefault
+option add *Dia.wmclose 1 widgetDefault
+option add *Dia.but {OK Cancel} widgetDefault
+option add *Dia.def 0 widgetDefault
+option add *Dia.can {end} widgetDefault
+option add *Dia.init 1 widgetDefault
+
+namespace eval dia {
+    namespace export ask err warn brief query pquery dia
+    variable v
+}
+
+# Regular dialog call but with less arguments
+#------------------------------------------
+proc dia::ask {text {default 0} args} {
+    if {$args == {}} {set args OK}
+    return [uplevel [list dia::dia [uwin .dia_ask] -text $text -default $default -buttons $args]]
+}
+
+# Dialog call structured as an error
+#------------------------------------------
+proc dia::err {text args} {
+    if {$args == {}} {set buts OK} else {set buts [concat OK $args]}
+    return [dia [uwin .dia_err] -text "Error:\n$text" -buttons $buts]
+}
+
+# Dialog call structured as a warning
+#------------------------------------------
+proc dia::warn {text args} {
+    if {$args == {}} {set buts OK} else {set buts [concat OK $args]}
+    return [dia [uwin .dia_warn] -text "Warning:\n$text" -buttons $buts]
+}
+
+# Pop up a message and then kill it after a time
+#------------------------------------------
+proc dia::brief {text {time 1200}} {
+    variable v
+    set w [uwin .dia_brief]
+    catch {after cancel $v(aid$w)}
+    set v(aid$w) [after $time "set dia::v(result$w) 0"]
+    dia $w -title Brief -text $text -buttons OK
+}
+
+# Query for a single value
+#------------------------------------------
+proc dia::query {text varname {default 0} args} {
+    if {$args == {}} {set args {OK Cancel}}
+    return [uplevel [list dia::dia [uwin .dia_qry] -text $text -variable $varname -default $default -buttons $args]]
+}
+
+# Query for a value without echoing characters, return the value input
+#------------------------------------------
+proc dia::pquery {{text {Password:}}} {
+    after idle "set dia::v(pquery_value) {}; .dia_pquery.f0 configure -show *"
+    dia::dia .dia_pquery -text $text -variable dia::v(pquery_value) -buttons OK
+    return $dia::v(pquery_value)
+}
+
+#Place a toplevel window somewhere near the cursor
+#------------------------------------------
+proc dia::place {w args} {
+    argform {xo yo} args
+    argnorm {{xoffset 2 xo} {yoffset 2 yo} {subwindow 2 sub} {center 2}} args
+    argproc \$s $args {{xo {}} {yo {}} {sub {}} {center 0}}
+    
+    wm withdraw $w
+#puts "w:$w rx:[winfo reqwidth $w] ry:[winfo reqheight $w]"
+    update idletasks			;#must update before winfo works
+    
+    set rx [winfo reqwidth $w]; set ry [winfo reqheight $w]	;#requested size
+    set wx [winfo width $w];    set wy [winfo height $w]	;#actual size
+#puts " rx:$rx ry:$ry  wx:$wx wy:$wy"
+    if {$wx == 1 && $wy == 1} {set wx $rx; set wy $ry}
+    set sx [winfo screenwidth $w]; set sy [winfo screenheight $w]	;#screen edges
+
+    if {$sub != {}} {		;#if subwindow specified to center on
+        set swx [winfo x $sub];     set swy [winfo y $sub]
+        set ssx [winfo width $sub]; set ssy [winfo height $sub]
+#puts " swx:$swx swy:$swy  ssx:$ssx ssy:$ssy"
+        set xo [expr -($ssx / 2 + $swx)]
+        set yo [expr -($wy - ($ssy / 2) - $swy + 10)]
+    } else {
+        if {$xo == {}} {set xo [expr -$wx / 2]}
+        if {$yo == {}} {set yo [expr -$wy / 2]}
+    }
+#set xo 0; set yo 0
+
+    if {$center} {
+        set px [expr $sx/2 - $wx/2 - [winfo vrootx [winfo parent $w]]]
+        set py [expr $sy/2 - $wy/2 - [winfo vrooty [winfo parent $w]]]
+    } else {
+        lassign [winfo pointerxy .] px py	;#get pointer x and y
+    }
+    set cx [expr $px + $xo]	;#where we will put it
+    set cy [expr $py + $yo]
+
+#puts " px:$px py:$py cx:$cx cy:$cy wx:$wx wy:$wy sx:$sx sy:$sy"
+    if {[expr $cx + $wx] > $sx} {set cx [expr $sx - $wx - 10]}	;#check for off screen
+    if {[expr $cy + $wy] > $sy} {set cy [expr $sy - $wy - 10]}
+    if {$cx < 0} {set cx 0}
+    if {$cy < 0} {set cy 0}
+
+#puts " cx:$cx cy:$cy"
+    wm geometry $w "+${cx}+${cy}"
+    wm deiconify $w
+}
+
+# Open a generalized dialog window, setting variables based on user input
+#------------------------------------------
+proc dia::dia {w args} {
+    variable cfig
+    variable v
+
+    argform {text variable buttons} args
+    argnorm {{text 2} {buttons 3 but} {variable 1 var} {default 3 def} {field 1 f} {parent 3 par} {bitmap 3 bit} {title 3} {grab 1} {place 2} {wmclose 3} {topargs 2 top} {twidth 2 tw} {initialize 3 init} {cancel 3 can}} args
+    array unset cfig *$w
+    foreach s {def textv data title grab but place wmclose tw init can} {xswitchs $s args cfig($s$w)}
+    foreach s {text par ent bit var top} {set cfig($s$w) [xswitchs $s args]}
+
+    set cfig(flds$w) {}
+    if {$cfig(var$w) != {}} {lappend cfig(flds$w) [list ent $cfig(text$w) -textv $cfig(var$w)]; set cfig(text$w) {}}
+    while {[set x [xswitch f args]] != {}} {lappend cfig(flds$w) $x}
+
+    if {[catch {set oldfocus [focus]}]} {return -1}	;#if focus errs, . probably gone
+    if {$cfig(par$w) == {}} {
+        if {$oldfocus != {}} {set cfig(par$w) [winfo toplevel $oldfocus]} else {set cfig(par$w) .}
+    }
+
+    if {[winfo exists $w]} {destroy $w}
+    eval toplevel $w -class Dia $cfig(top$w)
+    swores $w args cfig(%s$w) {title grab place wmclose but can init def}
+    
+    wm title $w $cfig(title$w)
+    wm iconname $w $cfig(title$w)
+    if {!$cfig(wmclose$w)} {wm protocol $w WM_DELETE_WINDOW {}}
+    if {[string range $cfig(par$w) 0 0] == {.}} {wm transient $w $cfig(par$w)}
+
+    widginit $w dia *$w
+
+    frame $w.b -bd 1; pack $w.b -side bottom -expand yes -fill x	;#for buttons
+
+    if {$cfig(bit$w) != {}} {			;#place bitmap
+        label $w.bmap -bitmap $cfig(bit$w); pack $w.bmap -side left
+    }
+    
+    if {$cfig(text$w) != {}} {		;#dialog message
+        label $w.msg -justify left -text $cfig(text$w) -padx 10 -pady 10
+        pack $w.msg -side left -expand yes -fill x
+    }
+    if {[info exists cfig(tw$w)]} {lappend args -t "-width $cfig(tw$w)"}
+    lassign 0 n rtvs fws
+    foreach fargs $cfig(flds$w) {
+#puts "fargs:$fargs:"
+        lappend fws [set f $w.f$n]
+        argform {style title} fargs
+        argnorm {{textvariable 5 textv}} fargs
+        lappend rtvs [set rv [xswitchs textv fargs]] [set tv dia::v(tv.$n$w)]	;#return and text variables
+        set style [xswitchs style fargs]
+#puts "rv.$rv tv.$tv. style:$style"
+        if {[regexp {^cdew::} $style]} {
+#puts "cdew::ent $f $args $fargs -textv $tv"
+            eval cdew::ent $f $args $fargs -textv $tv
+        } else {
+#puts "dew::dew $f $args $fargs -textv $tv"
+            eval dew::dew $f $args $fargs -textv $tv
+        }
+        pack $f -side top -fill x -expand yes -padx 10 -pady 5
+        incr n
+    }
+
+    set i 0; foreach but $cfig(but$w) {
+	button $w.but$i -text $but -command "set dia::v(result$w) $i"
+#puts " $i bindtags:[bindtags $w.but$i]:"
+	bindtags $w.but$i "$w.but$i Button all"		;#don't do Dia Return binding
+	if {$i == $cfig(def$w)} {
+	    $w.but$i configure -def active
+	} else {
+	    $w.but$i configure -def normal
+	}
+	grid $w.but$i -in $w.b -column $i -row 0 -sticky ew -padx 10
+	grid columnconfigure $w.b $i
+	incr i
+    }
+
+    if {$cfig(def$w) >= 0} {
+	bind $w <Return> "$w.but$cfig(def$w) configure -state active -relief sunken; update idletasks; after 100; set dia::v(result$w) $cfig(def$w)"
+    }
+
+    bind $w <Destroy> "set dia::v(result$w) -1"
+
+    switch -regexp $cfig(place$w) {
+        d.* {place $w -sub $w.but$cfig(def$w)}
+        s.* {place $w -center 1}
+        p.* {place $w}
+    }
+
+    if {$cfig(grab$w) == {}} {
+        set oldgrab {}
+    } else {
+        if {[set gc [grab current $w]] != {}} {	;#make cmd to restore grab
+            if {[grab status $oldgrab] == {global}} {set oldgrab "grab -global $gc"} else {set oldgrab "grab $gc"}
+        }
+        if {$cfig(grab$w) == {global}} {grab -global $w} else {grab $w}
+    }
+
+    if {$cfig(init$w)} {		;#initialize fields
+        foreach {r t} $rtvs {
+            upvar $r rvar
+            if {[info exists rvar]} {set $t $rvar} else {set rvar {}}
+        }
+    }
+
+    if {[llength $fws] > 0} {
+        focus [set ff [lindex $fws 0]]
+        $ff selection range 0 end
+    } elseif {$cfig(def$w) >= 0} {
+	focus $w.but$cfig(def$w)
+    } else {
+	focus $w
+    }
+
+    tkwait variable dia::v(result$w)
+
+    if {$cfig(can$w) == {end} && [set len [llength $cfig(but$w)]] > 1} {set cfig(can$w) [expr $len - 1]}	;#index of Cancel
+#puts "can:$cfig(can$w)"
+    if {$v(result$w) == $cfig(can$w)} {
+        set v(result$w) -1
+    } elseif {$v(result$w) >= 0} {
+        foreach {r t} $rtvs {upvar $r rvar; set rvar [subst $$t]}	;#return user values
+    }
+    
+    catch {focus $oldfocus}	;#catch in case already deleted
+    catch {bind $w <Destroy> {}}
+    catch {destroy $w}
+    catch {$oldgrab}		;#restore any previous grab
+
+#puts "return $dia::v(result$w)"
+    return $dia::v(result$w)
+}
+
+# Widget command
+#------------------------------------------
+proc dia::wcmd {w cmd args} {
+    variable cfig
+    switch -exact $cmd {
+        {w}		{return $w}
+        {b}		{set args [lassign args i]; return [eval $w.but$i $args]}
+        {f}		{set args [lassign args i]; return [eval $w.f$i $args]}
+        {default}	{return [eval $w $cmd $args]}
+    }
+}

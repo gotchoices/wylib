@@ -1,0 +1,50 @@
+#!/usr/bin/wish
+#include(Copyright)
+# Demonstration app for serial scanners
+
+package require wylib
+
+set cnf(title)		{Remote Scanner Wedge}	;#Mar 2007
+
+#Preferences control array {tag title display_type user_edit}
+set cnf(pref)  {\
+  -f {port     ent     {Remote Host/port:}         ::cnf(port)    -def [lindex [split $::env(DISPLAY) :] 0]:2300 -help {The name of the computer/port that has the scanner on it}}\
+}
+
+#Header fields:
+set cnf(hdr) {\
+    -f {lastscan  ent 40  {0 2}   {Last Scan:}            -textv ::cnf(lastscan) -help {The last barcode scanned}}\
+}
+
+#Periodically poll the scanner for new data
+#------------------------------------------
+proc poll {w} {
+    global cnf
+    scanner::scanner $w -pr answer -port $cnf(port)
+}
+
+proc answer {w data} {
+    global cnf
+    set cnf(lastscan) $data
+}
+
+#Create main window
+#----------------------------------------------------
+proc main_win {w} {
+    global cnf
+
+    eval mdew::mdew $w.hdr $cnf(hdr)
+    pack $w.hdr -side top -fill x -exp 1
+
+    eval mbar::mbar $w.but
+    pack $w.but -side top -anchor w
+    $w.but b poll {Start Scanning} {after idle "poll $w"} {Starting polling}
+
+}
+
+# main
+#----------------------------------------------------
+eval pref::init $cnf(pref)
+
+set w [top::top m main_win $cnf(title) -multi 1]
+

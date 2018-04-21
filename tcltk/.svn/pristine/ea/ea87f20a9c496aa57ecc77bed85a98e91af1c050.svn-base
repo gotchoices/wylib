@@ -1,0 +1,9 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+set fname /tmp/test
+
+while {[sfile::dia "Select your file:" -dest fname] != {}} {
+    puts "fname:$fname"
+}

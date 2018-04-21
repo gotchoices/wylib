@@ -1,0 +1,26 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+wm geometry . 400x300
+
+set v1 [read_file test.txt]
+
+stext::stext .t1 -textv v1
+frame .b -bd 0
+button .b.b1 -text Quit -command exit
+#checkbutton .b.mod -text Modified -state disabled -variable ::ismod
+
+pack .b -side bottom -fill x 
+pack .t1 -side top -fill both -exp 1
+pack .b.b1 -side left -fill x -exp 1
+#pack .b.mod -side left -fill x
+
+bind .t1 <<Modified>> {puts "modified: %W [%W modified]"}
+after 2000 {puts HI; set ::v1 HOWDY}
+
+.t1 mark set insert 1.0
+focus .t1
+
+puts [.t1 index insert]
+puts [.t1 cget -bg]

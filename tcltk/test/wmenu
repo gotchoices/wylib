@@ -1,0 +1,36 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Bug breaks if you call this program "menu" (because it thinks . is a menu?)
+
+package require wylib
+#wm geometry . 600x200
+
+menubutton .file -text File -menu .file.m
+pack .file
+
+menu .file.m
+
+.file.m add command ld -label Load -command {puts Load} -help Load
+.file.m add command sv -label Save -command {puts Save} -help Save
+.file.m add separator
+.file.m add command t1 -label {Test 1} -command {puts {Test 1}} -help {Test 1}
+.file.m add command t2 -label {Test 2} -command {puts {Test 2}} -help {Test 2}
+.file.m add command t3 -label {Test 3} -command {puts {Test 3}} -help {Test 3}
+.file.m add command t4 -label {Test 4} -command {puts {Test 4}} -help {Test 4}
+.file.m add separator
+.file.m add command qt -label Quit -command exit -help Quit
+
+.file.m insert 1 command imp -label Import -command {puts Import} -help Import
+
+.file.m delete 6 7
+
+#.file.m post 100 100
+#.file.m activate t4
+
+label .c -text {Right click} -bg lightblue
+pack .c
+bind .c <Button-3> {
+    lassign [winfo pointerxy .] x y
+#    .file.m post $x $y
+    tk_popup .file.m $x $y
+}

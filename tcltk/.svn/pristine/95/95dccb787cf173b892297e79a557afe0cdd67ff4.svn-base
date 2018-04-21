@@ -1,0 +1,20 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Wylib Text Printing</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article" title="Wylib Text Printing"><div class="titlepage"><div><div><h2 class="title"><a name="Wylib%20Text%20Printing"></a>Wylib Text Printing</h2></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#intro">Introduction</a></span></dt><dt><span class="sect1"><a href="#options">Printing Options</a></span></dt><dt><span class="sect1"><a href="#custom">Printing With Custom Widths or Lengths</a></span></dt><dt><span class="sect1"><a href="#other">Other Custom Print Command Options</a></span></dt></dl></div><div class="sect1" title="Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="intro"></a>Introduction</h2></div></div></div><p>
+   Under Wylib, there are two distinct printing modes: Postscript and Text.
+   Postscript is a markup language used for rendering images, figures and various text fonts.
+   Wylib typically uses lout or some other processor to create postscript pages.
+   The pages are then previewed in ghostview or some other application and so they can be printed according to the instructions for that particular application.
+  </p><p>
+   But this help applies only to Text Printing.
+  </p><p>
+   Wylib text windows and listboxes contain text which typically can not be formatted in different fonts nor can it include figures.
+   It is just straight text, with fixed line and column spacing.
+  </p><p>
+   Such text can be sent to a standard system printer without much in the way of fancy formatting.
+   It can also be sent via email, saved to a file, or transmitted via FAX.
+  </p></div><div class="sect1" title="Printing Options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="options"></a>Printing Options</h2></div></div></div><p>
+   Under construction (volunteers?).
+  </p></div><div class="sect1" title="Printing With Custom Widths or Lengths"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="custom"></a>Printing With Custom Widths or Lengths</h2></div></div></div><p>
+   Under construction (volunteers?).
+  </p></div><div class="sect1" title="Other Custom Print Command Options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="other"></a>Other Custom Print Command Options</h2></div></div></div><p>
+   Under construction (volunteers?).
+  </p></div></div></body></html>

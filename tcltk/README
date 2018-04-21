@@ -1,0 +1,364 @@
+WYLIB, Wyatt-ERP TCL/TK Library		Modified: November 2005
+Copyright Wyatt ERP, LLC.  All rights not enumerated are reserved.
+
+Documents:
+Read this document first.  Then go on to the coding examples provided in
+the test directory.  Hopefully, you also have the sample schema provided
+with Wyseman.  This has two application examples that use much of Wylib.
+
+There are also help files for some of the widgets in the doc directory.
+If you still don't get how a widget works, look next in the widget source 
+code.  (Go ahead, you can do it!)  Volunteers would be gratefully accepted
+to help provide better documentation.
+
+Development:
+This library is the third generation of development of a 
+set of library functions to aid in the rapid development of ERP 
+components.  It was initially developed to meet the needs of a single
+company.  Thanks to Action Target Inc., a good portion of the work is now
+available under an open source license so others can benefit from the years
+of work it took to develop it.
+
+In the first development iteration (pass 1), I was merely trying to create 
+widgets and functions as I needed them.  Barely usable, the "pass 1" library 
+suffered from many serious functional deficiencies as well as pretty bad 
+coding style.
+
+My goal behind the second pass was mostly to add functional features to
+each of the library modules.  The widgets became much more powerful, allowing
+the programmer a wider variety of options.  The coding style was improved
+but still not extremely consistent.  The libraries were also still heavily
+biased for the use of their original developer, Action Target Inc.
+
+The first objective of pass 3 was to "make generic" the libraries so they
+would be more applicable to other enterprises.  The standard TCL autoloader
+was employed for the first time in the library's history.  And the library
+took on the name of Wylib for the first time.  I tried to separate
+functionality into a set of more discernable layers so the company-specific
+things were not so deeply buried in the libraries.  Now it is possible to
+create a site-specific layer that customizes Wylib for the site's needs.
+
+Wylib is still not production ready, but its getting close.  At Action Target
+we are still using pass 2 libararies for most of our applications, but we
+are moving them over gradually to Wylib.  As we do, Wylib gets better and
+better.
+
+Objectives for Pass 3 (now in progress):
+
+If you would like to help develop Wyatt-ERP, I welcome your input.  But I
+want any code that is integrated into the original source to employ a common 
+set of standards and strategies.  This is important to assure that the code 
+becomes more powerful and flexible over time.
+
+1. Normalized code (Point-source)
+   Over recent years, smart people have figured out how to "normalize" data
+   in a relational database.  Good database designers have learned that,
+   ideally, a given piece of data should only exist in a single cell of a
+   single table.  That way, if the data is changed, the changes will 
+   propagate properly throughout the entire ERP.  At ATI, we coined the term
+   "point source data" to express this principle.
+   
+   A formalization of this style, (sometimes called 3rd normal form) tells us
+   how we should define primary keys, foreign keys, and unique constraints
+   to accomplish the most flexible and powerful design possible.
+   
+   Normalization techniques are also equally applicable to coding style.
+   Ideally, a given function (or chunk of procedural code) should only
+   exist in a single part of the program.  That way, if it is improved or
+   modified, these changes will also propagate automatically throughout the
+   entire ERP.
+   
+   If you find yourself copying and pasting code a lot, you probably suffer
+   from un-normalized code.  If, to make a change, you have to change things
+   in a lot of different places, this is a sign of the same problem.
+   
+2. Potent code (Extremely High Level)
+   You may notice that I have a very dense-packed coding style.  My apologies
+   in advance to those of you who like to spread code over many pages.  I
+   don't.  My goal is to create very powerful library functions that are still
+   generic in nature so as much of the details as humanly possible are packed
+   into libraries.
+   
+   This idea of "chunks" or modules of code extends itself even to lines of
+   code.  So sometimes, after I have debugged a little chunk of code, I will
+   "bundle it up" into a single line.  This allows me to look at a procedure
+   from a slightly higher vantage point.  If you like things more spread out,
+   you can always unwrap things yourself.  In fact, this is a great way to
+   get to know the code.
+   
+   The end goal of Wylib is to be able to create an enterprise application in
+   less than 1000 lines of application-specific code.  You will see me
+   sacrifice a handful of other principles (such as speed, convention, and
+   appearance) to achieve this goal of smallness.
+   
+   The reason for the emphasis on fewer lines of dedicated code is this:
+   
+   The biggest problem in ERP's is development and maintenance.  Writing an
+   ERP module should not be like writing a commercial word processor where
+   we invest hours of developer time to make the app run just a little more
+   efficiently.  In custom ERP's (particularly for small enterprises), the 
+   developer's time is just as much (if not more) of a concern as the user's 
+   time.  Any particular application you develop may only be used by a handful 
+   of people (at least in its present configuration).
+
+   I talked to one poor end-user who had a custom solution written for him.
+   He complained that in order to change a service charge in their billing
+   module, it required $3000 of developer time.  That's what we're trying to
+   avoid here.  If the main application is small and simple, chances are
+   better you will be able to keep it up-to-date for the enterprise.
+   
+   The more code you have to maintain, the less flexible your solution and 
+   the more likely the company will have to "just get by" with what it has.
+   If you can make modifications rapidly and efficiently, your IT development
+   will be able to keep better pace with the developments in your company.
+   In most cases, even if the software is not as user-friendly (i.e. eye 
+   candy) it will win out in the end if it can be rapidly expanded and 
+   extended to meet the dynamic needs of a growing enterprise.
+   
+   The downside to such extremely high-level coding is this:  It is harder
+   for developers to understand and master all the complexities of the
+   libraries.  While there is definitely a steep learning curve to figure
+   out all the functions available from these libraries, the payoff is there.
+   
+3. Nested Widgets (Giga-widgets, Mega-widgets and Widgets or GMW)
+   If you have done GUI programming, you probably know that a widget is a
+   label, a button, a text box, or some other kind of item that can be placed
+   on the screen.
+   
+   You may have also heard the term mega-widget.  This is generally used to
+   describe a group of widgets stuck together.  Like a file selector might
+   have a listbox to show files in and a few buttons.  A print dialog is
+   another example of a mega widget.
+   
+   I kind of wish they had called these Kilo-widgets because I have learned
+   there are many levels we can go above this and still be very functional.
+   I will use the term giga-widget to describe a group of mega-widgets put
+   together in a functional block.
+   
+   In TCL/TK, each time you create a widget, you generally also supply a
+   name for the widget (like .button3 or .topframe, .myentry).  When the 
+   widget is created, an associated command (cleverly called the widget 
+   command) is created with the same name as the widget.  The widget command
+   is used to perform functions on the widget.  For example, you might 
+   simulate a button press by executing the command:
+   
+      .button3 invoke
+   
+   It might seem more intuitive to some people to create a command called 
+   "invoke" and pass the button name in as a parameter such as:
+   
+      invoke .button3
+   
+   But this is not the way TK does things.  And it turns out to be a very
+   powerful feature the way it is done.  Because each widget has its own
+   command, every widget can have its own repertoire of commands and even
+   its own command line syntax!  This makes the language virtually limitless
+   in what it can accomplish.
+   
+   It took me a long time to figure out how I wanted widgets to use this
+   functionality.  In fact, by the end of pass 2, I was just starting to
+   really get it figured out.  As a result, many of the libraries are lacking
+   in the structure I call "nested widget commands."
+   
+   The idea is simple:  Each widget has its own command which can be invoked
+   using the name of the widget (.button3, .mylabel, or .entry1 for example).
+   
+   Let's say we create a mega-widget called a Data Entry Widget (DEW) that
+   consists of a label and an entry.  We stick these two in a common frame
+   and create it using the command dew::dew (if you don't understand
+   namespaces, now would be a great time to learn before going on).
+   We will pass in the name of the new DEW in parameter w.  We may want
+   to specify a number of other parameters as well.  These will go in 
+   arguments which can themselves contain a list of any length).
+   
+   The create function will look something like this:
+   
+      proc dew::dew {w args} {
+          argproc cfig(\$s) $args {....}	;#process arguments
+          frame $w -class Sentry
+          label $w.l -text $cfig(...)
+          entry $w.e -width ... -bg ..., etc.
+          pack $w.l $w.e -side left -exp 1
+      }
+   
+   Now when I invoke:
+   
+       dew::dew .se1
+       
+   it really creates a frame called .se1, a label called .se1.l and an entry
+   called .se1.e.  But the details of the label and the entry are done for
+   me automatically.
+
+   This allows us to create two widgets with a single command so it may save
+   some effort in the original coding.  But we have lost a bit of accessibility
+   to the contained widgets.  For example, if I want to further configure the
+   entry widget, it may be difficult to do without knowing that its name
+   consists of the frame name (.se1) plus a .e.
+   
+   If I try to access the entry by calling it .se1.e in my calling code, I
+   really have not hidden the detail of my library very well as the calling
+   code has to know the guts of the library to use it properly.  And if I
+   choose to change the way the library works one day, I will break all my
+   applications.
+   
+   The better way to do this is to include a widget command for the super
+   widget as follows:
+   
+      proc dew::dew {w args} {
+          argproc cfig(\$s) $args {....}
+          frame $w -class Sentry
+          label $w.l -text $cfig(...)
+          entry $w.e -width ... -bg ..., etc.
+          pack $w.l $w.e -side left -exp 1
+          rename ::$w _w_$w
+          proc ::$w {command args}\
+          	"namespace eval sentry widgcmd $w \$command \$args"
+      }
+
+    Notice we rename the original widget command ($w) which normally would
+    call the frame widget command to become _w_$w (so .se1 would become 
+    _w_.se1).  Then we create a new command in its place that calls a new 
+    function we define as the "widget command."
+   
+        proc dew::widgcmd {w command args} {
+            switch -exact $command {
+                {ent}		{return [eval ${w}.e $args]} 
+                {lab}		{return [eval ${w}.l $args]}
+                {default}	{return [eval __$w "$command" $args]}
+            }
+        }
+    
+    Widget commands generally have, as their first parameter, a command
+    word that defines what function to perform.  Then, the command may be
+    followed by any further parameters specific to that command.
+    
+    In this widget command, we define two commands, ent and lab.  If the
+    command word is ent or lab, we will pass the rest of the commands on
+    to the correct widget.  Otherwise, we will assume the command was meant
+    for the frame and will pass it on to that handler.
+    
+    So now if I want to configure the entry to have a red background, I could
+    use the following command:
+    
+        .se1 ent configure -bg red
+        
+    You just have to be careful not to obscure any of the built-in commands
+    used by the frame widget command.
+    
+    This method can be carried out to any level you wish.  Our dew widget
+    might be used to contain the "address" field in the employee database.  
+    It might be contained inside a database editor mega-widget who's command
+    word is "empe".  That widget might be contained in a toplevel window 
+    (called .empl) used for accessing the employee database.
+    
+    To configure the entry background, we might then do something like:
+    
+        .empl empe address ent configure -bg red
+        
+    At each level, we call a set of nested widgets to pass the command right
+    down to where we want it.  We don't need to know any of the gory details
+    about how each widget is coded.  We only have to know the well defined
+    command words at each widget level.  Ideally, these should not have to
+    change.
+
+Procedure Arguments and Dynamic Lists 
+(There is more on dynamic lists in the Wyseman README).  Throughout wylib, we 
+follow a  number of coding conventions.  One key convention is command line 
+arguments.  Most procedures act on a widget in some way.  In these procedures, 
+the first argument is the name of the widget(normally referred to as w).  You 
+need to be careful when you see w all over the place in the code because it 
+usually doesn't refer to the same thing.  It simply means "whatever widget we 
+are talking about in the current context."
+
+Sometimes a procedure has only a fixed number of arguments, but more often,
+it has a larger number of settings.  Some of them we may want to leave at
+a default.  Others we may want to specify.  These arguments we call
+"switches" and they have a syntax of:
+
+    -switch_name switch_value
+
+Even if it is a boolean value, we seldom allow you to just specify the switch
+itself, instead, you would have to specify both parts as follows:
+
+    -prompt yes
+
+To those of you who love those self-documenting switches that are about a
+mile long, my apologies.  Mine are generally short and sweet.  Keep the 
+docs handy.
+
+To further simplify (or complicate) things, I introduce the option of
+"shortcut arguments."  If a procedure allows shortcut arguments, it simply
+means that if you supply a bunch of switches on the command line, you can
+omit the "-switch_name" part of some of the more common ones as long as
+they occur in a certain predefined order.
+
+So for example, if you are calling the function dew::dew and the manual
+says that it has shortcut arguments, "-type" and "-title" the following
+lines of code are equivalent: (The first is the preferred form.)
+
+    dew::dew .d1 ent "An Entry:" -spf edw -def Hello
+    dew::dew .d1 -type ent -title "An Entry:" -spf edw -def Hello
+    dew::dew .d1 ent -spf edw "An Entry:" -def Hello
+    dew::dew .d1 -spf edw -def Hello ent "An Entry:"
+
+As you will see in some of the examples, the shortcuts are helpful in 
+setting up certain data structures (lists) that define how the widgets will
+be built on the screen.
+
+Some Philosophical Underpinnings:
+As you use Wylib, you may notice that the GUI is somewhat different than
+the traditional Mac/Win GUI.  Traditional nested windows were developed in
+the days of 640x480 monitors when screen real estate was one of the most
+critical concerns.  Relational database concepts have evolved considerably
+in that time, but the GUI's have not.
+
+Basically, programmers have tried to do the following:
+  1. Make it so it will run on any size monitor
+  2. Make it very big, simple, and easy to see
+  3. Nest windows hierarchically so you dig your way down, do what you
+     want to do, and then pop your way back up by closing windows.
+
+While these goals have helped to achieve relatively short learning curves
+and work well for most shrink-wrap, Wylib had a different set of goals:
+
+  1. I wanted to find a structure that would better represent the
+     relational manner in which data is stored in a database.  For each
+     record in a table, there may exist 0, 1 or many instances of records
+     in other tables that are "related" to it.  I wanted to be able to see
+     those records appear (automatically where possible) each time a new
+     record was selected.  Sometimes, I call this the "exposed model method."
+     
+  2. I wanted to achieve maximum operating efficiency for the user, even
+     if this meant a longer learning curve.  If you've ever seen the
+     controls of an airliner, you know they are a lot more intimidating than
+     the dashboard of your volkswagon.  But then, you don't drive your
+     volkswagon 600 mph nor will it carry 150 passengers.  In a production
+     environment operational efficiency will quickly overcome a slower
+     learning curve (even if it takes several weeks to become proficient
+     a using the software).
+
+  4. Rapid Development Platform (Generality / Modularity)
+     Many software designers work under the premise that once the application
+     is designed and tested, you can safely commit hundreds of programmer
+     hours to making each little detail perfect for the user.  No matter the
+     complexity of the code, just make it look good on the screen.
+     
+     While this may work for many applications, my experience is this is a
+     poor practice when coding an ERP.  ERP's are inherently difficult to
+     quantify.  Business rules are constantly evolving and it is difficult
+     enough to keep up with the needs of the users.
+
+     So in an ERP one of the most important qualities is the ability to make
+     rapid changes without threatening the stability of the program.
+
+     I accomplished this by creating general modules (dbe, dbp, etc.) that
+     can be used again and again within the code to represent data in 
+     different tables in a fairly consistent way.  In many cases, the GUI 
+     could be a little more user friendly, but the programmer would end up
+     writing a bunch more custom code for each module.
+     
+     In each case, I strive to keep as much code as possible in the library
+     routines so the code in the "main loop" is kept to an absolute minimum.
+     The libraries are maintained the hard way.  But we want the maintenance
+     of each site to be as simple as possible.  The fewer the lines of code
+     you have to maintain, the easier it is.  It's that simple.

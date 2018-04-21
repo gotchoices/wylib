@@ -1,0 +1,23 @@
+#!/usr/bin/tclsh
+#include(Copyright)
+
+if {$::tcl_platform(pointerSize) == 8} {
+    load ./libwylib-x86_64.so
+} else {
+    load ./libwylib.so
+}
+
+foreach {m p} {
+10 0 
+10 45
+10 90
+10 135
+10 180
+10 -135
+10 -90
+10 -45 
+} {
+    set x [rpn fix4 deg $p $m ptor]
+    set y [rpn rdn]
+    puts "[format {m:%7.2f p:%7.2f x:%7.2f y:%7.2f} $m $p $x $y]"
+}

@@ -1,0 +1,91 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Test mlb.tcl widget
+package require wylib
+
+#option add *font {Helvetica 16} 5
+#option add *Listbox.font {fixed 8} 30
+
+#set is {a b c d e f g h i j k l m n o p q r s t u v w x y z}
+#set is {a b c d e f g h i j k l}
+set is {a b c d e f}
+
+foreach i $is {
+    lappend args -f "$i -title {Title $i}"
+    set list($i) {}
+}
+
+set args {-f {aa -sort ascii} -f b -f c -f {d -hide 1} -f e -f {f -inv 1}}
+
+#set t [toplevel .m1]
+set t {}
+set tl {.}
+wm geometry $tl 550x400
+
+#------------------------------------------------
+foreach ln [read_file "/usr/share/dict/words"] {
+    set first [string range $ln 0 0]
+    if {[lcontain $is $first]} {
+        lappend list($first) $ln
+    }
+}
+
+set len 0		;#find longest list
+foreach i $is {
+    if {[llength $list($i)] > $len} {set len [llength $list($i)]}
+}
+
+set data {}
+for {set i 0} {$i < $len} {incr i} {
+    set line {}
+    foreach tag $is {
+        set el [lindex $list($tag) $i]
+        if {$el == {}} {set el $i}
+        lappend line $el
+    }
+#puts line:$line
+    lappend data $line
+}
+
+#------------------------------------------------
+button $t.b -text Quit -command exit
+pack $t.b -side bottom -fill x
+
+eval mlb::mlb $t.mlb -auto 0 -frame \{-wid 300 -hei 600\} -selectmode extended $args -sum 1
+pack $t.mlb -side left -fill both -exp 1
+
+bind $t.mlb <<Execute>> "puts {Hey!}"
+
+#sizer::sizer $t.sz .mlb -o v -size 4
+#frame $t.f2 -bg pink
+#pack $t.sz -side left -fill y
+#pack $t.f2 -side left -fill both -exp 1
+
+eval $t.mlb pref [pref::auto mlb]		;#restore preferences
+$t.mlb delete 0 end
+eval $t.mlb insert end $data
+
+#update idletasks
+#after idle {$t.mlb size}
+
+update idletasks
+#$t.mlb pref
+#$t.mlb pref \
+#    {display {a b c e}}\
+#    {column a frame configure -width 90}\
+#    {column b frame configure -width 40}\
+#    {column c frame configure -width 30}\
+#    {column d frame configure -width 20}\
+#    {column e frame configure -width 180}\
+#    {column f frame configure -width 40}
+#$t.mlb pref
+
+
+#------------------------------------------------
+#signal -restart trap * {
+#    puts "Signal:%S:"
+#}
+
+#Schedule orderly close
+#------------------------------------------------
+wm protocol $tl WM_DELETE_WINDOW "eval pref::auto mlb \[$t.mlb pref\]; destroy $tl"

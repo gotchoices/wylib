@@ -1,0 +1,12 @@
+#!/usr/bin/wish
+package require wylib
+
+wboard::wboard .wb \
+    -f {pb1	{0 0}		padbank::padbank	A1e 3 3 2}\
+    -f {pb2	{10 50}		padbank::padbank	A1e 4 2 1}\
+    -f {e1 	{20 80}		entry}\
+    -f {b1 	{30 100}	button {Hello}}
+
+pack .wb -side top -fill x -exp 0
+
+.wb create oval 10 100 100 200 -fill yellow   

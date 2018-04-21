@@ -1,0 +1,129 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Wylib Standard Features</title><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article"><div class="titlepage"><div><div><h2 class="title"><a name="Wylib"></a>Wylib Standard Features</h2></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="sect1"><a href="#idm139840610282624">Standard Features</a></span></dt><dt><span class="sect1"><a href="#idm139840606474400">How Wylib Applications Organize Data</a></span></dt></dl></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm139840610282624"></a>Standard Features</h2></div></div></div><p>
+   Wylib (The WyattERP function library) consists of computer code to generate and manage a number of different objects (widgets) that appear on your screen.
+   A widget can be a button, a menu, an entry or a combination of other widgets.
+   Each widget may used to view and or alter data (possibly from the database) in some useful way.
+  </p><p>
+   For example, most applications make common use of a 
+   <a class="ulink" href="dbp.html" target="_top">preview widget </a>
+   that allows you to select and view a list of multiple records from a single table according to some search criteria you may specify.
+   The records appear in a list of rows and columns, much like you might see in a spreadsheet program.
+   Each row represents a record in the database.
+   Each column represents a distinct value that record can contain.
+  </p><p>
+   Once you have located a record (row) you are interested in, you can load it into an 
+   <a class="ulink" href="dbe.html" target="_top">editing widget</a>
+   (also commonly used) where you can typically change some or all of the information in that record, press an update button, and the new record data will be written back into the database.
+  </p><p>
+   Most widgets have a menu of their own, either in the upper left corner of the widget, or by right-clicking on the widget somewhere (or sometimes both).
+   To get help with using a specific widget, look for the help option in the widget's menu.
+  </p><p>
+   Note that the same types of widgets are used over again in different applications.
+   So once you have learned to use it in one program, you know most of what you need for a different program.
+   The help instructions for each individual application program will assume that you have a basic understanding of how to use each of the wylib widgets (preview, editing, search, etc.)
+  </p><p>
+   Wylib applications use a design philosphy called "exposed model."
+   This simply means that the user is more aware of the way in which data is stored.
+   In the specific case of Wylib, it means that all data are stored in a uniform system of rows and columns in a database.
+   This even applies to data that you might not naturally choose to model that way.
+  </p><p>
+   Many computer applications go to great lengths to shield the user from the way data is stored, instead presenting the data in a way the user may be more familiar with.
+   Wylib applications are admittedly less user-friendly in this regard, but they have a huge advantage over other applications that are not built on an exposed model.
+   Specifically, when it comes time to analyze the data, it is very easy to access and query.
+   Once an enterprise stores all its data in a uniform system, many important facts and trends can be easily "mined" from the data that will help managers better understand how to run the business.
+  </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a name="idm139840606487040"></a>Top Level Windows</h3></div></div></div><p>
+    An application (like conim) may consist of one or more windows.
+    Each window that can be moved around separately on the screen is called a
+    "Top Level" window.
+   </p><p>
+    Once you start an application, it is often possible to open new Top Level
+    windows (from the File-&gt;New_Window menu).
+    If you do this in conim, for example, you will get a second window that
+    looks just like the first conim window you opened up.
+    They are not two separate instances of the program, but almost.
+    They are running under the same program, but only one of them is "active" at a time. 
+    If you "close" one of the windows, the other will stay open.
+    But if you "exit," they will both close.
+   </p><p>
+    When multiple Top Level windows are created like this, there is typically
+    a small button near the upper right that shows which one is "active" at
+    any given time.  You can press the button to make a certain window active.
+   </p><p>
+    Sometimes two different Top Level windows of different types (like the conim
+    main window and the conim document window) might have messages to pass
+    back and forth.  
+    For example, if the main window wants to ask the document window
+    to update its list of documents, and there are multiple document windows
+    open, the message will only be sent to the one that is "active" at the time.
+   </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a name="idm139840606483088"></a>Top Level Window Settings</h3></div></div></div><p>
+    Top Level windows can be stretched from the edge or corner to change their size.
+    There are sometimes internal spacer bars as well to change the sizes of different panes (individual rectangular areas within the window).
+    These settings, as well as the internal settings of any widgets contained
+    inside the Top Level window will be saved whenever you close the Top Level
+    window in the normal way.
+   </p><p>
+    For example, if you execute the File-&gt;Close option, or if you press the
+    "Red X" in the upper right corner, size and similar settings will be  saved.
+    If the program is terminated externally (like with the Kill option in the window manager menu in the upper left corner), these settings will not be saved.
+   </p><p>
+    So if you want to save settings in your program, you may want to get
+    everything set the way you like, and then close the window.
+    Then re-open it and you should have your new settings.
+   </p><p>
+    In many cases, an application will remember what other Top Level windows you
+    had open at the time you closed the application.
+    When you start it up again the next time, it will try to re-open the same windows.
+   </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a name="idm139840606479888"></a>Menu Options and Shortcuts</h3></div></div></div><p>
+    Many of the Top Level windows have a menu bar near the top.  
+    This might have a traditional "File" menu or it may be called something else.
+    Regardless, this is where you go to execute functions that act on the window
+    as a whole or the application as a whole.
+   </p><p>
+    Many of the individual widgets have their own menu as well.  This is
+    generally at the upper left corner of the widget and will be shaded like
+    the other menu bar items in the application.
+   </p><p>
+    Items which you can select from a menu can sometimes also have a "shortcut
+    button."  If present, this button will be found in the same menu bar but
+    typically to the right of the standard menu pull-downs.  Pressing this
+    shortcut button will have the same effect as executing the function from 
+    the menu pull-down, but it is a little easier.
+    The title of the buttons is not always the same (its shorter).
+    But the button and its associated menu function will always have the same
+    help text.
+   </p><p>
+    Also note that menus can generally be "torn off."  
+    This is done by selecting the peforated line near the top of the menu.
+    This will allow you to place a copy of the menu in its own Top Level window.
+    This makes the menu options very much like dedicated buttons so you can
+    just press them without having to go to the menu each time.
+   </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a name="idm139840606476496"></a>Preferences</h3></div></div></div><p>
+    Each Wylib application has a standard preferences setting screen.
+    This can be accessed under the standard Edit menu.
+    Once you have the preferences menu open, you can get more help from the
+   <a class="ulink" href="pref.html" target="_top">Widget Help</a>
+    screen found within that window's File menu.
+   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm139840606474400"></a>How Wylib Applications Organize Data</h2></div></div></div><p>
+   Traditionally, different office applications have been produced by different companies.  So you might have one software program for running your accounting and another for managing inventory--one program for designing products and another for keeping your appointments.  In these cases, each program stores its data in a way that is most convenient and helpful for its particular application.
+  </p><p>
+   So, an accounting program would probably store its data in a ledger system that looks much like a spreadsheet.  But a calendaring program might require a much more complex model (like tracking multiple reminders for the appointment, who is invited, when the appointment might repeat, etc.)  The problem is, when each application stores its data in a different way, it makes it hard for a company to extract meaningful information from data when it spans across multiple applications.
+  </p><p>
+   For example, imagine we wanted to find all the appointments you have had in the last year with clients who bought a certain part number.  That would require pulling data from the inventory management system and correlating it with the appointment tracking system.  This might be very useful data to help the company be more productive, but when multiple diverse applications are in use to store this data, it becomes almost impossible to answer a wide variety of such questions without a monumental programming effort.
+  </p><p>
+   The solution is called Enterprise Resource Planning (or ERP).  In an ERP solution, all data is stored in a uniform way in a central data repository.  That "standard way" is to organize data into tables where each table can be thought of as a spreadsheet consisting of rows and columns.  The database can contain any number of tables.  Each table typically has a number of predefined columns and can contain any number of rows.
+  </p><p>
+   Different types of data are stored in different tables within the database.  So, there might be one table for storing all your appointments.  Each row would represent one appointment and each column would contain a different piece of information about the appointment as follows:
+
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"></span></dt><dd><div class="table"><a name="idm139840610366096"></a><p class="title"><b>Table 1. Appointment Table</b></p><div class="table-contents"><table class="table" summary="Appointment Table" cellpadding="2" border="1"><colgroup><col><col><col><col><col></colgroup><thead><tr><th align="center">Cust</th><th align="center">Summary</th><th align="center">Date</th><th align="center">Time</th><th align="center">Location</th></tr></thead><tbody><tr><td align="center"> </td><td align="center">Company Party</td><td align="center">2004-Dec-15</td><td align="center">6:00 pm</td><td align="center">Bowling alley</td></tr><tr><td align="center">47</td><td align="center">Meeting with Bob</td><td align="center">2005-Jan-07</td><td align="center">12:35 pm</td><td align="center">The office</td></tr><tr><td align="center">59</td><td align="center">Close ACME sale</td><td align="center">2005-Feb-19</td><td align="center">10:00 am</td><td align="center">conference room</td></tr></tbody></table></div></div><br class="table-break"></dd></dl></div><p>
+
+   Note that the number and type of columns is decided by the database designer.  But the number of rows depends on how much people use the database.  So this table might start out with only a few entries, but each time you schedule a new appointment, another row will be added to the table, making it longer.
+  </p><p>
+   The trick in ERP design is to find a way to store any kind of data for any kind of application in this "row and column" kind of a way.  This is one reason why ERP applications might seem a little "less friendly" than your good, old word processor.  That's because certain compromises may have been made by the designer in order to get all the information to store efficiently in a row, column format.  The big payoff is when it comes time to produce reports about the data in the tables because it is all organized so neatly.
+  </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a name="idm139840610335744"></a>Linking the Tables Together</h3></div></div></div><p>
+   The previous example shows how basic data is stored, but it doesn't show how you answer the question about "how many appointments you had with people who bought the certain part."  In order to do this query, we need to know the "relationship" between different tables.  To do this, we use special columns called "keys."  A key column is just like a regular column, except that it contains a value which also has meaning in another table.  In the appointment table, there is a column called "Cust" that represents the identification number of the customer the appointment is with.  Now we just need a few more tables and we can answer the question:
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"></span></dt><dd><div class="table"><a name="idm139840610333360"></a><p class="title"><b>Table 2. Customer Table</b></p><div class="table-contents"><table class="table" summary="Customer Table" cellpadding="2" border="1"><colgroup><col><col><col><col></colgroup><thead><tr><th align="center">Cust</th><th align="center">Name</th><th align="center">Job</th><th align="center">Organization</th></tr></thead><tbody><tr><td align="center">47</td><td align="center">Bob Davis</td><td align="center">Manager</td><td align="center">National Supply</td></tr><tr><td align="center">59</td><td align="center">Roger Smith</td><td align="center">Buyer</td><td align="center">ACME Explosives</td></tr></tbody></table></div></div><br class="table-break"></dd></dl></div><div class="variablelist"><dl class="variablelist"><dt><span class="term"></span></dt><dd><div class="table"><a name="idm139840610426096"></a><p class="title"><b>Table 3. Order Table</b></p><div class="table-contents"><table class="table" summary="Order Table" cellpadding="2" border="1"><colgroup><col><col><col><col><col></colgroup><thead><tr><th align="center">Order</th><th align="center">Cust</th><th align="center">Part</th><th align="center">Cost</th><th align="center">Shipped</th></tr></thead><tbody><tr><td align="center">157</td><td align="center">59</td><td align="center">7740</td><td align="center">$999.95</td><td align="center">2005-Mar-12</td></tr><tr><td align="center">158</td><td align="center">47</td><td align="center">3920</td><td align="center">$ 49.50</td><td align="center">2005-Jun-16</td></tr><tr><td align="center">159</td><td align="center">99</td><td align="center">6542</td><td align="center">$745.00</td><td align="center">2005-Aug-17</td></tr></tbody></table></div></div><br class="table-break"></dd></dl></div><p>
+   With these two additional tables, we can see that on Dec 19th, we had an appointment.  By looking in the Customer table, we can see that the customer was Roger Smith of ACME Explosives (customer number 59).  And if we also look at the order table, we can see that on Mar 12, that customer ordered our part number 7740, worth $999.95.
+  </p><p>
+    This examination of the data (normally called a "query") can be done very quickly by the computer (as long as we know how to ask it the right question.)  And note that the data potentiall belong to three different applications (calendaring, customer contacts, and order writing), and yet we were able to look at the data all together in order to answer an important question.
+  </p><p>
+   This is the magic of database driven ERP design!
+  </p></div></div></body></html>

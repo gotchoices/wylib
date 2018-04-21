@@ -1,0 +1,14 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Test mlb.tcl widget
+package require wylib
+
+set state_data {{{} None} {AK Alaska} {AL Alabama} {AR Arkansas} {AZ Arizona} {CA California} {CO Colorado} {CT Connecticut} {DC {Washington DC}} {DE Deleware} {FL Florida} {GA Georgia} {HI Hawaii} {IA Iowa} {ID Idaho} {IL Illinois} {IN Indiana} {KS Kansas} {KY Kentucky} {LA Louisiana} {MA Massachussetts} {MD Maryland} {ME Maine} {MI Michigan} {MN Minnesota} {MO Missouri} {MS Mississippi} {MT Montana} {NC {North Carolina}} {ND {North Dakota}} {NE {}} {NH {New Hamshire}} {NJ {New Jersey}} {NM {New Mexico}} {NV Nevada} {NY {New York}} {OH Ohio} {OK Oklahoma} {OR Oregon} {PR {Puerto Rico}} {PA Pennsylvania} {RI {Rhode Island}} {SC {South Carolina}} {SD {South Dakota}} {TN Tennesse} {TX Texas} {UT Utah} {VA Virgina} {VI {Virgin Islands}} {VT Vermont} {WA {Washington State}} {WI Wisconson} {WV {West Virginia}} {WY Wyoming}}
+
+wm geometry . 200x400
+mlb::mlb .mlb -selectmode single -f {st -width 20} -f name -data $state_data
+pack .mlb -side left -fill both -exp 1
+
+#after 100 ".mlb size"
+#.mlb delete 0 end
+#eval .mlb insert end $state_data

@@ -1,0 +1,30 @@
+A Wyatt application generally consists of a toplevel module of
+application code sitting atop a numer of layers of library code:
+
+5- application main loop and procedural code (executable scripts)
+   - emplim, persim, etc.
+
+4- application specific routines you may create (applib)
+   - shiptool
+   - inventory
+   - prd
+
+3- site specific routines: (sitelib)
+   - customize domains, phone numbers, interfaces, etc.
+
+2- Graphical widgets and helper routines: (wylib)
+   - dbe, dbp
+   - sizers
+   - graphing
+
+1- Non-graphical routines: (wylib)
+   - database access
+   - date/time functions
+   - command line parsers
+
+0- Lower layers
+   - Tk
+   - Tcl
+   - BLT
+   - Postgres
+   - OS (Linux)

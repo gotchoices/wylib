@@ -1,0 +1,42 @@
+#!/usr/bin/wish
+#include(Copyright)
+if {$::tcl_platform(pointerSize) == 8} {
+    load ./libwylib-x86_64.so
+} else {
+    load ./libwylib.so
+}
+source ../debug.tcl
+
+if {[llength $argv] > 0} {
+    set uname [lindex $argv 0]
+} else {
+    set uname wyatt
+}
+
+#Test only the password input routine:
+#set res [dia::pquery {Please enter your password:}]
+#set pword [dia::pquery]
+#debug pword
+
+#set res [checkpwd $uname {dia::pquery "Please input %s"}]
+#set res [checkpwd $uname {dia::pquery "Please input password for $uname:"}]
+#set res [checkpwd uname {set dummy "hi"}]; debug dummy
+
+# don't use any other wylib function
+proc getpwd {uname} {
+    puts -nonewline "Please input password for $uname: "
+    flush stdout
+    exec /bin/stty -echo
+    set paswd [gets stdin]
+    exec /bin/stty echo
+    puts ""
+    return $paswd
+}
+proc retpwd {paswd} {
+    return $paswd
+}
+set paswd [getpwd $uname]
+set res [checkpwd $uname "retpwd $paswd"]
+debug res
+
+exit 0

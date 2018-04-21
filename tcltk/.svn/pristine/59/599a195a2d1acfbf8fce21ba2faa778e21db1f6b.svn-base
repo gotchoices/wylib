@@ -1,0 +1,837 @@
+#dbe.tcl	0.10	Apr 2001
+#New and improved DataBase record Editor.
+#This is the main editor widget where fields can be veiwed and edited.
+#------------------------------------------
+#Copyright (C) 1999-2001 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+package provide wylib 0.10
+#TODO:
+#- Can't do a dia::query on the textvariable for a field that is type mle
+#- Implement nested widgets
+#- 
+
+#option add *Dbe.f*Entry.font {Courier 12} widgetDefault
+#option add *Dbe.f*Menubutton.font {Courier 12 bold} widgetDefault
+option add *Dbe.f*Text.background {#f0f0f0} widgetDefault
+#option add *Dbe*Entry.background {#f0f0f0} widgetDefault
+
+namespace eval dbe {
+    namespace export dbe
+    variable cfig		;#config values for each widget
+    variable v			;#holds field values
+    variable lv			;#holds fields' previous values
+
+    set cfig(as) {{auto 1} {pksep { }} {pst.ldrec {}} {preclear 1} {reload 1} {prompt 1} {help {}} {pkey {}} {and {}} {table {}} {title {}} {pwidget {}} {ifocus {}} {gman pack} {ftanchor e} {ftwidth 0} {nulemp 1} {keyload 1} {keysee 0} {gmc.ti {-side top -expand yes -fill both}} {gmc.ff {-side top -expand yes -fill both}} {gmc.bf {-side bottom -expand yes -fill x}} {ff_gman pack} {ff_gmc {-side top -expand yes -fill both -anchor e}} {fl_gman pack} {fl_gmc {-side left -fill both}} {fs_gman pack} {fs_gmc.e {-side right -expand no}} {fs_gmc.t {-side right -expand no -anchor n}} {bf_gman pack} {bf_gmc {-side top -fill x}} {bu_gman pack} {bu_gmc {-side left -expand yes -fill x}} {f {} {f_add \$w $v}} {b {} {b_add \$w $v}} {borderwidth 2} {relief raised} {native {borderwidth relief}} {* {} {lappend cfig(\$w:native) $s; set dummy \{$v\}}}}
+    set cfig(b_as) {{prompt $cfig($w:prompt)} {hide 0} {help {}} {pre {}} {pst {}} {s {}} {gman $cfig($w:bu_gman)} {gmc $cfig($w:bu_gmc)} {hotkey {def}} {native {command}} {* {} {lappend cfig(\$w\$bname:native) $s; set dummy \{$v\}}}}
+    set cfig(f_as) {{ro 0} {wr 1} {rd 1} {seq {}} {hide 0} {type {}} {help {}} {def {}} {tw $cfig($w:ftwidth)} {ta $cfig($w:ftanchor)} {s {}} {spf {}} {fkey {}} {field {}} {fdep {}} {size {}} {title {}} {alias 0} {data {}} {proc {}} {eoth {}} {tpt {}} {errchk 1} {nulemp $cfig($w:nulemp)} {table $cfig($w:table)} {gman $cfig($w:fl_gman)} {gmc $cfig($w:fl_gmc)} {s_gman $cfig($w:fs_gman)} {s_gmc.e $cfig($w:fs_gmc.e)} {s_gmc.t $cfig($w:fs_gmc.t)} {native {}} {* {} {lappend cfig(\$w\$fname:native) $s; set dummy \{$v\}}}}
+    set cfig(butright) {-gmc.bf {-side right -fill y} -bu_gmc {-side top -fill both} -bf_gmc {-side right -fill y}}
+    set cfig(butleft) {-gmc.bf {-side left -fill y} -bu_gmc {-side top -fill both} -bf_gmc {-side left -fill y}}
+    set cfig(buttop) {-gmc.bf {-side top -expand yes -fill x} -bf_gmc {-side top}}
+
+    set cfig(hot:addrec)	{<Alt-n>}
+    set cfig(hot:updrec)	{<Alt-u>}
+    set cfig(hot:delrec)	{<Alt-d>}
+    set cfig(hot:clear)		{<Alt-l>}
+    set cfig(help:addrec)	{Add the currently showing data as a new record}
+    set cfig(help:updrec)	{Update the current record with any modifications}
+    set cfig(help:delrec)	{Delete the currently showing record}
+    set cfig(help:clear)	{Clear the entry fields on the screen}
+    
+    variable tpt	    ;#These are default field templates
+    set tpt(zip) {{{} {[0-9][0-9][0-9][0-9][0-9]} {[0-9][0-9][0-9][0-9][0-9][- ][0-9][0-9][0-9][0-9]}}\
+        {##### or #####-####}\
+        {{country USA} {country {}}}\
+    }
+    set tpt(phone) {{{} {[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]} {[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]x[0-9]+}}\
+        {###-###-#### or ###-###-####x###}\
+        {{country USA} {country {}}}\
+    }
+    set tpt(state) {{{} {[A-Z][A-Z]}} {XX (2 Capital Letters)} {{country USA} {country {}}}}
+    set tpt(email) {{{} {[0-9a-zA-Z._~-]+@[0-9a-zA-z._-]+}} name@domain}
+    set tpt(date) {{{} {([12][0-9][0-9][0-9])[- ]([Jj]an|[Ff]eb|[Mm]ar|[Aa]pr|[Mm]ay|[Jj]un|[Jj]ul|[Aa]ug|[Ss]ep|[Oo]ct|[Nn]ov|[Dd]ec|[0-9][0-9]|[0-9])[- ]([0-9][0-9]|[0-9])}} YYYY-Mmm-dd}
+    set tpt(dollar) {{^[-]*[0-9]+\\.[0-9][0-9]$} ####.##}
+    
+    variable scm	;#default values for scmenu widgets
+    set scm(state) {-list {{{} Blank} {AK Alaska} {AL Alabama} {AR Arkansas} {AZ Arizona} {CA California} {CO Colorado} {CT Connecticut} {DC {Washington DC}} {DE Deleware} {FL Florida} {GA Georgia} {HI Hawaii} {IA Iowa} {ID Idaho} {IL Illinois} {IN Indiana} {KS Kansas} {KY Kentucky} {LA Louisiana} {MA Massachussetts} {MD Maryland} {ME Maine} {MI Michigan} {MN Minnesota} {MO Missouri} {MS Mississippi} {MT Montana} {NC {North Carolina}} {ND {North Dakota}} {NE {}} {NH {New Hamshire}} {NJ {New Jersey}} {NM {New Mexico}} {NV Nevada} {NY {New York}} {OH Ohio} {OK Oklahoma} {OR Oregon} {PR {Puerto Rico}} {PA Pennsylvania} {RI {Rhode Island}} {SC {South Carolina}} {SD {South Dakota}} {TN Tennesse} {TX Texas} {UT Utah} {VA Virgina} {VI {Virgin Islands}} {VT Vermont} {WA {Washington State}} {WI Wisconson} {WV {West Virginia}} {WY Wyoming}} -format {%-4s %s}}
+    set scm(country) {-list {{{} Blank} {A Austria} {AFG Afghanistan} {AG Antigua and Barbuda} {AL Albania} {AND Andorra} {ANG Angola} {ARM Armenia} {AUS Australia} {AZ Azerbaijan} {B Belgium} {BD Bangladesh} {BDS Barbados} {BF Burkina Faso} {BG Bulgaria} {BH Belize} {BHT Bhutan} {BIH Bosnia-Herzegovina} {BM Bermudas} {BOL Bolivia} {BR Brazil} {BRN Bahrain} {BRU Brunei} {BS Bahamas} {BU Burundi} {BY Belarus} {C Cuba} {CAM Cameroon} {CDN Canada} {CH Switzerland} {CI Ivory Coast} {CL Sri Lanka} {CN China} {CO Columbia} {CR Costa Rica} {CV Cape Verde} {CY Cyprus} {CZ Czech Republic} {D Germany} {DJI Djibouti} {DK Denmark} {DOM Dominican Republic} {DZ Algeria} {E Spain} {EAK Kenya} {EAT Tanzania} {EAU Uganda} {EC Ecuador} {EQ Equatorial Guinea} {ER Eritrea} {ES El Salvador} {EST Estonia} {ET Egypt} {ETH Ethiopia} {F France} {FJI Fiji} {FL Lichtenstein} {FR Faroer} {G Gabon} {GB Great Britain} {GBZ Gibraltar} {GCA Guatemala} {GE Georgia} {GH Ghana} {GNB Guinea-Bissau} {GR Greece} {GUY Guyana} {H Hungary} {HA Haiti} {HK Hongkong} {HN Honduras} {HR Croatia} {I Italy} {IL Israel} {IND India} {IR Iran} {IRL Ireland (Republic)} {IRQ Iraq} {IS Iceland} {J Japan} {JA Jamaica} {JOR Jordan} {K Cambodia} {KIR Kiribati} {KO North Korea} {KS Kyrgyzstan} {KWT Kuwait} {KZ Kazakhstan} {L Luxembourg} {LAO Laos} {LAR Libya} {LB Liberia} {LS Lesotho} {LT Lithuania} {LV Lativa} {M Malta} {MA Morocco} {MAL Malaysia} {MC Monaco} {MD Moldova} {MEX Mexico} {MK Macedonia} {MNG Mongolia} {MOC Mozambique} {MS Mauritius} {MW Malawi} {MYA Myanmar} {N Norway} {NA Netherlands Antilles} {NAM Namibia} {NEP Nepal} {NIC Nicaragua} {NL Netherlands} {NZ New Zealand} {OM Oman} {P Portugal} {PA Panama} {PE Peru} {PK Pakistan} {PL Poland} {PNG Papua New Guinea} {PR Puerto Rico} {PY Paraguay} {Q Qatar} {RA Argentina} {RB Botswana} {RC Taiwan} {RCA Central African Republic} {RCB Congo} {RCH Chile} {RG Guinea} {RI Indonesia} {RIM Mauretania} {RL Lebanon} {RM Madagascar} {RMM Mali} {RN Niger} {RO Romania} {ROK South Korea} {ROU Uruguay} {RP Philippines} {RPB Benin} {RSA Republis of South Africa} {RSM San Marino} {RT Togo} {RUS Russia} {RWA Rwanda} {S Sweden} {SA Saudi Arabia} {SD Swaziland} {SF Finland} {SGP Singapore} {SK Slovakia} {SLO Slovenia} {SME Suriname} {SN Senegal} {SP Somalia} {SUD Sudan} {SY Seychelles} {SYR Syria} {THA Thailand} {TJ Tajikistan} {TM Turkmenistan} {TN Tunesia} {TR Turkey} {TT Trinidad & Tobago} {UA Ukraine} {UAE United Arab Emirates} {USA USA} {UZB Uzbekistan} {V Vatican City} {VN Vietnam} {WAG The Gambia} {WAL Sierra Leone} {WAN Nigeria} {WD Dominica} {WG Grenada} {WL St. Lucia} {WS Western Samoa} {WV St. Vincent} {YE Yemen} {YMN Northern Yemen} {YU Yugoslavia (Serbia & Montenegro)} {YV Venezuela} {Z Sambia} {ZA South Africa} {ZRE Zaire} {ZW Zimbabwe}} -format {%-12.12s %s}}
+}
+
+#Load a record as defined by the primary key the user will enter
+#------------------------------------------
+proc dbe::keyload {w} {
+    variable cfig; variable v
+    set strgs {}
+    set vnams {}
+    set i 0; foreach ftag $cfig($w:pkflds) {
+        lappend strgs $cfig($w.f.$ftag:title)
+        set vals($i) [lindex [split $v($w:_pk) $cfig($w:pksep)] $i]
+        lappend vnams vals($i)
+        incr i
+    }
+    if {[llength $strgs] == 1} {set strgs [lindex $strgs 0]}
+#puts "strgs:$strgs vnams:$vnams"
+    if {[dia::query $strgs $vnams 0 OK Cancel] > 0} {return}
+    set kvals {}
+    set i 0; foreach ftag $cfig($w:pkflds) {lappend kvals $vals($i); incr i}
+    ldrec $w $kvals
+}
+
+#Load the data for the specified record into the edit widget
+#------------------------------------------
+proc dbe::ldrec {w {id {}} args} {
+    variable cfig
+    variable v
+    variable lv
+
+    argproc ca(\$s) $args {{oid {}} {post 1}}
+    if {$id == {}} {set id [split $v($w:_pk) $cfig($w:pksep)]}
+    if {$id == {}} {return 0}		;#if still blank
+    if {$ca(oid) != {}} {
+        set where "where t0.$ca(oid) = $id"
+    } else {
+        set where {}
+        set i 0; foreach k $cfig($w:pkflds) {	;#primary keys must be in alias 0 and their tag must be the field name
+            if {[set qs "[sql::quote $cfig($w:table) $k [lindex $id $i]]"] == {}} {dia::err "Blank value improperly specified for loading record"; return 0}
+            lappend where "t0.$k = $qs"
+            incr i
+        }
+        set where "where [join $where { and }]"
+    }
+    set fields {}
+    set flds {}
+    set tables {}
+    set t 0
+    foreach fld $cfig($w:flds) {
+        if {!$cfig($fld:rd)} continue
+        set ftag [lindex [split $fld .] end]
+        lappend tables "$cfig($fld:table) t$cfig($fld:alias)"
+        if {$cfig($fld:field) != {}} {
+            set fname $cfig($fld:field)
+            if {[regexp {%} $fname]} {regsub -all {%} $fname t$cfig($fld:alias). fname}
+        } else {
+            set fname t$cfig($fld:alias).$ftag
+        }
+        lappend flds $fld
+        if {[lcontain {date timestamp} [sql::ft $cfig($fld:table) $ftag]]} {
+            lappend fields "norm_date($fname)"
+        } else {
+            lappend fields $fname
+        }
+    }
+    set tables [lrmdups $tables]
+    set links [join $cfig($w:links) { and }]
+    if {$links != {}} {set links "and $links"}
+    if {$cfig($w:and) == {}} {set and {}} else {set and "and $cfig($w:and)"}
+    set query [subst "select [join $fields ,] from [join $tables ,] $where $links $and"]
+#puts "query:$query"
+    set pgres [sql::exe $query]
+    set cnt [pg_result $pgres -numTuples]	;#how many did we get
+    if {$cnt < 1} {dia::err "No record found: $id"; return 0}
+    if {$cnt > 1} {error {In dbe ldrec} "Multiple records found: $id ($cnt)"; return 0}
+    set res [pg_result $pgres -getTuple 0]
+    pg_result $pgres -clear
+#puts "res:$res"
+    set f 0; foreach fn $flds {			;#fill entry fields
+        set ftag [lindex [split $fn .] end]
+        set v($w:$ftag) [lindex $res $f]
+#puts "fn:$fn:[sql::ft $cfig($fn:table) $ftag]:"
+        set lv($w:$ftag) $v($w:$ftag)		;#keep original value for later
+        incr f
+    }
+    set kfv {}; foreach ftag $cfig($w:pkflds) {lappend kfv $v($w:$ftag)}
+#puts "kfv:$kfv"
+    set v($w:_pk) [join $kfv $cfig($w:pksep)]		;#show the primary key
+
+    foreach i {addrec delrec updrec} {if [winfo exists $w.b.$i] {b_config $w $i -state normal}}
+    if {$cfig($w:pst.ldrec) != {} && $ca(post)} {eval $cfig($w:pst.ldrec)}
+    return 1
+}
+
+#Clear all fields
+#------------------------------------------
+proc dbe::clear {w args} {
+    variable lv
+    variable v
+    variable cfig
+
+    set bn $w.b.clear
+    argproc ca(\$s) $args {{pre $cfig($bn:pre)} {pst $cfig($bn:pst)} {prompt $cfig($bn:prompt)}}
+    if {$ca(pre) != {}} {if {![eval $ca(pre)]} {return 0}}
+    if {$ca(prompt)} {if {![dia::ask {Clear the entry fields?} 0 OK Cancel] == 0} {return 0}}
+    
+    foreach ftag $cfig($w:ftags) {
+        eval "set v($w:$ftag) \"$cfig($w.f.$ftag:def)\""
+        set lv($w:$ftag) $v($w:$ftag)
+        set cfig($w.f.$ftag:lastaux) {}
+    }
+    set v($w:_pk) {}
+    auxupdate $w
+    foreach i {delrec updrec} {if [winfo exists $w.b.$i] {b_config $w $i -state disabled}}
+    if {$ca(pst) != {}} {eval $ca(pst)}
+    if {$cfig($w:ifocus) != {}} {focus $w.f.$cfig($w:ifocus).e}
+    return 1
+}
+
+# Clear the primary key fields only
+#------------------------------------------
+proc dbe::pkclear {w} {
+    variable cfig
+    foreach ftag $cfig($w:pkflds) {f_clear $w $ftag}
+}
+
+#Return a where clause based on the currently loaded primary key(s)
+#------------------------------------------
+proc dbe::pkwhere {w {prefix {}}} {
+    variable cfig
+    variable lv
+    set where {}
+    foreach ftag $cfig($w:pkflds) {
+        if {$where != {}} {append where " and "}
+        if {[set val [sql::quote $cfig($w:table) $ftag $lv($w:$ftag)]] == {}} {dia::err "There is no value in the primary key field: $ftag ($cfig($w.f.$ftag:title))"; return {}}
+        append where "$prefix$ftag = $val"
+    }
+    return $where
+}
+
+#Return a field value quoted if appropriate
+#------------------------------------------
+proc dbe::qfield {w ftag} {
+    variable cfig
+    variable v
+    return [sql::quote $cfig($w:table) $w.f.$ftag $v($w:$ftag)]
+}
+
+# Eval the prefunc if appropriate, return the additional query string
+#------------------------------------------
+proc dbe::eval_prefunc {w sql pre} {
+    proc arg {s v} {uplevel 2 set ca($s) $v}	;#set command line args in calling routine
+    if {!$sql && $pre != {}} {
+        set res [eval $pre]
+        if {![lcontain {0 1 yes no {}} $res]} {
+            return $res
+        } elseif {[lcontain {0 no {}} $res]} {
+            return -code return 0
+        }
+    }
+    return {}
+}
+
+# build the total query from the primary and the additional query
+#------------------------------------------
+proc dbe::cat_query {query aquery} {
+    if {$aquery == {}} {
+        return $query
+    } elseif {[regexp -- {%q} $aquery]} {
+        regsub -- {%q} $aquery $query query
+    } else {
+        append query ";\n$aquery"
+    }
+    return "$query"
+}
+
+#Delete the currently showing record
+#------------------------------------------
+proc dbe::delrec {w args} {
+    variable cfig
+    variable v
+
+    set bn $w.b.delrec
+    argproc ca(\$s) $args {{pre $cfig($bn:pre)} {pst $cfig($bn:pst)} {prompt $cfig($bn:prompt)} {sql 0} {clear 1} {auto $cfig($w:auto)}}
+    
+    set aquery [eval_prefunc $w $ca(sql) $ca(pre)]
+    if {$cfig($w:and) == {}} {set and {}} else {set and "and $cfig($w:and)"}
+    if {[set where [pkwhere $w]] == {}} {return 0}
+    set query "delete from $cfig($w:table) where $where $and"
+#puts "query:$query aquery:$aquery"
+    if {!$ca(sql) && $ca(prompt)} {if {[dia::ask {Delete this record?} 0 OK Cancel] != 0} {return 0}}
+    if {$ca(sql)} {return $query}
+    sql::exe [cat_query $query $aquery] -clear -trans
+
+    pkclear $w
+    foreach i {delrec updrec} {if [winfo exists $w.b.$i] {b_config $w $i -state disabled}}
+    foreach p $cfig($w:pwidget) {if {$ca(auto)} {$p reload}}
+    if {$ca(pst) != {}} {eval $ca(pst)}
+    return 1
+}
+
+#Add a new record with the information showing
+#------------------------------------------
+proc dbe::addrec {w args} {
+    variable cfig
+    variable v
+    variable lv
+
+    set bn $w.b.addrec
+    argproc ca(\$s) $args {{pre $cfig($bn:pre)} {pst $cfig($bn:pst)} {prompt $cfig($bn:prompt)} {sql 0} {tuple 0} {reload $cfig($w:reload)} {auto $cfig($w:auto)}}
+    set aquery [eval_prefunc $w $ca(sql) $ca(pre)]
+#puts "aquery:$aquery"
+    if {!$ca(sql) && $ca(prompt)} {if {[dia::ask {Add this data as a new record?} 0 OK Cancel] != 0} {return 0}}
+
+    set fields {}			;#holds fieldnames
+    set values {}			;#holds values
+    foreach fn $cfig($w:flds) {
+        set ftag [lindex [split $fn .] end]
+        if {$cfig($fn:field) == {}} {set fname $ftag} else {set fname $cfig($fn:field)}
+#puts "fn:$fn fname:$fname"
+        if {$fname == {oid}} continue	;#don't add an oid field if in record
+        if {$cfig($fn:alias) != {0} || !$cfig($fn:wr)} continue	;#only consider primary table fields
+        if {![tptcheck $w $fn]} {return 0}	;#check field against any templates
+        set lv($w:$ftag) $v($w:$ftag)		;#note new "last value"
+        if {$v($w:$ftag) == {} && $cfig($fn:nulemp)} continue	;#don't write empty fields
+        if {$cfig($fn:fdep) != {}} continue		;#write only this table
+        lappend fields $ftag
+        lappend values [sql::quote $cfig($fn:table) $ftag $v($w:$ftag) $cfig($fn:errchk)]
+    }
+    if {$fields == {} || $values == {}} {return 0}
+    set query "insert into $cfig($w:table) ([join $fields ,]) values ([join $values ,])"
+#puts "Query:[cat_query $query $aquery]"
+    if {$ca(sql)} {return $query}
+    if {[set pgres [sql::exe [cat_query $query $aquery] -trans]] == 0} {return 0}
+    if {$ca(reload)} {
+        if {$ca(tuple)} {
+            $w ldrec [set result [pg_result $pgres -getTuple 0]]
+        } elseif {$cfig($w:foid) != {}} {
+            $w ldrec [set result [pg_result $pgres -oid]] -oid $cfig($w:foid)
+        }
+    }
+#puts "result:$result"
+    pg_result $pgres -clear
+
+    foreach p $cfig($w:pwidget) {if {$ca(auto)} {$p reload -autoload 0}}
+
+#    if {$cfig($w:log) != {}} {		;#log to _doc table
+#        sql::exe "select [lindex $cfig($w:log) 0]_doc_store('autolog','New record','txt','','$v($w:_pk)');" -clear
+#    }
+    if {$ca(pst) != {}} {eval $ca(pst)}
+    return $result
+}
+
+#Update the current record with all changes
+#------------------------------------------
+proc dbe::updrec {w args} {
+    variable cfig
+    variable v
+    variable lv
+
+    set bn $w.b.updrec
+    argproc ca(\$s) $args {{warn 1} {pre $cfig($bn:pre)} {pst $cfig($bn:pst)} {prompt $cfig($bn:prompt)} {sql 0} {auto $cfig($w:auto)}}
+    if {[$w pkval] == {}} {dia::err "Please load a record first"; return 0}
+    set aquery [eval_prefunc $w $ca(sql) $ca(pre)]
+    if {!$ca(sql) && $ca(prompt)} {if {[dia::ask {Update this record?} 0 OK Cancel] != 0} {return 0}}
+    if {[set where [pkwhere $w]] == {}} {return 0}	;#where primary key...
+
+    set updates {}				;#field update clause
+    set lvcmds {}
+    set chlog {}				;#change log string
+#Take this out when working OK
+#    lassign $cfig($w:log) logpfx logfields
+    foreach fnam $cfig($w:flds) {
+        set ftag [lindex [split $fnam .] end]
+#        if {[lsearch $cfig($w:pkflds) $ftag] >= 0} continue	;#exlude PK fields
+        if {!$cfig($fnam:wr)} continue		;#exlude non-writable fields
+        set val $v($w:$ftag)
+#puts "fnam:$fnam v:$v($w:$ftag) lv:$lv($w:$ftag)"
+        if {$val == $lv($w:$ftag)} continue	;# if value changed
+        if {![tptcheck $w $fnam]} {return 0}	;#check field against any templates
+        set qval [sql::quote $cfig($fnam:table) $ftag $val $cfig($fnam:errchk)]
+        if {$val == {}} {
+            if {$cfig($fnam:nulemp)} {
+                set qval null
+            } elseif {$qval == $val} {
+                dia::err "Can't write blank to field: $fnam of type: $v(dt:$fnam$w)"
+                return 0
+            }
+        }
+#        if {[lcontain $logfields $ftag]} {lappend chlog "$cfig($fnam:title) $lv($w:$ftag) -> $val"}
+        append lvcmds "set lv($w:$ftag) \{$val\}; "		;#note new "last value"
+        lappend updates "$ftag = $qval"
+    }
+    if {$updates == {}} {		;#if no updates to do
+        set query {}
+    } else {
+        if {$cfig($w:and) == {}} {set and {}} else {set and "and $cfig($w:and)"}
+        set query "update $cfig($w:table) set [join $updates ,] where $where $and"
+#        if {$chlog != {}} {append query ";\nselect ${logpfx}_doc_store('autolog','Change Log:\n[join $chlog "\n"]','txt','','$v($w:_pk)');"}
+    }
+    if {$ca(sql)} {
+        return $query
+    } elseif {$query == {}} {		;#if no updates to do
+        if {$ca(warn)} {dia::warn "Nothing modified"}; return 0
+    } else {
+#puts "Query:[cat_query $query $aquery]"
+        sql::exe [cat_query $query $aquery] -clear -trans
+    }
+    eval $lvcmds
+    foreach p $cfig($w:pwidget) {if {$ca(auto)} {$p reload -autoload 0}}
+    if {$ca(pst) != {}} {eval $ca(pst)}
+    return 1
+}
+
+#Return a list of fields suitable for the preview Ordby button
+#------------------------------------------
+proc dbe::oblist {w flist} {
+    variable cfig
+#puts "oblist flist:$flist"
+    if {$w == {}} {return $flist}
+    set rlst {}; foreach ftags $flist {
+        set tlst {}; foreach ftag [split $ftags {, }] {
+            if {[info exists cfig($w.f.$ftag:title)]} {
+                lappend tlst $cfig($w.f.$ftag:title)
+            } else {
+                lappend tlst $ftag
+            }
+        }
+        lappend rlst [list $ftags $tlst]
+    }
+#puts "rlst:$rlst"
+    return $rlst
+}
+
+#Return a command line for making a search widget associated with this dbe
+#------------------------------------------
+proc dbe::lblist {w} {
+    variable cfig
+#    set ret "-tab $cfig($w:table)"
+    set ret {}		;#try to pull table from dbp
+    foreach fld $cfig($w:flds) {
+        set ftag [lindex [split $fld .] end]
+        if {$cfig($fld:fdep) != {}} continue
+        append ret " -f \{$ftag \{$cfig($fld:title)\}\}"
+    }
+#puts "lblist:$ret"
+    return $ret
+}
+
+# Check fields against a template
+#------------------------------------------
+# Return 1 if we should abort (i.e. a value doesn't fit the template)
+proc dbe::tptcheck {w fn} {
+    variable v
+    variable cfig
+    variable tpt
+
+    proc deps_met {w fnam dep} {		;#check templates on this field?
+        variable v
+        if {$dep == {}} {return 1}
+        foreach k $dep {			;#for each dependency
+            lassign $k fld val
+            if {![info exists v($w:$fld)]} continue	;#if dep field doesn't exist
+            if {$v($w:$fld) == $val} {return 1}
+        }
+        return 0
+    }
+
+    set ftag [lindex [split $fn .] end]
+    if {$cfig($fn:tpt) == {}} {return 1}
+    if {[llength $cfig($fn:tpt)] == 1 && [info exists tpt($cfig($fn:tpt))]} {set cfig($fn:tpt) $tpt($cfig($fn:tpt))}
+#puts "tptcheck-- $fn: $v($w:$ftag) tpt:$cfig($fn:tpt)"
+    lassign $cfig($fn:tpt) ftpt fexm fdep
+    if {![deps_met $w $ftag $fdep]} {return 1}	;#should we run the template check
+    set val $v($w:$ftag)			;#get field value
+    foreach j $ftpt {			;#compare each template
+#puts "  cmp $j:$val"				;# if a match found, no problem
+        if {($j == {} && $val == {}) || ([regexp $j $val len] && $len == $val)} {
+            return 1
+        }
+    }
+    if {$fexm != {}} {set fexm ".  Value should be like: $fexm"}
+    dia::err "Illegal Field value: $ftag=$val $fexm"
+    return 0
+}
+
+#Load the data for the specified record into the edit widget
+#w:	name of the widget
+#fname:	the field to update
+#------------------------------------------
+proc dbe::auxupdate {w {flds {}} {force 0}} {
+    variable cfig
+    variable v
+    if {$flds == {}} {
+        foreach {fkx fkv} [array get cfig $w.f.*:fdep] {if {$fkv != {}} {lappend flds $fkv}}
+        set flds [lrmdups $flds]
+    }
+#puts "auxupdate flds:$flds"
+    foreach fkt $flds {
+        set fn $w.f.$fkt
+#puts "fkt:$fkt lastaux:$cfig($fn:lastaux) v:$v($w:$fkt)"
+#puts "dflds:$cfig($fn:dflds)"
+        if {$cfig($fn:dflds) == {} || (!$force && $v($w:$fkt) == $cfig($fn:lastaux))} continue
+#puts "  fkey:$cfig($fn:fkey)"
+        set cfig($fn:lastaux) $v($w:$fkt)	;#note updated
+#if {$fkt == {empl_id} && $v($w:$fkt) == {}} exit
+        if {$v($w:$fkt) == {}} {		;#if no value to key from
+            set query {}
+        } elseif {$cfig($fn:fkey) != {}} {
+            lassign $cfig($fn:fkey) fkey ftab
+            set query "select [join $cfig($fn:dflds) ,] from $ftab where $fkey = [sql::quote $ftab $fkey $v($w:$fkt)]"
+        } else {
+            regsub -all "%$fkt" $cfig($fn:dflds) "[sql::quote $cfig($fn:table) $fkt $v($w:$fkt)]" dflds
+            set query "select [join $dflds ,]"
+        }
+#puts "Query:$query:"
+        if [catch {set lst [sql::one [subst $query]]}] {set lst {}}
+        set i 0; foreach ftag $cfig($fn:dtags) {
+            set v($w:$ftag) [lindex $lst $i]
+            incr i
+        }
+    }
+}
+
+#Parse configuration switches for a button
+#------------------------------------------
+proc dbe::b_cpars {w btag def args} {
+    variable cfig
+
+    set bname .b.$btag
+    set bn $w$bname
+    argproc cfig($bn:\$s) $args $cfig(b_as) $def
+#puts "B_ARGS:$args btag:$btag def:$def info:[info commands $btag]"
+    if {![info exists cfig($bn:command)] && [info commands $btag] != {}} {	;#if user didn't specify a routine
+        set cfig($bn:command) "dbe::$btag $w"
+    }
+    regsub -all {%w} $cfig($bn:command) "$w" cfig($bn:command)
+    if {$cfig($bn:hotkey) == {def} && [info exists cfig(hot:$btag)]} {
+        set cfig($bn:hotkey) $cfig(hot:$btag)
+    }
+    if {$cfig($bn:help) == {} && [info exists cfig(help:$btag)]} {
+        set cfig($bn:help) $cfig(help:$btag)
+    }
+#puts "B_CFIG:[array get cfig $bn:*]"
+}
+
+#Configure a button
+#------------------------------------------
+proc dbe::b_config {w btag args} {
+    variable cfig
+
+    eval b_cpars $w $btag 0 $args
+    eval $w.b.$btag configure [native dbe $w .b.$btag]	;#configure native stuff
+    help::init $w.b.$btag $cfig($w.b.$btag:help)
+}
+
+#Return the configuration switches for a button
+#------------------------------------------
+proc dbe::b_cget {w btag option} {
+    variable cfig
+    set bn $w.b.$btag
+    if {![catch {set v [$bn cget $option]}]} {	;#if native
+        return $v
+    }
+    return $cfig($bn:$option)
+}
+
+#Add a button into a dbe widget
+#------------------------------------------
+proc dbe::b_add {w btag args} {
+    variable cfig
+#puts "B_add w:$w btag:$btag args:$args"
+    set args [lassign $args text]
+    set args "[list -text "$text"] $args"
+    set bname .b.$btag
+    set bn $w$bname
+    eval b_cpars $w $btag 1 $args
+
+    if {$cfig($bn:s) != {}} {		;#if non-standard frame
+        lappend cfig($bn:gmc) -in [set in $w.b.b$cfig($bn:s)]
+        if {![winfo exists $in]} {lappend cfig($w:bframes) [frame $in]}
+    }
+    
+    eval button $bn [native dbe $w $bname]
+    bind $bn <Return> "$bn invoke"
+    if {$cfig($bn:hotkey) != {} && $cfig($bn:hotkey) != {def}} {bind $w $cfig($bn:hotkey) "$bn invoke"}
+    lappend cfig($w:buts) $bn
+#    lappend cfig($w:btags) $btag
+    help::init $bn $cfig($bn:help)
+}
+
+#Configure a field
+#------------------------------------------
+proc dbe::f_config {w ftag args} {
+    variable cfig
+
+    argproc cfig($w.f.$ftag:\$s) $args $cfig(f_as) 0
+    eval $w.f.$ftag configure [native dbe $w .f.$ftag]		;#configure native stuff
+    help::init $w.f.$ftag.e $cfig($w.f.$ftag:help)
+}
+
+#Clear a field
+#------------------------------------------
+proc dbe::f_clear {w ftag} {
+    variable v
+    variable cfig
+    set v($w:$ftag) $cfig($w.f.$ftag:def)
+}
+
+#Bind a special function
+#------------------------------------------
+proc dbe::bindspf {en sc} {foreach e {<Button-3> <Escape>} {bind $en $e $sc}}
+
+#Add a field into a dbe widget
+#------------------------------------------
+proc dbe::f_add {w ftag type args} {
+    variable cfig
+    variable v
+    variable lv
+
+    set args [lassign $args size title]
+    set args "[list -type "$type" -size "$size" -title "$title"] $args"
+    set fname .f.$ftag
+    set fn $w$fname
+    argproc cfig($fn:\$s) $args $cfig(f_as)
+    if {$cfig($fn:s) != {}} {		;#if non-standard frame
+        lappend cfig($fn:gmc) -in [set in $w.f.f$cfig($fn:s)]
+        if {![winfo exists $in]} {lappend cfig($w:fframes) [frame $in]}
+    }
+#puts "F_add w:$w fname:$fname args:$args frame:$cfig($fn:s)"
+#    if {$cfig($fn:fdep) != {}} {set cfig($fn:table) {}}
+
+#puts "eval frame $fn [native dbe $w $fname]"
+    eval frame $fn [native dbe $w $fname]
+    lappend cfig($w:flds) $fn
+    lappend cfig($w:ftags) $ftag
+#    if {$cfig($fn:fdep) != {}} {lappend $cfig($w.f.$cfig($fn:fdep):dflds) $fn}
+    set cfig($fn:lastaux) {}
+    set cfig($fn:dflds) {}
+    set cfig($fn:dtags) {}
+#puts "Field $fn $c"
+
+    set lv($w:$ftag) {}			;#init original value
+    set en [set cfig($fn:en) $fn.e]	;#make field entry name
+    if {$type == {inf}} {set type ent; append cfig($fn:eoth) " -relief raised -bd 1"}
+    switch $type {			;#make actual field entry
+        {ent} {eval entry $en -width $cfig($fn:size) -bd 1 -textvariable dbe::v($w:$ftag) $cfig($fn:eoth)}
+        {mle} {
+            lassign [split $cfig($fn:size) :] width height
+            eval text $en -width $width -height $height -relief sunken -bd 1  $cfig($fn:eoth)
+            set v($w:$ftag) {}
+            bind $en <Tab> {tkTabToWindow [tk_focusNext %W]; break}
+            trace variable dbe::v($w:$ftag) rw "dbe::trh_mle $en"
+        }
+        {pdm} {
+#puts "en:$en"
+            eval menubutton $en -width $cfig($fn:size) -textvariable dbe::v($w:$ftag) -relief raised -bd 1 -padx 1 -pady 1 -anchor w -menu $en.m -indicatoron yes $cfig($fn:eoth)
+            menu $en.m
+            foreach mi $cfig($fn:data) {
+                lassign $mi mtag mtit
+                if {$mtit == {}} {set mlab $mtag} else {set mlab "$mtag - $mtit"}
+                $en.m add command -label $mlab -command "set dbe::v($w:$ftag) \"$mtag\"; eval \"$cfig($fn:proc)\""
+            }
+        }
+        {chk} {
+            if {[sql::ft $cfig($fn:table) $ftag] == {bool}} {set on t; set off f} else {set on 1; set off 0}
+            eval checkbutton $en -variable dbe::v($w:$ftag) -onvalue $on -offvalue $off $cfig($fn:eoth)
+            if {$cfig($fn:def) == {}} {set cfig($fn:def) $off}
+        }
+        {inv} {set v($w:$ftag) {}; return}	;#make a variable for invisible fields
+        {nul} {set v($w:$ftag) {}; frame $en}
+        {default}   {error "Unknown display type: $type"}
+    }
+#from here on only for non-invisible fields
+
+    if {[sql::q $cfig($fn:table) $ftag] == {}} {$en configure -just right}		;#numeric type fields
+    if {$cfig($fn:ro)} {$en configure -state disabled}
+    if {$cfig($fn:spf) == {emp}} {set cfig($fn:spf) {fsm}; set cfig($fn:data) {empl}}
+    if {$cfig($fn:spf) == {fsm} || $cfig($fn:spf) == {scm}} {
+        if {$cfig($fn:data) == {} && [info exists dbe::scm($ftag)]} {set cfig($fn:data) $dbe::scm($ftag)}
+        if {[llength $cfig($fn:data)] == 1 && [info exists dbe::scm($cfig($fn:data))]} {set cfig($fn:data) $dbe::scm($cfig($fn:data))}
+    }
+    switch $cfig($fn:spf) {{} {}
+        {fsm}	{
+            eval scmenu::bindf .fsm_$cfig($w:table)_$ftag $en -title \{$cfig($fn:title)\} $cfig($fn:data)
+            bindspf $en "lib::cwatch $en; scmenu::launchf %W; lib::cnorm"
+            }
+        {scm}	{
+            regsub -all {%} $cfig($fn:data) {%%} cfig($fn:data)
+            bindspf $en "focus $en; lib::cwatch $en; scmenu::top .scm_$cfig($w:table)_$ftag -title \{$cfig($fn:title)\} -dest $en $cfig($fn:data); lib::cnorm"
+            }
+        {exs}	{bindspf $en "focus $en; lib::cwatch $en; scmenu::top .scm_$cfig($w:table)_$ftag -title \{$cfig($fn:title)\} -eval \{sql::qlist \"select distinct $ftag from $cfig($fn:table) order by $ftag\"\} -dest $en -height 20 -token all; lib::cnorm"}
+        {clc}	{bindspf $en "focus $en; calc::top .calc_$cfig($w:table)_$ftag -dest dbe::v($w:$ftag) -parent $w"}
+        {edw}	{bindspf $en "focus $en; edwin::edwin .edwin_$cfig($w:table)_$ftag -varname dbe::v($w:$ftag) -wrap word"}
+        {edi}	{bindspf $en "focus $en; exedit::exedit .exedit_$cfig($w:table)_$ftag \$dbe::v($w:$ftag) -dest dbe::v($w:$ftag) $cfig($fn:data)"}
+        {prj}	{bindspf $en "focus $en; proj::projmenu .proj_$cfig($w:table)_$ftag -dest dbe::v($w:$ftag)"}
+        {tod}	{bindspf $en "focus $en; set dbe::v($w:$ftag) \[date_today\]"}
+        {cal}	{bindspf $en "focus $en; cal::top .cal_$cfig($w:table)_$ftag dbe::v($w:$ftag) -pweeks 3 -title {Select Date:}"}
+        {dat}	{bindspf $en "focus $en; set dbe::v($w:$ftag) \[spin::getdate Date: \$dbe::v($w:$ftag)\]"}
+        {mdy}	{bindspf $en "focus $en; set dbe::v($w:$ftag) \[spin::getmday Date: \$dbe::v($w:$ftag)\]"}
+        {default} {bindspf $en "[subst $cfig($fn:spf)]"}
+    }
+    bindtags $en "[bindtags $en] $w"	;#use any default bindings for the frame
+#puts "bindtags:$w:$en:[bindtags $en]"
+
+    label $fn.t -textvariable dbe::cfig($fn:title) -anchor $cfig($fn:ta) -width $cfig($fn:tw)	;#field title
+    eval $cfig($fn:s_gman) $en $cfig($fn:s_gmc.e)
+    eval $cfig($fn:s_gman) $fn.t $cfig($fn:s_gmc.t)
+    help::init $en $cfig($fn:help)
+}
+
+#Handle a call to a variable linked to a text widget
+#------------------------------------------
+proc dbe::trh_mle {en n1 n2 op} {
+#puts "en:$en n1:$n1 n2:$n2 op:$op"
+    upvar ${n1}($n2) var
+    if {$op == {r}} {
+        set var [$en get 0.0 {end - 1 char}]
+    } elseif {$op == {w}} {
+        $en delete 0.0 end
+        $en insert end $var
+    }
+}
+
+#Some configuration steps common to create and configure
+#------------------------------------------
+proc dbe::setup {w} {
+    variable cfig
+    variable v
+    proc aubind {w fld} {
+        foreach e {<FocusOut> <FocusIn> <Leave> <Enter>} {bind $w.f.$fld $e "dbe::auxupdate $w $fld"}
+    }
+    eval $w configure [native dbe $w {}]		;#configure native stuff
+    set cfig($w:pkflds) [lindex $cfig($w:pkey) 0]	;#primary key fields
+    foreach {fkx fkv} [array get cfig $w.f.*:fkey] {	;#check for linked tables
+        if {$fkv == {}} continue
+        lassign $fkv fkey ftab alias		;#get keyfield and table
+        set fkt [lindex [split [lindex [split $fkx :] 0] .] end]	;#get tag
+        if {$alias == {}} {set alias "[incr cfig($w:aliascnt)]"}
+        if {$alias != 0} {lappend cfig($w:links) "t0.$fkt = t$alias.$fkey"}
+#puts "Fkey: $fkt/$fkey/$ftab fdeps:[array get cfig $w.f.*:fdep]"
+        set ftags {}        
+        set fields {}        
+        foreach {fdx fdv} [array get cfig $w.f.*:fdep] {	;#find dependent fields
+            if {$fdv != $fkt} continue
+            set en [lindex [split $fdx :] 0]
+            set fdt [lindex [split $en .] end]
+#puts " FDEP:$fdx fdv:$fdv fdt:$fdt"
+            set fn $w.f.$fdt
+            set cfig($fn:table) $ftab
+            set cfig($fn:alias) $alias
+            aubind $w $fdv
+            if {$cfig($en:field) != {}} {set fname $cfig($en:field)} else {set fname $fdt}
+            lappend ftags $fdt
+            lappend fields $fname
+        }
+        regsub -all {%} $fields {} fields
+        set cfig($w.f.$fkt:dflds) $fields
+        set cfig($w.f.$fkt:dtags) $ftags
+    }
+    foreach {fdx fdv} [array get cfig $w.f.*:fdep] {	;#find dependent fields that are not joined (no -fkey in field we are dependent upon)
+        if {$fdv == {}} continue
+#puts "found:$fdx = $fdv"
+        set fdt [lindex [split [lindex [split $fdx :] 0] .] end]	;#get tag
+        if {$cfig($w.f.$fdv:fkey) != {} || $cfig($w.f.$fdt:field) == {}} continue
+#puts "Field:$cfig($w.f.$fdv:field)"
+        aubind $w $fdv
+        lappend cfig($w.f.$fdv:dflds) $cfig($w.f.$fdt:field)
+        lappend cfig($w.f.$fdv:dtags) $fdt
+    }
+#puts "Tables:[array get cfig $w.f.*:table]"
+#puts "Alias :[array get cfig $w.f.*:alias]"
+#puts "Links :$cfig($w:links)"
+#puts "Table:$cfig($w:table)"
+#    foreach i {oid _oid} {
+#        if {![catch {sql::one "select $i from $cfig($w:table) limit 1" {}}]} {set cfig($w:foid) $i}
+#    }
+    if {[sql::one "select count(*) from pg_views where viewname = '$cfig($w:table)'"] <= 0} {
+        set cfig($w:foid) oid		;#if not a view, use oid
+    } elseif {[sql::one "select count(*) from pg_class c, pg_attribute a where a.attrelid = c.oid and c.relname = '$cfig($w:table)' and a.attname = '_oid'"] > 0} {
+        set cfig($w:foid) _oid		;#else use _oid if it exists
+    }
+#puts "table:$cfig($w:table) oid:$cfig($w:foid)"
+}
+
+#Configure a dbe widget
+#------------------------------------------
+proc dbe::config {w args} {
+    variable cfig
+
+    argproc cfig($w:\$s) $args $cfig(as) 0
+#puts "FRAME: $w configure $c"
+    setup $w
+}
+
+#Create the entry window and init the control array
+#------------------------------------------
+proc dbe::dbe {w args} {
+    variable cfig
+    variable v
+
+    catch {frame $w -class Dbe}	;#main frame for widget
+    frame $w.f			;#master frame for fields
+    frame $w.b			;#master frame for buttons
+    frame $w.t -relief raised -bd 1
+    
+    array set cfig "$w:pkflds {} $w:foid {} $w:ftags {} $w:buts {} $w:flds {} $w:fframes {} $w:bframes {} $w.b.addrec:pre {} $w.b.addrec:pst {} $w.b.updrec:pre {} $w.b.updrec:pst {} $w.b.delrec:pre {} $w.b.delrec:pst {}  $w.b.clear:pre {} $w.b.clear:pst {} $w:aliascnt 0 $w:links {}"
+    argproc cfig($w:\$s) $args $cfig(as)
+    label $w.t.l -text $cfig($w:title); pack $w.t.l -side left
+    help::init $w.t.l $cfig($w:help)
+    set oargs [lassign $cfig($w:pkey) flds title help]
+    if {$title == {}} {set title Record:}
+    if {$cfig($w:keyload)} {
+        button $w.t.kl -text $title -pady 1 -bd 1 -command "dbe::keyload $w"
+        help::init $w.t.kl {Press to load a single record by its primary key}
+    } else {
+        label $w.t.kl -text $title
+    }
+    eval entry $w.t.ke -textvariable dbe::v($w:_pk) -state disabled -bd 1 $oargs
+    if {$help != {}} {help::init $w.t.ke $help}
+    if {$cfig($w:keysee)} {pack $w.t.ke $w.t.kl -side right}
+    
+    eval $cfig($w:gman) $w.b $cfig($w:gmc.bf)	;#button frame
+    if {$cfig($w:title) != {}} {eval $cfig($w:gman) $w.t $cfig($w:gmc.ti)}	;#title frame
+    eval $cfig($w:gman) $w.f $cfig($w:gmc.ff)	;#field frame
+    
+    if {$cfig($w:bframes) != {}} {eval $cfig($w:gman) $cfig($w:bframes) $cfig($w:bf_gmc)}	;#pack button frames
+    if {$cfig($w:fframes) != {}} {eval $cfig($w:gman) $cfig($w:fframes) $cfig($w:ff_gmc)}	;#pack field frames
+
+    foreach a "$cfig($w:buts) $cfig($w:flds)" {	;#pack buttons and fields
+        if {$cfig($a:hide)} {} else {eval $cfig($a:gman) $a $cfig($a:gmc)}
+#puts "$cfig($a:gman) $a $cfig($a:gmc)"
+    }
+    setup $w
+#    if {$cfig($w:table) == {}} {error {No table defined}}
+#    if {$cfig($w:pkflds) == {}} {error {No primary key defined}}
+
+    rename ::$w __$w		;#rename widget, make a new one in its place
+    proc ::$w {command args} "namespace eval dbe widgcmd $w \$command \$args"
+    if {![winfo exists $w.b.clear]} {b_add $w clear {} -hide 1}		;#add hidden clear button if not explicitly declared
+    if {$cfig($w:preclear)} {clear $w -prompt no}	;#initial clear
+}
+
+#The widget command for the entry box widget
+#w:		widget name
+#command:	the basic command
+#args:		the rest of the arguments
+#------------------------------------------
+proc dbe::widgcmd {w command args} {
+#puts "entwidg :$w:$command:$args"
+
+    switch -exact $command {
+        {v}		{return $dbe::v($w:$args)}
+        {lv}		{return $dbe::lv($w:$args)}
+        {sv}		{set dbe::v($w:[lindex $args 0]) [lindex $args 1]}
+        {vn}		{return dbe::v($w:$args)}
+        {auxupdate}	{eval auxupdate $w $args}
+        {addrec}	{eval addrec $w $args}
+        {updrec}	{eval updrec $w $args}
+        {delrec}	{eval delrec $w $args}
+        {ldrec}		{eval ldrec $w $args}
+        {clear}		{eval clear $w $args}
+        {b_invoke}	{$w.b.[lindex $args 0] invoke}
+        {b_config}	{eval dbe::b_config $w $args}
+        {pkclear}	{pkclear $w}
+        {keyload}	{keyload $w}
+        {pkval}		{return [split $dbe::v($w:_pk) $dbe::cfig($w:pksep)]}
+        {pkvar}		{return dbe::v($w:_pk)}
+        {pksep}		{return dbe::cfig($w:pksep)}
+        {f_entry}	{return $dbe::cfig($w.f.[lindex $args 0]:en)}
+        {f_title}	{return $dbe::cfig($w.f.[lindex $args 0]:title)}
+        {t_frame}	{return $w.t}
+        {pkwhere}	{return [eval pkwhere $w $args]}
+        {qfield}	{return [eval qfield $w $args]}
+        {w}		{return $w}
+        {default}	{return [eval __$w $command $args]}
+    }
+}
+
+if {[info commands customize] != {}} {customize dbe}

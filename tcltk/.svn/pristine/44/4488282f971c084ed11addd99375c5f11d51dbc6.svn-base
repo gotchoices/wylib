@@ -1,0 +1,19 @@
+#!/usr/bin/wish
+#include(Copyright)
+
+package require wylib
+package require base64
+set file {sig-wile.gif}
+
+label .ll -text {Test Image:}
+pack .ll -side top
+
+set imgdata [photo::readfile $file]
+
+#photo::photo .ph -file $file
+#photo::photo .ph -data $imgdata
+photo::photo .ph -textvariable imgdata -help {This is the image}
+pack .ph -side top
+
+button .b -text Change -command {set ::imgdata [photo::readfile test.gif]} -help {Switch to a different image}
+pack .b -side bottom -fill x

@@ -1,0 +1,126 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Wylib Table Widget</title><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article"><div class="titlepage"><div><div><h2 class="title"><a name="Wylib%20Pref"></a>Wylib Table Widget</h2></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="sect1"><a href="#idm140638168495264">Introduction</a></span></dt><dt><span class="sect1"><a href="#idm140638168491936">Standard Fields</a></span></dt><dt><span class="sect1"><a href="#idm140638168460048">Menu Options</a></span></dt><dt><span class="sect1"><a href="#idm140638168619424">Row and Column Menu Options</a></span></dt></dl></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140638168495264"></a>Introduction</h2></div></div></div><p>
+   The table Embedded Text Widget (ETW) allows you to produce rows and
+   columns of tabular data in a Wylib document.
+   This type of ETW may be used in several different types of documents
+   such as letters and product documentation.
+  </p><p>
+   Tables can be formatted in a way similar to a figure, where a caption
+   is shown under the table, and the 
+   <a class="ulink" href="etwref.html" target="_top">REF (reference) widget.</a>
+   can be used to create a numerical reference to the table.
+  </p><p>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+   Just under the menu button are two shortcut buttons (Column and Row)
+   to allow faster access to two common functions also found in the menu.
+  </p><p>
+   Tabular data can be imported and/or exported from CSV files such as
+   might be created from a spreadsheet program.
+  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140638168491936"></a>Standard Fields</h2></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">Tag:</span></dt><dd>
+       When the table is created, you will be asked to provide a tag name.
+       This is a short name consisting of alpha characters which may be
+       used to refer to this table.
+       So each table within a document should have a unique tag name.
+       Once the table has been created, the tag can not be changed.
+       If you need to change it, export the data to a file, create a new
+       table with the desired tag name, and import the data into the new table.
+      </dd><dt><span class="term">Style:</span></dt><dd><p>
+        This controls how the table will be formatted.
+        The "Plain" method will indent the table with the value provided
+        in the Indent field.
+        There will be no caption or centering of the table.
+       </p><p>
+        The "Figure" method will center the table and will provide a caption
+        consiting of the Title you provide.
+        This is the only method that will allow you to refer to the table
+        using the 
+        <a class="ulink" href="etwref.html" target="_top">REF (reference) widget.</a>
+        The Indent value will be ignored.
+       </p><p>
+        The "Centered" method will center the table but will not provide a caption.
+        No references may be used, and the Indent value will be ignored.
+        consiting of the Title you provide.
+       </p></dd><dt><span class="term">Indent:</span></dt><dd>
+       When the Style is set to "Plain," this value will determine how
+       far the table will be indented from the left side of the page.
+      </dd><dt><span class="term">Title:</span></dt><dd>
+       The text you enter here will be shown as a caption for the table
+       if the Style is set to "Figure."
+       Otherwise, the title is not used when rendering the document.
+      </dd><dt><span class="term">(Cells)</span></dt><dd>
+       There is one cell at the intersection of each row and column.
+       Rows and columns may be added or deleted as described below.
+       Once you have the desired number of cells, you can type any text
+       value into each of the cells.
+      </dd></dl></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140638168460048"></a>Menu Options</h2></div></div></div>
+   The widget menu contains a number of functions to allow you to control
+   the size and attributes of the table.
+   The menu functions are as follows:
+
+   <div class="variablelist"><dl class="variablelist"><dt><span class="term">Add Columns</span></dt><dd><p>
+        This will increase the number of columns in the table.
+        The program will ask you how many columns you wish to add.
+        The added columns will be added at the right side of the table.
+       </p><p>
+        Note that there is a menu at the top of each column that will allow
+        you to add columns into the center of the table and/or delete
+        columns from the center of the table.
+       </p></dd><dt><span class="term">Add Rows</span></dt><dd><p>
+        This will increase the number of rows in the table.
+        The program will ask you how many rows you wish to add.
+        The added rows will be added at the bottom of the table.
+       </p><p>
+        Note that there is a menu on the left side of each row that will allow
+        you to add rows into the center of the table and/or delete
+        rows from the center of the table.
+       </p></dd><dt><span class="term">Remove Columns</span></dt><dd><p>
+        This will decrease the number of columns in the table.
+        The program will ask you how many columns you wish to remove.
+        The columns will be removed from the right side of the table.
+       </p><p>
+        Note that there is a menu at the top of each column that will allow
+        you to add columns into the center of the table and/or delete
+        columns from the center of the table.
+       </p></dd><dt><span class="term">Remove Rows</span></dt><dd><p>
+        This will decrease the number of rows in the table.
+        The program will ask you how many rows you wish to remove.
+        The rows will be removed from the bottom of the table.
+       </p><p>
+        Note that there is a menu on the left side of each row that will allow
+        you to add rows into the center of the table and/or delete
+        rows from the center of the table.
+       </p></dd><dt><span class="term">Clear Table</span></dt><dd>
+       This will remove all the data from the cells in the table and will
+       reset the header fields to their default values.
+      </dd><dt><span class="term">Import</span></dt><dd>
+       This will allow you to load the table cells with data from a CSV
+       from the disk.
+       A CSV file can be created (exported) from most spreadsheet programs.
+      </dd><dt><span class="term">Export</span></dt><dd>
+       This will allow you to create a CSV file on the disk which contains
+       the data from the cells of the table.
+       The data can then be viewed and/or edited in most common spreadsheet programs.
+      </dd><dt><span class="term">Set Delimiter</span></dt><dd>
+       CSV files consist of rows of data wherein each row is separated by a delimiter character.
+       In a standard CSV file, the delimiter is normally a comma (,).
+       It is possible to specify a different delimiter character using this menu function.
+      </dd></dl></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140638168619424"></a>Row and Column Menu Options</h2></div></div></div>
+   Each row and column has a special menu that will act upon that specific
+   row or column.
+   Typically these menu items are used for adding or deleting rows or
+   columns from within the center of the table.
+   The menu functions are as follows:
+
+   <div class="variablelist"><dl class="variablelist"><dt><span class="term">Bump 1</span></dt><dd>
+        This will insert one column (or row) before the column (or row) from whose menu the command is executed.
+      </dd><dt><span class="term">Bump n</span></dt><dd>
+        This will insert multiple columns (or rows) before the column (or row) from whose menu the command is executed.
+      </dd><dt><span class="term">Delete 1</span></dt><dd>
+        This will remove the column (or row) from whose menu the command is executed.
+      </dd><dt><span class="term">Delete n</span></dt><dd>
+        This will remove multiple columns (or rows) starting with the column (or row) from whose menu the command is executed.
+      </dd><dt><span class="term">Display Width</span></dt><dd>
+       This will adjust how wide the column is as it is displayed on the screen.
+       It has no effect on the way the document is ultimately formatted (printed).
+       During formatting, all columns are adjusted for a "best fit" to the actual data in the column.
+      </dd></dl></div></div></div></body></html>

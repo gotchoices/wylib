@@ -1,0 +1,13 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+set zip 84601
+if {[llength $argv] > 0} {
+    set zip [lindex $argv 0]
+}
+
+lassign [web::zip $zip] city state
+puts "city:$city state:$state"
+
+exit

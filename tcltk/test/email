@@ -1,0 +1,8 @@
+#!/usr/bin/wish
+#include(Copyright)
+
+package require wylib
+
+#lib::email kyle@actarg.com -text 1 -subject "A test message" -message {The body of the message}
+
+lib::mail_to kyle@actarg.com {The body of the message} -subject {A test with launch} -launch payreq -editmsg 1 -descr {Click to launch}

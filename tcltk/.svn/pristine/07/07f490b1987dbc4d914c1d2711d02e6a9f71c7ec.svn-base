@@ -1,0 +1,109 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Wylib DataBase Editing widget (DBE)</title><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article" title="Wylib DataBase Editing widget (DBE)"><div class="titlepage"><div><div><h2 class="title"><a name="Wylib%20DBE"></a>Wylib DataBase Editing widget (DBE)</h2></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2751331">Introduction</a></span></dt><dt><span class="sect1"><a href="#id2751359">Loading a Record</a></span></dt><dt><span class="sect1"><a href="#id2751401">Modifying a Record</a></span></dt><dt><span class="sect1"><a href="#id2750111">Deleting a Record</a></span></dt><dt><span class="sect1"><a href="#id2750133">Adding a Record</a></span></dt><dt><span class="sect1"><a href="#id2750168">Record Display</a></span></dt><dt><span class="sect1"><a href="#id2750213">Expanding to Show Hidden Fields</a></span></dt><dt><span class="sect1"><a href="#id2750241">Record History</a></span></dt><dt><span class="sect1"><a href="#id2749532">Other Menu Options</a></span></dt><dt><span class="sect1"><a href="#id2749552">Settings</a></span></dt><dt><span class="sect1"><a href="#id2749572">Record Display</a></span></dt></dl></div><div class="sect1" title="Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2751331"></a>Introduction</h2></div></div></div><p>
+   This widget is used to view individual records of a database and, optionally, make changes to them.
+   Like many other widgets, it will have a menu near the upper left corner of the widget where you can find the available functions for the widget.
+   The title on this menu is typically something like "Table Edit:" where "Table" is the name of the database table the widget draws its data from.
+  </p></div><div class="sect1" title="Loading a Record"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2751359"></a>Loading a Record</h2></div></div></div><p>
+   To load a record into an editing widget, you must first identify it.
+   Each record in the database can be identified by certain fields that make it unique.
+   For example, a contact in conim is identified by his "contact ID."
+   This consists of a number for the organization he belongs to (his organization ID) and an individual ID (a second number).
+   If you know those two numbers, you can identify the specific contact you want.
+   This unique set of information is called the "primary key" for that table.
+  </p><p>
+   If you know the primary key of a record, you can often load it directly into an editing pane.
+   Generally there is a menu option called "Load Record" that allows you to do this.
+   It pops up a dialog box and you are expected to type in the ID of the record you want.
+   Note that some tables use multiple fields to identify a record uniquely.  
+   You will have to type each one in to tell the computer which record you want to load.
+  </p><p>
+   A more common method for loading a record is to select it from a 
+   <a class="ulink" href="dbp.html" target="_top">preview widget</a>
+   which shows a list of available records for you to load (see the separate help document on preview widgets).
+   Once the record is loaded, you don't really need to worry about what the primary key is.
+   But if you want to see it, it is often shown in the upper right area with the title "Record:".
+  </p></div><div class="sect1" title="Modifying a Record"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2751401"></a>Modifying a Record</h2></div></div></div><p>
+   When you want to make changes to the record you have just loaded, type the changes into the entries (or select the appropriate pull-down menus) and then select the Update menu function (or shortcut button) to apply the changes to the database.  
+   (Note that some editing panes in some applications may not have an Update function if you are not intended to make changes in this way).
+  </p><p>
+    <span class="bold"><strong>Note:</strong></span>
+   If you make changes to a record but fail to press the update button, your changes will be lost when the next record is loaded into the pane!
+   If you attempt to do this, the computer may issue a warning (depending on your current settings.)
+  </p></div><div class="sect1" title="Deleting a Record"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2750111"></a>Deleting a Record</h2></div></div></div><p>
+   Like the Update function, there may also be a Delete function.  
+   Once a record is loaded into the widget, the "Delete Current Record" function becomes available. 
+  </p><p>
+   <span class="bold"><strong>Be careful as you typically CAN NOT undo this operation.</strong></span>
+  </p></div><div class="sect1" title="Adding a Record"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2750133"></a>Adding a Record</h2></div></div></div><p>
+   To add a new record, you may (optional) first clear the widget to reset all the fields to their default values.
+   Then fill in the fields with the desired values and execute the "Add New Record" function.
+  </p><p>
+   Depending on the application, there may be certain fields you are required to fill out.
+   If so, a pop-up dialog may appear with a red background requesting that you supply proper values in those fields.
+   Also, the field titles will be highlighted to show you which fields need attention.
+   You can fill out the fields and then ask the computer to re-check and see if it can continue.
+  </p><p>
+   The popup may also appear with a yellow background, highlighting certain fields yellow.
+   These fields are recommended to be filled out but are not mandatory.
+   You can then ask the computer to recheck to see if all recommended fields are filled out.
+   Or you can tell the computer to proceed anyway even though they are not all filled out.
+  </p><p>
+   If fields are highlighted with a green title, the computer is requesting that you examine these fields for accuracy (as a precaution) before proceeding.
+  </p></div><div class="sect1" title="Record Display"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2750168"></a>Record Display</h2></div></div></div><p>
+   You may remember that database tables are typically thought of like a spreadsheet, containing rows and columns.
+   When you load a record from the database, you are loading only a single row into the editing widget.
+   Even so, the widget may be configured with its rows and columns in order to fit all the needed table columns on the page.
+  </p><p>
+   Don't be confused by this.
+   The editing pane contains only a single record--not a whole table.
+  </p><p>
+   Each database field (column) is represented by an entry, button, or checkbox.
+   Depending upon the data type for the field, it may also have a "special function" pull-down button (which can also be selected with a click of the right mouse button.)
+  </p><p>
+   For example, click the pull-down button on a date field and a special date calendar widget will appear to allow you to click on a date (rather than having to type it in.)  
+   If you right-click on a state field, a list of valid state abbreviations appears.
+   If you right-click on an employee field, a list of employees appears.
+  </p><p>
+   Certain text fields allow you to right-click to generate a larger box to edit in.
+   For example, a comment field might contain multiple lines of text. 
+   Only a portion of it might be viewable in the standard editing window, but by right clicking on it, you can create a larger window, edit the text, and then hit the Done button to write it back to the entry box on the screen.  
+   Remember that the data has still not been sent to the database.
+   You have to do the Update function to do that.
+  </p></div><div class="sect1" title="Expanding to Show Hidden Fields"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2750213"></a>Expanding to Show Hidden Fields</h2></div></div></div><p>
+   Often a database table will contain columns that are needed less frequently than others.
+   Where a table or view contains many columns, it can be confusing to display them all in an editing pane.
+  </p><p>
+   So the widget allows the application to show certain fields by default and keep certain others hidden until you ask to see them.
+   If an editing pane contains hidden fields, you will know it by seeing a small aqua colored bar right at the bottom of the pane.
+   Press on this bar and the pane will grow to show the rest of the fields.
+   Press on it again to hide the fields again.
+  </p><p>
+   Typically you should not have to access hidden fields to input or edit data.
+   But applications may often choose to hide more esoteric informational fields that don't need to be accessed as often.
+  </p></div><div class="sect1" title="Record History"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2750241"></a>Record History</h2></div></div></div><p>
+   The editing widget keeps track of records you have recently viewed.
+   These are kept in a list so you can cycle back through the list with the following functions:
+  </p><div class="variablelist"><dl><dt><span class="term">Previous Record:</span></dt><dd>
+       This will reload the record you were working on just previous to the currently loaded record.  
+       Executing it multiple times will cycle back through all the records you have had loaded.
+      </dd><dt><span class="term">Next Record:</span></dt><dd>
+       This is the opposite of the "Previous Record" function.  
+       It only works if you have already executed "Previous Record" one or more times.
+      </dd></dl></div></div><div class="sect1" title="Other Menu Options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2749532"></a>Other Menu Options</h2></div></div></div><p>
+   Note that each application may add more options under the standard menu for the editing widget.
+   You need to read the manual for the particular application you are running in order to know how to use these custom functions.
+  </p><p>
+   Also, the application may disable certain functions of the editing pane.
+   For example, some applications may not allow the functions for altering data in the table.
+  </p></div><div class="sect1" title="Settings"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2749552"></a>Settings</h2></div></div></div><p>
+   It is possible to configure the editing widget to prompt you before clearing, adding, deleting, or updating a record.
+   These settings can be changed in the standard menu.
+   When the widget (or the window containing it) is closed, these settings should be saved.
+  </p><p>
+   It is probably a good idea to have the program ask you before deleting a record.
+   You can configure the other prompting settings to your taste (and the needs of the particular application.)
+  </p></div><div class="sect1" title="Record Display"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2749572"></a>Record Display</h2></div></div></div><p>
+   Sometimes an application will link an editing pane to some other preview pane in the application.  
+   For example in conim, each time you load a new record into the contact editing pane, a signal will be sent to the contact document preview pane (if it is open), telling it to reload itself with all documents pertaining to the newly loaded contact.
+  </p><p>
+   This kind of linking is commonly done in Wylib applications and allows you to see the relational links between tables in the database.
+  </p></div></div></body></html>

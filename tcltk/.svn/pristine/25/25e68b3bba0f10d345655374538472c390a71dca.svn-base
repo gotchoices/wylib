@@ -1,0 +1,38 @@
+#!/usr/bin/tclsh
+#include(Copyright)
+
+package require wylib
+
+puts "today:[date::date]"
+
+puts [cap_first kyle]
+
+puts "text:[wrap "This is wrapped text" 8]"
+
+sql::init -dbname ati
+puts "[sql::one "select empl_name(1000)"]"
+
+set query "select adate,amount,debit,credit from rp_v_mt where adate between '2006-Jun-25' and '2006-Jul-10' order by adate"
+
+#Test query using "array of columns" method:
+set cnt [sql::qlist $query results]
+puts "cnt:$cnt results:[array get results]"
+exit
+
+#Test query fetching "list of rows" method:
+set pgres [sql::exe $query]
+#set results [pg_result $pgres -list]		;#straight list
+set results [pg_result $pgres -llist]		;#list of rows
+puts "results:$results"
+exit
+
+#Or using -tupleArray method:
+set pgcnt [pg_result $pgres -numTuples]
+if {$pgcnt <= 0} {
+    array set results {adate {} amount {} debit {} credit {}}
+} else {
+    for {set i 0} {$i < $pgcnt} {incr i} {
+        set res [pg_result $pgres -tupleArray $i results]
+        puts [format {%12s %14s %5s %5s} $results(adate) $results(amount) $results(debit) $results(credit)]
+    }
+}

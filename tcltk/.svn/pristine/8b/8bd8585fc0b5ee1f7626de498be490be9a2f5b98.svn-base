@@ -1,0 +1,79 @@
+TODO:
+
+- Move site specific stuff out from this file so it is just wylib related
+
+X- Shared calendar program
+X-   add employees to calendar events
+-   add conim contacts to calendar events           
+-   add personal contacts to calendar events        
+-   add vendor contacts to calendar events
+
+- finish TODO's in dbp
+- re-write ddis.tcl (clean it up)
+- finish html/print.xml
+
+- deploy emplim / payroll
+X-   temporary deploy of emplim (so we can use priv window)
+X-   use materialized path for empl hierarchy
+X-   better data integrity triggers 
+X-   port wholdings to wylib
+X-   port payroll.tcl to wylib
+X-   delta port file for payroll tables (pay_req, empl_whold)
+-   use cdoc.tcl in emplim
+-   payroll views should show only my employees (unless I have admin priv)
+
+- New conim
+-   integrate CS ticket system
+-   keep cont_doc_data files in filesystem?
+-   better support for bulk mail in cont_doc
+-   generic cont_doc template for other pims
+
+- New ordtool
+-   integrate RMA, Requisition tools
+
+- New ledit
+-   use wylib, etext
+-   use latest lout
+-   split into generic/site-specific specific parts
+-   etw's are part of wylib
+-   add support for form letters (bulk-mail)
+
+- New noedit
+
+- deploy WALT key on ATI platform
+-   key bindings support WALT key
+-   control key still does traditional bindings
+
+- Wylib fixes:
+- wyattize report.tcl
+- can we get rid of tsearch.tcl now?
+
+WHAT ARE THESE:
+- make help menu do something reasonable
+- retain history for search/replace widget (implement ::prefs)
+- test edwin
+- should Esc bind to spf in dbe's?
+- paste undo buffer working? (Ctrl-B)
+- implement right-click context menus across widgets?
+- save, load, print in text windows?
+
+- implement in listbox?:
+  - kill function
+  - spell function
+
+- redo date spinners (-dest switch, -def switch, should spentry be a dew?)
+
+- redo phonemap?
+- get rid of all references to cnf in library (only in priv.tcl now)
+
+MAYBE LATER:
+- module for macros (make savable macros, autoexec macro)
+
+- add bind method to all widgets?
+  (because with standard bind, you can't hide the guts of how the widget is implemented i.e. stext)
+
+- how do dew and cdew use each other?
+X  - how can we use grid to line up a bunch of dews (so their titles align)
+  - should cdew consist of multiple dews?
+  - can a dew call a cdew? (date::dia)
+  

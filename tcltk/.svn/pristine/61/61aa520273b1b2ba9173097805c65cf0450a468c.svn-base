@@ -1,0 +1,235 @@
+#calc.tcl	0.20	Oct 2001
+#A simple calculator widget
+#------------------------------------------
+#Copyright (C) 1999-2003 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software. You can redistribute it and/or modify it under the terms of the Open Public License as published by PIC Development Group and the Open Solutions Group.
+#The program is distributed with the hope that it will be useful and beneficial, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCAHANTABILLITY or FITNESS FOR A PARTICULAR PURPOSE. See the license agreement for further details.
+#You should have received a copy of the Open Public License along with this program. If you did not, please visit www.opl.org to obtain a copy.
+package provide wylib 0.20
+#TODO:
+#- add PI back in
+#- add some other functions
+#- 
+
+namespace eval calc {
+    namespace export calc top
+    variable cfig		;#widget configuration
+    variable tfig		;#toplevel configuration
+    variable va			;#holds dynamic values
+
+    set cfig(barr) {{{Sto sto}	{Rcl rcl}	{C clr}		{AC ac}}
+    		    {{1/x inv}	{Sqrt sqrt}	{x^2 sqr}	{/ dv}}
+    		    {{7}	{8}		{9}		{* mu}}
+    		    {{4}	{5}		{6}		{- mi}}
+    		    {{1}	{2}		{3}		{+ pl}}
+    		    {{0}	{. dot}		{+/- pm}	{= eq}}}
+}
+
+#Various simple function procedures
+#------------------------------------------
+proc calc::dot {w} {variable va; keyproc $w "."}
+proc calc::pm {w} {variable va; set va(disp$w) [expr -$va(disp$w)]}
+proc calc::pl {w} {func $w +}
+proc calc::mi {w} {func $w -}
+proc calc::dv {w} {func $w /}
+proc calc::mu {w} {func $w *}
+
+proc calc::pi {w} {variable va; set va(disp$w) [expr asin(1) * 2]; set va(nxtclr$w) 1}
+proc calc::sqr {w} {variable va; set va(disp$w) [expr $va(disp$w) * $va(disp$w)]; set va(nxtclr$w) 1}
+proc calc::sqrt {w} {variable va; set va(disp$w) [expr sqrt($va(disp$w))]; set va(nxtclr$w) 1}
+proc calc::inv {w} {variable va; set va(disp$w) [expr 1.00 / $va(disp$w)]; set va(nxtclr$w) 1}
+proc calc::sto {w} {variable va; set va(mem$w) $va(disp$w); set va(nxtclr$w) 1}
+proc calc::rcl {w} {variable va; set va(disp$w) $va(mem$w); set va(nxtclr$w) 1}
+
+#Register a binary function
+#------------------------------------------
+proc calc::func {w func} {
+    variable va
+    
+    if {$va(func$w) != {} && $va(nxtclr$w) == 0} {	;#if already a function and some entry done
+        eq $w			;#compute the function first
+    }
+    set va(func$w) $func
+    set va(alu$w) $va(disp$w)
+    set va(nxtclr$w) 1		;#remember to clear on next entry
+}
+
+#Equals - compute value
+#------------------------------------------
+proc calc::eq {w} {
+    variable va
+    
+    if {$va(func$w) != {}} {
+        set va(disp$w) [expr $va(alu$w) $va(func$w) $va(disp$w)]
+    }
+    set va(func$w) {}
+    set va(alu$w) {}
+    set va(nxtclr$w) 1		;#remember to clear on next entry
+}
+
+#Full clear
+#------------------------------------------
+proc calc::ac {w} {
+    variable va
+    set va(disp$w)	0	;#clear displayed value
+    set va(alu$w)	{}	;#no stored value
+    set va(func$w)	{}	;#no current function
+    set va(nxtclr$w)	1	;#whether to clear on next entry
+}
+
+#Clear entry
+#------------------------------------------
+proc calc::clr {w} {
+    variable va
+    set va(disp$w) [csubstr $va(disp$w) 0 end]
+    if {$va(disp$w) == {}} {set va(disp$w) 0}
+}
+
+#Handle a key or a number input to the calculator
+#w:	name of the widget we are updating
+#key:	the keystroke
+#------------------------------------------
+proc calc::keyproc {w key} {
+    variable cfig
+    variable va
+#puts "key:$key"
+    if {[string first $key {+-/*}] >= 0} {		;#function keys
+        func $w $key
+    } elseif {[string is integer $key] || $key == {.}} {	;#numeric keys
+        if {$va(nxtclr$w)} {
+            set va(disp$w) $key
+        } else {
+            append va(disp$w) $key
+        }
+        set va(nxtclr$w) 0
+    } elseif {$key == {=}} {				;#equals
+        eq $w
+    } elseif {$key == "\b"} {				;#little clear
+        clr $w
+    }
+}
+
+#Create the calculator window and initialize it
+#w:	name we will give this widget
+#args:	other arguments
+#------------------------------------------
+proc calc::calc {w args} {
+    variable cfig
+    variable va
+     
+#    argproc cfig(\$s$w) $args {}
+    frame $w -bd 2 -relief raised	;#main frame for widget
+    
+    frame $w.d; pack $w.d -side top
+    label $w.d.f -textv calc::va(func$w) -width 1 -bd 2
+    entry $w.d.d -textv calc::va(disp$w) -width 20 -bd 2 -just right -state disabled
+    pack $w.d.d $w.d.f -side right
+
+    set r 1
+    foreach row $cfig(barr) {
+        frame $w.r$r; pack $w.r$r -side top
+        foreach but $row {
+            lassign $but lab cod
+            if {$cod == {}} {		;#if a numeric key
+                set cod $lab
+                set cmd "calc::keyproc $w $lab"
+            } else {			;#else a function
+                set cmd "calc::$cod $w"
+            }
+            button $w.r$r.$cod -width 3 -text $lab -bd 2 -width 4 -command $cmd
+            pack $w.r$r.$cod -side left
+        }
+        incr r
+    }
+    bind $w <Key> "calc::keyproc $w %A"
+    focus $w
+    ac $w		;#clear all
+}
+
+## Support routines for an independent toplevel popup with a calculator in it
+
+#We're done, write the value to its destination
+#w:	name of the toplevel widget
+#------------------------------------------
+proc calc::ok {w args} {
+    variable tfig
+    variable va
+
+    eq $w.c				;#finish any function in progress
+    if {[lindex $args 0] == {-value}} {
+        set val [lindex $args 1]
+    } else {
+        set val $va(disp$w.c)
+    }
+    set dest $tfig(dest$w)			;#make local copy of destination name
+#puts "assert val:$val dest:$dest"
+    if {[string range $dest 0 0] == {.}} {	;#if writing to an entry
+        $dest delete 0 end
+        $dest insert 0 $val
+    } elseif {$dest != {}} {			;#if writing to a variable
+        if {$tfig(wait$w)} {} else {		;#if not waiting
+            set ::$dest $val			;#write to a global
+        }
+    }						;#else write it after wait
+    set va(status$w) OK
+    destroy $w
+}
+
+#Abort the toplevel
+#w:	name of the toplevel widget
+#------------------------------------------
+proc calc::abort {w args} {
+    variable va
+
+    set va(status$w) ABORT
+    destroy $w
+}
+
+# Make a toplevel window with a calculator in it
+#w:		Name for this widget
+#args:	arguments
+#------------------------------------------
+proc calc::top {w args} {
+    variable tfig
+    variable va
+
+    argproc tfig(\$s$w) $args {{dest {}} {wait no} {title {}} {parent .}}
+    catch {destroy $w}
+    toplevel $w -class Dialog
+    wm transient $w $tfig(parent$w)		;#make it a child window
+    wm iconname $w Dialog
+    if {$tfig(title$w) != {}} {
+        label $w.q -text $tfig(title$w) -anchor w	;#Query string at top
+        pack $w.q -side top -expand yes -fill x
+    }
+    calc $w.c
+    pack $w.c -side top
+    frame $w.b; pack $w.b -side bottom -expand yes -fill x
+    button $w.b.ok  -text OK     -command "calc::ok $w" -bd 4 -pady 0
+    button $w.b.can -text Cancel -command "calc::abort $w"
+    pack $w.b.ok $w.b.can -side right -expand yes -fill x
+
+    bind $w <Return>	"calc::ok $w"
+    bind $w <Escape>	"calc::abort $w"
+    
+    dia::place $w -xo -20 -yo -40		;#place our toplevel near cursor
+
+    if {[string range $tfig(dest$w) 0 0] == {.}} {	;#if writing to an entry
+        set va(disp$w.c) [$tfig(dest$w) get]	;#get initial value
+    } elseif {$tfig(dest$w) != {}} {		;#if a variable
+        upvar $tfig(dest$w) lest		;#it should exist in the calling routine
+        if {![info exists lest]} {set lest 0}	;#create it if it doesn't exist
+        set va(disp$w.c) $lest			;#get initial value
+    }
+#puts "dest:$tfig(dest$w) = [subst $$tfig(dest$w)]"
+
+    if {$tfig(wait$w)} {
+        tkwait window $w
+        if {$va(status$w) != {OK}} {return 0}
+        if {$tfig(dest$w) != {} && [string range $tfig(dest$w) 0 0] != {.}} {	;#if writing to a variable
+            upvar $tfig(dest$w) var	;#write to a local in level above
+            set var $va(disp$w.c)
+        }
+        return 1
+    }
+}

@@ -1,0 +1,21 @@
+-------------------------------------------------------------------------------
+If you don't want this installed under /usr/lib, first set the variable:
+
+    WYLIB=/some/dir
+
+Then do
+
+    make install
+
+This should install the library either in /usr/lib or /some/dir.  You should now be able
+to run any wylib application that has this in it:
+
+    package require wylib
+
+
+-------------------------------------------------------------------------------
+Note that Tcl-only programs can still use some limited capabilities of wylib.  But most of
+Wylib's functionality is intended for use with Tcl/Tk (GUI).  
+
+There are some of the library modules that presume the use of a PostgreSQL backend (like
+dbe, dbp and sql for example).

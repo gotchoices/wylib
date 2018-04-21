@@ -1,0 +1,22 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Test how grid geometry manager works
+
+frame .b
+pack .b -side bottom -fill x
+
+label .l1 -text {A Title:} -bd 2 -relief raised -bg pink -anchor w
+button .b1 -text B1 -command {puts B1}
+button .b2 -text B2 -command {puts B2}
+button .b3 -text B3 -command {puts B3}
+button .b4 -text B4 -command {puts B4}
+button .b5 -text RB5 -command {puts B5}
+button .b6 -text RB6 -command {puts B6}
+button .b7 -text RB7 -command {puts B7}
+button .b8 -text RB8 -command {puts B8}
+
+pack .l1 -side top -exp 1 -fill x
+grid .b1 .b2 .b3 .b4 -in .b -row 0 -sticky ew
+#grid .b2 -in .b ;#-column 2
+grid .b5 .b6 .b7 -in .b -row 1
+grid .b8 -in .b -column 3 -row 1

@@ -1,0 +1,167 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Wylib Signature Widget</title><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article"><div class="titlepage"><div><div><h2 class="title"><a name="Wylib%20Pref"></a>Wylib Signature Widget</h2></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="sect1"><a href="#idm140460706472432">Introduction</a></span></dt><dt><span class="sect1"><a href="#idm140460706469680">Standard Fields</a></span></dt><dt><span class="sect1"><a href="#idm140460706727168">Menu Options</a></span></dt><dt><span class="sect1"><a href="#idm140460706861984">Electronic Signatures</a></span></dt><dt><span class="sect1"><a href="#idm140460706855152">Advanced Fields</a></span></dt><dt><span class="sect1"><a href="#idm140460706848016">Sharing Signature Files</a></span></dt></dl></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706472432"></a>Introduction</h2></div></div></div><p>
+   The Signature Embedded Text Widget (ETW) contains the data necessary to
+   create the signature block at the bottom of your letter.
+  </p><p>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+   Just under the menu button are two shortcut buttons (Select and View)
+   to allow faster access to two common functions also found in the menu.
+  </p><p>
+   A signature block typically consists of a closing greeting 
+   (such as "Sincerely,") followed by your name and a title.
+  </p><p>
+   In addition to these text components of the signature block, the ETW
+   is also capable of rendering your actual scripted signature (an
+   electronic signature).
+  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706469680"></a>Standard Fields</h2></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">Close:</span></dt><dd>
+       Specify the closing greeting you wish to use in concluding your letter.
+       You can choose from several standard options using the pull-down menu button to the right of this field.
+      </dd><dt><span class="term">Name:</span></dt><dd>
+       This entry contains your name and an optional title.
+       You can use any number of lines, but 2 is customary as follows:
+       <p>
+        Fred Garvin
+       </p><p>
+        Chief Administrative Officer
+       </p></dd><dt><span class="term">Sig:</span></dt><dd>
+       If you loaded the signature widget from a saved file, this field
+       will contain a short name (or tag) that identifies the signature configuration.
+       You can store multiple signature configurations (each with a different tag)
+       to make it easier to sign different letters in different ways.
+      </dd><dt><span class="term">Email:</span></dt><dd>
+       If you enter an email address here, it will be used as your return address
+       any time a letter is send via email.
+       It is a good idea to enter your email address here and then save the
+       signature as your standard configuration.
+      </dd><dt><span class="term">Esig:</span></dt><dd>
+       If you loaded the signature widget from a saved file, and the
+       saved configuration contains an electronic signature, this checkbox
+       will be enabled by default, and your electronic signature will
+       be included when you format your letter.
+       If you disable this checkbox, no electronic signature will be
+       printed on your formatted letter, even if one is available in your
+       stored configuration.
+      </dd></dl></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706727168"></a>Menu Options</h2></div></div></div>
+   The widget menu contains a number of functions to allow you to control
+   your signatures.
+   The menu functions are as follows:
+
+   <div class="variablelist"><dl class="variablelist"><dt><span class="term">Select Signature</span></dt><dd>
+       This will allow you to select a signature from a list of signatures
+       you have saved previously using the "Save Signature function.
+       This function can also be accessed by the pull-down menu button next
+       to the field showing the signature tag name.
+      </dd><dt><span class="term">Save Signature</span></dt><dd>
+       This function will save the current widget settings in a file
+       and will associate those settings with a name (tag) you specify.
+       Then, you can reload those same settings later by the tag name.
+       This allows you to have several different signatures stored so
+       you can sign different letters in different ways.
+      </dd><dt><span class="term">Edit Electronic Signature:</span></dt><dd>
+       This will allow you to create a new (or modify an existing)
+       electronic signatures script to go with the current configuration
+       settings.
+       This is accomplished by launching the drawing program, TGIF.
+       You draw your signature using line vectors in TGIF, save the file,
+       and the widget will store the "drawing" as your electronic signature.
+       See the section below on Electronic Signatures for more
+       information on how to do this.
+      </dd><dt><span class="term">View Electronic Signature</span></dt><dd>
+       This will launch a viewer on the current electronic signature
+       to allow you to see what it will look like when it is rendered on
+       the page.
+      </dd><dt><span class="term">Show Advanced</span></dt><dd>
+       If you are using an electronic signature, it will probably be
+       necessary to scale and/or place the signature accurately on the page.
+       There are four parameters that allow you to do this but they are not
+       normally visible.
+       To show them, click this checkbox and they should appear on the far
+       right side of the signature widget.
+      </dd><dt><span class="term">Clear</span></dt><dd>
+       This will reset all fields back to their default (typically blank)
+       vallues.
+      </dd><dt><span class="term">Delete Signature</span></dt><dd>
+       When you Save a signature configuration setup, the program actually
+       creates a file stored under your home directory which contains
+       your signature parameter information.
+       This menu option will locate the file on disk associated with the
+       current settings, and will delete it.
+       Use this function with caution--it can not be un-done.
+      </dd></dl></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706861984"></a>Electronic Signatures</h2></div></div></div><p>
+    In addition to a closing greeting and your name, this widget can also
+    render your actual scripted signature on your letters.
+    In order to do this, you must author a signature using a drawing
+    program (TGIF) in a certain way.
+    The steps are generally as follows:
+   </p><p>
+    Starting from a cleared signature block, edit the closing greeting
+    and name, title entry.
+    Exedute the menu option "Edit Electronic Signature" and you should
+    see the TGIF drawing editor launch on the screen.
+   </p><p>
+    Write your signature on a white piece of paper as large as you can.
+   </p><p>
+    Use a copy machine to enlarge the signature until it is about 6 to 7 inches wide.
+   </p><p>
+    Copy the signature onto an overhead transparency.  
+    Tape the transparency over your monitor so you can see the tgif screen
+    through the transparency.
+   </p><p>
+    Select Properties, Line Type, and choose the smooth curvy line (without dots in it).
+    This is called a spline curve.
+   </p><p>
+    Choose Properties, Line Width, and choose the line that is 5 pixels wide (you can modify this to your taste).
+   </p><p>
+    Choose the drawing tool on the left that is a line with several bends in it but with loose ends (a polyline).
+   </p><p>
+    Choose Layout, and turn the Snap to Grid off.
+   </p><p>
+    Begin tracing your signature by pressing the mouse button near each curve in the signature.
+    The line can be broken using the right mouse button.
+    You can select a line using the arrow tool and then drag the points of the lines around until the line matches your signature exactly.
+   </p><p>
+    When you are satisfied with the signature, save the file and exit.  
+    You will be asked if it is OK to save the signature to your signature file.
+    You can answer in the affirmative to save all signature parameters,
+    or you can test the rendering of the signature first and then do a save when everything looks right.
+   </p><p>
+    To view your signature, press the Preview button in the letter editor.
+    This should show you a rendered version of your letter.
+    Make sure you are showing the four Advanced configuration parameters (see widget menu) on the right side of the widget.
+    If the signature does not render on the page the way you would like, try adjusting the four parameters and then press the Preview button again to see how it will look with the new settings.
+    You can adjust the spacing above and below the signature,
+    You can also adjust the scaling (width) and placement (shift) for the signature.
+   </p><p>
+    When the signature renders the way you want, make sure you use the Save Signature option to save all settings under a tag name.
+   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706855152"></a>Advanced Fields</h2></div></div></div>
+   As mentioned, there are four additional fields that do not normally show on the
+   screen and which affect the way your electronic signature is rendered
+   on the page.
+
+   <div class="variablelist"><dl class="variablelist"><dt><span class="term">Above:</span></dt><dd>
+       This specifies the amount of space between the closing greeting
+       (Sincerely,) and the centerline of the signature.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature "over-write" the other text on the page so it will look more natural.
+      </dd><dt><span class="term">Below:</span></dt><dd>
+       This specifies the amount of space between the centerline of the 
+       signature and the name/title that comes under it.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature "over-write" the other text on the page so it will look more natural.
+      </dd><dt><span class="term">Shift:</span></dt><dd>
+       This specifies the amount of space between the left edge of the closing greeting
+       (Sincerely,) and the centerline of the signature.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature hang out over the left side of the margin so it will look more natural.
+      </dd><dt><span class="term">Width:</span></dt><dd>
+       This specifies the overall width of the signature on the page.
+      </dd></dl></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm140460706848016"></a>Sharing Signature Files</h2></div></div></div><p>
+   Sometimes you may want to give a signature file to an assistant who will
+   be formatting correspondence for you.
+   You can only do this after creating the file first under your own login.
+   Then, use the Export Signature option to save your signature to a file
+   you will specify in the file system.
+   Then have your assistant use the Import Signature option to load the
+   file you saved, and then use the Save Signature option to save the
+   signature with an appropriate tag name.
+  </p></div></div></body></html>

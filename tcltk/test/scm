@@ -1,0 +1,27 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Test scm.tcl widget
+package require wylib
+
+eval "scm::scm .s1 -f abc -f def \
+	-data {{Hi there} {this is} {a test}}"
+
+frame .b
+pack .b -side bottom -fill x
+pack .s1 -side bottom -fill both -exp 1
+
+button .b.clr -text Clear -command {.s1 delete 0 end}
+button .b.emp -text Empty -command {.s1 list delete 0 end}
+button .b.ini -text Init -command {.s1 init}
+button .b.ext -text Quit -command exit
+
+pack .b.clr .b.emp .b.ini .b.ext -side left -exp 1 -fill x
+
+
+
+set v(answer) {}
+while {$v(answer) != {done}} {
+    scm::dia {Input your answer:} -dest ::v(answer) -token def \
+	-f abc -f def -data {{Hi there} {this is} {a test} {of the} {all New} {system of} {fast TYPing}}
+    puts "answer:$v(answer)"
+}

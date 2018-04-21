@@ -1,0 +1,14 @@
+0.33	Feb 2017
+	Updated to build with ruby based wyseman.  No substantive changes to code.
+
+0.32	May 2011
+	Several years of progress and fixes
+	Moved some items out to waplib and sitelib that were not general enough to be here
+	Cleaned up and standardized copyright and versioning system
+
+0.30	Many bug fixes, many feature additions
+
+0.20	Slight changes to accomodate postgres 8.1.0.  More significant
+	changes in wyseman release 2.
+
+0.10	Initial open-source release of version 0.30

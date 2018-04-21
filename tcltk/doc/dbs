@@ -1,0 +1,90 @@
+DBS: DataBase Search widget
+
+OBSOLETE -- this needs to be reviewed
+
+This widget works in conjunction with a dbp to construct queries.  It will
+query the table/view that is native to the dbp, but it also has the ability 
+to join in other tables/views the user has permission to read.
+
+Basic Design Strategy:
+------------------------------------------
+When the user selects a "Report" from the dbp, open a toplevel window showing
+three blank text windows: a join widget, a query widget, and a sort widget.
+
+In the query widget, the user can press a button to insert a template clause
+into the window.  This will allow the selection of a field from the table
+as a left side of a comparison clause.
+
+The user can select a comparison operator with an optional binary 'not' 
+(inversion) operator.
+
+For the right side of the comparison, the user can supply a constant value
+(one typed into an entry by the user) or another field from the database.
+
+For appropriate comparison operators, a "case" switch will also be enabled
+which can tell whether case is considered in string comparisons.
+
+Multiple Clauses:
+------------------------------------------
+When the user adds additional clauses to his query, an operator will appear
+between them that can be "and" or "or."  Each clause will also have an
+indentation level.  Adjacent clauses with the same indentation level will
+be grouped together by parenthesis in the query.
+
+Joins:
+------------------------------------------
+By default, the user will only have access to fields existing in the table
+the dbp is viewing.  All fields in the table will be accessible regardless of
+whether they are showing in the dbp or not.
+
+In the join window, in icon will show the name of the base table.  By 
+clicking on this, the user can select from a set of tables/views that have
+a foreign key relationship with this table (in either direction).  Once
+selected, this new table will show up with a name and a color.  It will
+show its relationship to the base table by being one level indented
+from that table.
+
+Once added, this new table will be clickable just like the base table so new
+tables can be added which are relational to it.  These will show their
+relationship by being further indented from the table they relate to.
+
+Once added, join tables will be accessible in the menus for selecting 
+tables.columns in the query builder.  
+
+Once added, join tables will be accessible as display fields in the dbp.
+Since there could be multiple dbs's open at a time, only the fields associated
+with the active dbs should be accessible in the dbp.  When a different dbs
+is made active (either by pressing its Active button, or by executing a load
+in it), the display field order associated with that dbs should be enabled
+in the dbp.
+
+Sorts:
+------------------------------------------
+When the user clicks a sort button in a field header, this will be captured
+by the dbs and displayed to indicate which field the report is ordered by.
+It will also show whether the sense of the sort is ascending or descending.
+When subsequent sorts are enabled, these will be added to the sort display
+but with higher presidence than any previously recorded sort fields.  In
+this way, the user can record any number of fields in the sort priority.
+
+By pressing a Clear button, the sort order will be erased and can be rebuilt
+by pressing sort buttons again in a new order.
+
+Saving State:
+------------------------------------------
+The state of the entire dbs should be able to be saved with a name and a
+description of what the report does.  This state should also be exportable
+to a file for use by other users.
+
+Every time the widget is closed, it should save its current state as well as
+all saved states it knows about.  The user should be able to select named
+states from a menu for future use.
+
+Dumping state should result in a script which can be executed by the dbs
+at any time in order to restore its state.
+
+The dbs should be used as a means of establishing a default "Load" state for
+a given dbp.  So the main app can describe its default load state in terms of
+a dbs script.  The user should be able to view a dbs with the default load
+state (and even modify it if the programmer wants).
+

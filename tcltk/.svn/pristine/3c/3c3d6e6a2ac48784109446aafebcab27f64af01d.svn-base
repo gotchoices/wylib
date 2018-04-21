@@ -1,0 +1,167 @@
+package provide wylib 0.20	;#Oct 2001
+#Allow selection from a group of values in a spinner
+#Title, tag, type valid_values
+#------------------------------------------
+#Copyright (C) 1999-2003 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software. You can redistribute it and/or modify it under the terms of the Open Public License as published by PIC Development Group and the Open Solutions Group.
+#The program is distributed with the hope that it will be useful and beneficial, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCAHANTABILLITY or FITNESS FOR A PARTICULAR PURPOSE. See the license agreement for further details.
+#You should have received a copy of the Open Public License along with this program. If you did not, please visit www.opl.org to obtain a copy.
+
+namespace eval spin {
+    namespace export ent top
+    variable cfig	;#config values for each widget
+    variable v		;#values of each spinner item
+    set cfig(swar)	{{type 2} {valid 2} {delay 2} {increment 3 inc} {initialize 3 init}}
+    
+#Bitmaps for up/down buttons
+#    image create bitmap spin.dn -data "#define dn_width 14\n#define dn_height 7\nstatic unsigned char down_bits[] = {\n0xff, 0x3f, 0xfe, 0x1f, 0xfc, 0x0f, 0xf8, 0x07, 0xf0, 0x03, 0xe0, 0x01, 0xc0, 0x00};"
+#    image create bitmap spin.up -data "#define up_width 14\n#define up_height 7\nstatic unsigned char   up_bits[] = {\n0xc0, 0x00, 0xe0, 0x01, 0xf0, 0x03, 0xf8, 0x07, 0xfc, 0x0f, 0xfe, 0x1f, 0xff, 0x3f};"
+    image create bitmap spin.dn -data "#define dn_width 12\n#define dn_height 6\nstatic unsigned char dn_bits[] = {\n0xff, 0x0f, 0x06, 0x06, 0x0c, 0x03, 0x98, 0x01, 0xf0, 0x00, 0x60, 0x00};"
+    image create bitmap spin.up -data "#define up_width 12\n#define up_height 6\nstatic unsigned char up_bits[] = {\n0x60, 0x00, 0xf0, 0x00, 0x98, 0x01, 0x0c, 0x03, 0x06, 0x06, 0xff, 0x0f};"
+}
+
+option add *Spin.type int widgetDefault
+option add *Spin.delay 180 widgetDefault
+option add *Spin.inc 1 widgetDefault
+option add *Spin.b.takeFocus 0 widgetDefault
+option add *Spin.b.Button.borderWidth 1 widgetDefault
+option add *Spin.b.Button.height 4 widgetDefault
+option add *Spin.b.Button.width 14 widgetDefault
+option add *Spin.b.Button.highlightThickness 0 widgetDefault
+option add *Spin.b.Button.takeFocus 0 widgetDefault
+
+# Handle a press on an arrow button
+#------------------------------------------
+proc spin::inc {w {inc 1}} {
+    variable cfig
+    upvar #0 [$w.e cget -textv] tvar
+puts "type:$cfig(type$w)"
+    switch -exact $cfig(type$w) {
+        {int} {					;#if an integer
+            if {$cfig(valid$w) != {}} {lassign $cfig(valid$w) min max} else {set min 0}
+            if {[string is digit -strict [string trimleft $tvar -]]} {
+                incr tvar $inc
+            } else {
+                set tvar $min
+            }
+            if {$cfig(valid$w) != {}} {
+                if {$tvar > $max} {set tvar $min}
+                if {$tvar < $min} {set tvar $max}
+            }
+        }
+        {float} {					;#if a floating point
+            if {$cfig(valid$w) != {}} {lassign $cfig(valid$w) min max fmt} else {set min 0; set fmt {}}
+            if {$fmt == {}} {set fmt {%.2f}}
+            if {[string is digit -strict [translit -. 00 $tvar]]} {
+                set tvar [expr $tvar + $inc]
+            } else {
+                set tvar $min
+            }
+            if {$cfig(valid$w) != {}} {
+                if {$tvar > $max} {set tvar $min}
+                if {$tvar < $min} {set tvar $max}
+            }
+            set tvar [format $fmt $tvar]
+        }
+        {enum} {					;#if enumerated list
+            set len [llength $cfig(valid$w)]
+            set idx [lsearch $cfig(valid$w) "$tvar*"]
+            incr idx $inc
+            if {$idx >= $len} {set idx 0}
+            if {$idx < 0} {set idx [expr $len - 1]}
+            set tvar [lindex $cfig(valid$w) $idx]
+        }
+    }
+}
+
+# Make an entry with spinner buttons that will increment through a range
+#------------------------------------------
+proc spin::ent {w args} {
+    variable cfig
+    variable v
+
+    array unset cfig *$w
+    argform {type valid} args
+    argnorm $cfig(swar) args
+    catch {frame $w -class Spin}
+    widginit $w spin *$w
+
+    swores $w args cfig(%s$w) {type valid delay inc}
+    xswitchs init args cfig(init$w)
+
+    eval entry $w.e $args
+    if {[$w.e cget -textv] == {}} {$w.e configure -textv spin::v(val$w)}
+#puts "textv:[$w.e cget -textv]"
+    frame $w.b
+    button $w.b.up -image spin.up -rep $cfig(delay$w) -command "spin::inc $w $cfig(inc$w)" -help {Increase}
+    button $w.b.dn -image spin.dn -rep $cfig(delay$w) -command "spin::inc $w -$cfig(inc$w)" -help {Decrease}
+    pack $w.e -side left -fill x
+    pack $w.b.up $w.b.dn -side top -fill y -exp 1
+    pack $w.b -side left -fill y
+    if {[info exists cfig(init$w)]} {$w.e insert 0 $cfig(init$w)}
+}
+
+#These routines are specific to Toplevel grouped spinners
+#------------------------------------------
+
+# Finish a spinner window and return the selected value
+#------------------------------------------
+proc spin::ok {w} {
+    variable cfig
+    variable v
+
+    set v(ret$w) {}
+    foreach tag $cfig(tags$w) {lappend v(ret$w) $v(sv:$tag$w)}
+    if {$cfig(varname$w) != {}} {set $cfig(varname$w) $v(ret$w)}
+    destroy $w
+}
+
+# Abort a spinner window
+#------------------------------------------
+proc spin::cancel {w} {
+    variable v
+    set v(ret$w) {}
+    destroy $w
+}
+
+# Make a toplevel window which will allow the selection as a spinner
+#------------------------------------------
+proc spin::top {w carr args} {
+    variable cfig
+    variable v
+
+    argproc cfig(\$s$w) $args {{init {}} {focus {}} {wait no} {delay 180} {dirent yes} {varname {}} {title {}} {width {20}}}
+    catch {destroy $w}
+    toplevel $w -class Dialog
+    wm transient $w .
+    wm iconname $w Dialog
+    if {$cfig(title$w) != {}} {
+        label $w.q -text $cfig(title$w) -anchor w	;#Query string at top
+        pack $w.q -side top -expand yes -fill x
+    }
+    set i 0
+    set cfig(tags$w) {}
+    foreach cl $carr {			;#for each item in the spinner
+        lassign $cl title tag typ vld
+        if {$cfig(dirent$w)} {set state normal} else {set state disabled}
+        spentry $w.$tag -type $typ -title $title -width $cfig(width$w) -valid $vld -textv spin::v(sv:$tag$w) -state $state
+        set v(sv:$tag$w) [lindex $cfig(init$w) $i]	;#initial value
+        pack $w.$tag -side top -expand yes -fill x
+        lappend cfig(tags$w) $tag
+        if {$i == 0 && $cfig(focus$w) == {}} {set cfig(focus$w) $tag}
+        incr i
+    }
+    set cfig(cnt$w) $i		;#remember number of tags
+    frame $w.b; pack $w.b -side bottom -expand yes -fill x
+    button $w.b.ok -text OK      -command "spin::ok $w" -borderwidth 4
+    button $w.b.can -text Cancel -command "spin::cancel $w"
+    pack $w.b.ok $w.b.can -side right -expand yes -fill x
+    bind $w <Return> "$w.b.ok invoke"
+    
+    place_near $w -80 -50	;#place our toplevel near cursor
+    if {$cfig(focus$w) != {}} {focus $w.$cfig(focus$w).e}
+    if {$cfig(wait$w)} {
+        tkwait window $w
+        return $v(ret$w)
+    }
+}

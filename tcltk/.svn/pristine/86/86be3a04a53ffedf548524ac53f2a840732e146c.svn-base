@@ -1,0 +1,120 @@
+Dialog Generator
+
+OBSOLETE -- this needs to be reviewed
+
+This widget is used to generate pop-up dialogs to ask the user questions or
+to warn him of things.
+
+The dialog is a toplevel window containing the following:
+ - An optional main title
+ - An optional bitmap decoration
+ - An optional set of data entry widgets consisting of:
+   - dew
+   - cdew
+   - calc, cal, etc.
+   - Any other widget (or compound widget) the user may specify
+   
+   Each of these widgets must support a single -textvariable argument which
+   contains the value (or the compound value) of the entry(s) in the widget.
+   It must also support the widget name (w) as the first parameter.
+   While the user is editing the values in the entry fields, temporary
+   textvariables will be used.  But if the user selects any button except
+   the pre-defined Cancel button, the temporary values will be written into
+   the true textvariables, thus returning the user input.
+   
+ - An optional set of action buttons possibly including:
+   - OK
+   - Cancel
+   - Other buttons as the user may define
+
+External Procedures:
+------------------------------------------
+dia::dia {w args}		Creates a generalized dialog
+    A toplevel window will be opened and will display a message to the user.
+    The user may be asked to fill out certain fields on the screen and will
+    then press one of several buttons specified in order to tell the computer
+    what to do next.  The return value will be an index indicating which
+    button was pressed, or -1 if the window was destroyed.
+    
+    All arguments not among those enumerated below are passed along to the
+    underlying toplevel.
+
+Arguments:
+    w:	The name of the new widget to create
+    
+Shortcuts:	text, variable, buttons
+
+Switches:
+    -text	A message to be displayed in the dialog.  In the event
+        that only a single entry has been specified (by specifying the
+        -variable switch), this text will be associated directly with the
+        entry.  If multiple fields have been specified, this message will
+        be at the top and should apply generally to all the fields.
+	
+    -buttons	Specify a list of labels (text) to place in the buttons
+        at the bottom of the dialog.
+
+    -default	Specify which button is the normal response.  This button
+        will be activated if the user hits Return.  The dialog can also
+        be centered so this button is under the mouse.
+
+    -cancel	This specifies the index of a button which is considered to
+        be the Cancel button.  If this button is pressed, the values will not
+        be written into the specified textvariables and the return value will
+        be -1.
+        
+    -variable	Specify a variable to set with a value the user will type
+        in.  This will create a standard entry widget associated with the
+        query text.  For more fancy entries, use the -field option.
+    
+    -field	This is followed by standard dew::dew syntax telling the
+        dialog how to build an entry widget to put into the dialog.  Exclude
+        the command name (dew::dew) and the widget name (w) which would
+        normally be specified when building a dew.
+    
+    -parent	Specify the name of a window which the dialog should
+        consider as its parent.  If not specified, this will default to
+        whatever toplevel window had the focus when the dialog was called.
+        If no window has focus, then . will be assumed.  If a non-window
+        name is specified (like "none"), the window will not be tagged
+        as transient and so will also include a standard toplevel border.
+    
+    -bitmap	Specify a bitmap to display on the left side of the dialog.
+    
+    -title	Specify a title to show for iconified programs and in the
+        window title bar.
+    
+    -grab	This can have one of the values: local, global which will
+        determine what type of grab is done on the dialog window.  If blank,
+        no grab will happen.
+    
+    -wmclose	If true (default), the dialog will allow the window manager
+        to issue it a close protocol command.
+    
+    -place	This will determine how the toplevel is placed on the
+        screen or if it should just be left up to the window manager.  It
+        can have the following values:
+        
+        default	The default button will be placed under the pointer
+        screen	The dialog will be located at the screen center
+        pointer The dialog will be centered under the pointer
+    
+    -topargs	Pass these arguments to the toplevel window constructor
+    
+    -twidth	A single width argument to apply to all dew labels so the
+        data entry fields will all be lined up.
+    
+    -initialize If true, and the referenced textvariables exist, initialize
+        the data entry fields with their values (default true).  If the
+        referenced textvariables do not exist, they will be created with
+        an empty value.
+        
+    
+        
+Widget Command {widget_name command args}:
+------------------------------------------
+If the command argument is other than what is enumerated below, the command
+is passed down to the underlying frame widget.
+
+Command:
+    w		Return the name of the widget.

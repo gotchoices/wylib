@@ -1,0 +1,9 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+set m [top::top Main m]
+puts m:$m
+
+set q [top::top Query q -par $m]
+puts q:$q

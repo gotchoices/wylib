@@ -1,0 +1,21 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+if {[llength $argv] > 0} {
+    set fname [lindex $argv 0]
+} else {
+    set fname test.txt
+}
+
+proc main_win w {
+    top::add [etext::etext $w.t1 -textv v1 -mode txt]
+    pack $w.t1 -side top -exp 1 -fill both
+    focus $w.t1
+}
+
+top::top m main_win -main 1
+m t1 load $fname
+
+#update
+#m t1 delete 3.0 3.5

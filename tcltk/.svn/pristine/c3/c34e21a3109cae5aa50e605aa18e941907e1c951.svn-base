@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article id="Wylib Pref">
+ <articleinfo>
+  <title>Wylib Document Attachment Widget</title>
+  <publisher>
+   <publishername>WyattERP</publishername>
+   <address>
+    <otheraddr>Provo, Utah</otheraddr>
+    <otheraddr>
+     <ulink url="http://www.wyatterp.com/">WyattERP.com</ulink>
+    </otheraddr>
+   </address>
+  </publisher>
+ </articleinfo>
+
+ <sect1>
+  <title>Introduction</title>
+  <para>
+   The attachment Embedded Text Widget (ETW) allows you to attach a
+   reference document to a letter.
+   This is helpful when you want to refer to some other document in your
+   correspondence and you want that document to be transmitted with the
+   letter to the recipient, and also filed in the system with your
+   letter.
+  </para><para>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+  </para><para>
+   It should not matter where in your letter the attachments are actually placed.
+   However, it is a matter of good form to place them together at (or near) the end of the letter.
+  </para><para>
+   Typically an attachment is a file on the disk which has a standard content
+   type (so the system knows how to handle it) like PS, PDF, DOC, GIF, JPG, etc.
+   Depending on your local configuration, it may also be possible to attach
+   other types of documents (like customer orders).
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Standard Fields</title>
+
+   <variablelist>
+    <varlistentry>
+      <term>File:</term>
+      <listitem>
+       This field can not be edited directly.
+       Instead, it gets filled out at the time the attachment is first created.
+       The field shows the path name of the disk file you have used for the attachment.
+       If you want to change the attachment, the pull-down button will open a file selector to allow you to do so.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Type:</term>
+      <listitem>
+       This field normally has the value "file."
+       But if the local configuration allows the attachment of other types of
+       documents, this field may contain some other value (like "order").
+       This field is not directly editable.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Descr:</term>
+      <listitem>
+       This field contains a description of the attachment.
+       What you enter in this field will show up on the attachment line for
+       this document at the bottom of your letter.
+       It will also be used when creating email attachments.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+ <sect1>
+  <title>Menu Options</title>
+   The widget menu contains a number of functions to allow you to control
+   the attachment.
+   The menu functions are as follows:
+
+   <variablelist>
+    <varlistentry>
+      <term>View Document</term>
+      <listitem>
+       This will allow you to see the document in a viewer applicable to
+       the document's particular content type.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Print Document</term>
+      <listitem>
+       This will attempt to translate the document to the Postscript format
+       and will then send it to the standard print handler.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Save To File</term>
+      <listitem>
+       This will allow you to export the document back to a disk file.
+       This may be helpful, for example, if you want to re-edit the document.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+</article>

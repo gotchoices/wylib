@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article id="Wylib Pref">
+ <articleinfo>
+  <title>Wylib Signature Widget</title>
+  <publisher>
+   <publishername>WyattERP</publishername>
+   <address>
+    <otheraddr>Provo, Utah</otheraddr>
+    <otheraddr>
+     <ulink url="http://www.wyatterp.com/">WyattERP.com</ulink>
+    </otheraddr>
+   </address>
+  </publisher>
+ </articleinfo>
+
+ <sect1>
+  <title>Introduction</title>
+  <para>
+   The Signature Embedded Text Widget (ETW) contains the data necessary to
+   create the signature block at the bottom of your letter.
+  </para><para>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+   Just under the menu button are two shortcut buttons (Select and View)
+   to allow faster access to two common functions also found in the menu.
+  </para><para>
+   A signature block typically consists of a closing greeting 
+   (such as "Sincerely,") followed by your name and a title.
+  </para><para>
+   In addition to these text components of the signature block, the ETW
+   is also capable of rendering your actual scripted signature (an
+   electronic signature).
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Standard Fields</title>
+
+   <variablelist>
+    <varlistentry>
+      <term>Close:</term>
+      <listitem>
+       Specify the closing greeting you wish to use in concluding your letter.
+       You can choose from several standard options using the pull-down menu button to the right of this field.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Name:</term>
+      <listitem>
+       This entry contains your name and an optional title.
+       You can use any number of lines, but 2 is customary as follows:
+       <para>
+        Fred Garvin
+       </para><para>
+        Chief Administrative Officer
+       </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Sig:</term>
+      <listitem>
+       If you loaded the signature widget from a saved file, this field
+       will contain a short name (or tag) that identifies the signature configuration.
+       You can store multiple signature configurations (each with a different tag)
+       to make it easier to sign different letters in different ways.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Email:</term>
+      <listitem>
+       If you enter an email address here, it will be used as your return address
+       any time a letter is send via email.
+       It is a good idea to enter your email address here and then save the
+       signature as your standard configuration.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Esig:</term>
+      <listitem>
+       If you loaded the signature widget from a saved file, and the
+       saved configuration contains an electronic signature, this checkbox
+       will be enabled by default, and your electronic signature will
+       be included when you format your letter.
+       If you disable this checkbox, no electronic signature will be
+       printed on your formatted letter, even if one is available in your
+       stored configuration.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+ <sect1>
+  <title>Menu Options</title>
+   The widget menu contains a number of functions to allow you to control
+   your signatures.
+   The menu functions are as follows:
+
+   <variablelist>
+    <varlistentry>
+      <term>Select Signature</term>
+      <listitem>
+       This will allow you to select a signature from a list of signatures
+       you have saved previously using the "Save Signature function.
+       This function can also be accessed by the pull-down menu button next
+       to the field showing the signature tag name.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Save Signature</term>
+      <listitem>
+       This function will save the current widget settings in a file
+       and will associate those settings with a name (tag) you specify.
+       Then, you can reload those same settings later by the tag name.
+       This allows you to have several different signatures stored so
+       you can sign different letters in different ways.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Edit Electronic Signature:</term>
+      <listitem>
+       This will allow you to create a new (or modify an existing)
+       electronic signatures script to go with the current configuration
+       settings.
+       This is accomplished by launching the drawing program, TGIF.
+       You draw your signature using line vectors in TGIF, save the file,
+       and the widget will store the "drawing" as your electronic signature.
+       See the section below on Electronic Signatures for more
+       information on how to do this.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>View Electronic Signature</term>
+      <listitem>
+       This will launch a viewer on the current electronic signature
+       to allow you to see what it will look like when it is rendered on
+       the page.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Show Advanced</term>
+      <listitem>
+       If you are using an electronic signature, it will probably be
+       necessary to scale and/or place the signature accurately on the page.
+       There are four parameters that allow you to do this but they are not
+       normally visible.
+       To show them, click this checkbox and they should appear on the far
+       right side of the signature widget.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Clear</term>
+      <listitem>
+       This will reset all fields back to their default (typically blank)
+       vallues.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Delete Signature</term>
+      <listitem>
+       When you Save a signature configuration setup, the program actually
+       creates a file stored under your home directory which contains
+       your signature parameter information.
+       This menu option will locate the file on disk associated with the
+       current settings, and will delete it.
+       Use this function with caution--it can not be un-done.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+ <sect1>
+  <title>Electronic Signatures</title>
+   <para>
+    In addition to a closing greeting and your name, this widget can also
+    render your actual scripted signature on your letters.
+    In order to do this, you must author a signature using a drawing
+    program (TGIF) in a certain way.
+    The steps are generally as follows:
+   </para><para>
+    Starting from a cleared signature block, edit the closing greeting
+    and name, title entry.
+    Exedute the menu option "Edit Electronic Signature" and you should
+    see the TGIF drawing editor launch on the screen.
+   </para><para>
+    Write your signature on a white piece of paper as large as you can.
+   </para><para>
+    Use a copy machine to enlarge the signature until it is about 6 to 7 inches wide.
+   </para><para>
+    Copy the signature onto an overhead transparency.  
+    Tape the transparency over your monitor so you can see the tgif screen
+    through the transparency.
+   </para><para>
+    Select Properties, Line Type, and choose the smooth curvy line (without dots in it).
+    This is called a spline curve.
+   </para><para>
+    Choose Properties, Line Width, and choose the line that is 5 pixels wide (you can modify this to your taste).
+   </para><para>
+    Choose the drawing tool on the left that is a line with several bends in it but with loose ends (a polyline).
+   </para><para>
+    Choose Layout, and turn the Snap to Grid off.
+   </para><para>
+    Begin tracing your signature by pressing the mouse button near each curve in the signature.
+    The line can be broken using the right mouse button.
+    You can select a line using the arrow tool and then drag the points of the lines around until the line matches your signature exactly.
+   </para><para>
+    When you are satisfied with the signature, save the file and exit.  
+    You will be asked if it is OK to save the signature to your signature file.
+    You can answer in the affirmative to save all signature parameters,
+    or you can test the rendering of the signature first and then do a save when everything looks right.
+   </para><para>
+    To view your signature, press the Preview button in the letter editor.
+    This should show you a rendered version of your letter.
+    Make sure you are showing the four Advanced configuration parameters (see widget menu) on the right side of the widget.
+    If the signature does not render on the page the way you would like, try adjusting the four parameters and then press the Preview button again to see how it will look with the new settings.
+    You can adjust the spacing above and below the signature,
+    You can also adjust the scaling (width) and placement (shift) for the signature.
+   </para><para>
+    When the signature renders the way you want, make sure you use the Save Signature option to save all settings under a tag name.
+   </para>
+ </sect1>
+
+ <sect1>
+  <title>Advanced Fields</title>
+   As mentioned, there are four additional fields that do not normally show on the
+   screen and which affect the way your electronic signature is rendered
+   on the page.
+
+   <variablelist>
+    <varlistentry>
+      <term>Above:</term>
+      <listitem>
+       This specifies the amount of space between the closing greeting
+       (Sincerely,) and the centerline of the signature.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature "over-write" the other text on the page so it will look more natural.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Below:</term>
+      <listitem>
+       This specifies the amount of space between the centerline of the 
+       signature and the name/title that comes under it.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature "over-write" the other text on the page so it will look more natural.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Shift:</term>
+      <listitem>
+       This specifies the amount of space between the left edge of the closing greeting
+       (Sincerely,) and the centerline of the signature.
+       Because it measures off the centerline of the signature, this allows you to have your
+       signature hang out over the left side of the margin so it will look more natural.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Width:</term>
+      <listitem>
+       This specifies the overall width of the signature on the page.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+ <sect1>
+  <title>Sharing Signature Files</title>
+  <para>
+   Sometimes you may want to give a signature file to an assistant who will
+   be formatting correspondence for you.
+   You can only do this after creating the file first under your own login.
+   Then, use the Export Signature option to save your signature to a file
+   you will specify in the file system.
+   Then have your assistant use the Import Signature option to load the
+   file you saved, and then use the Save Signature option to save the
+   signature with an appropriate tag name.
+  </para>
+ </sect1>
+
+</article>

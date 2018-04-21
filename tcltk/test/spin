@@ -1,0 +1,32 @@
+#!/usr/bin/wish
+#include(Copyright)
+#TODO:
+#- 
+
+package require wylib
+
+# Test mcmenu
+#----------------------------------------------------
+dew::dew .e1 ent {Entry 1:} -textvariable v1
+dew::dew .e2 ent {Entry 2:} -textvariable v2
+dew::dew .e3 ent {Entry 2:} -textvariable v3
+
+dew::dew .e4 ent {Entry 4:} -spin {-init 2}		;#-textvariable v4
+dew::dew .e5 ent {Entry 5:} -textv v5 -spin {-valid {1 10}} -width 4 -justify r
+dew::dew .e6 ent {Entry 6:} -textv v6 -spin {enum {Kyle Julee Riley Jonah Hannah}}
+dew::dew .e7 ent {Entry 6:} -textv v7 -just r -init 2.50 -spin {float {0.00 3.90} -inc 0.10}
+pack .e1 .e2 .e3 .e4 .e5 .e6 .e7 -side top -fill both -expand yes
+
+foreach i {e1 e2 e3 e4 e5 e6 e7} {
+    bind .$i <<Modified>> {puts "modified: %W [%W modified]"}
+}
+
+bind .e3 <Button-3>	{set ::v3 [dates::getmday Birthday: $::v3]}
+set v3 [join [lrange [split [date::date] -] 1 end] -]
+
+#wm geometry . +100+366
+
+button .br -text Reset -command {
+    foreach i {.e1 .e2 .e3 .e4 .e5 .e6 .e7} {$i init}
+}
+pack .br -side bottom -fill x

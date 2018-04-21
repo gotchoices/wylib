@@ -1,0 +1,36 @@
+#!/usr/bin/wish
+#include(Copyright)
+#Test sizer.tcl widget
+package require wylib
+
+set args {-f {a -sort ascii} -f b -f c -f {d -hide 1} -f e -f {f -inv 1}}
+
+#set t [toplevel .m1]
+set t {}
+set tl {.}
+wm geometry $tl 550x400
+
+frame $t.top -bg pink -height 100 -width 100
+eval mlb::mlb $t.mlb2 $args
+
+sizer::sizer $t.sz $t.top $t.mlb2 -size 4 -orient h
+
+eval mlb::mlb $t.top.ll $args
+#label $t.top.ll -text Huh	-bg yellow
+label $t.top.ul -text Hi	-bg blue
+label $t.top.ur -text Ho	-bg green
+label $t.top.lr -text Hey	-bg red
+
+pack $t.top	-side top	-fill both
+pack $t.sz	-side top	-fill x
+pack $t.mlb2	-side top	-fill both	-exp 1
+
+grid propagate $t.top 0
+grid $t.top.ll		-row 2 -column 1	-sticky news
+grid $t.top.ul		-row 1 -column 1	-sticky news
+grid $t.top.ur		-row 1 -column 2	-sticky news
+grid $t.top.lr		-row 2 -column 2	-sticky news
+grid rowconfigure $t.top 2 -weight 1
+grid columnconfigure $t.top 1 -weight 1
+
+#$t.top.ll configure -height 80 -width 300

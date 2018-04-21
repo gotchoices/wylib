@@ -1,0 +1,493 @@
+DBE: DataBase Editor widget
+
+OBSOLETE -- this needs to be re-written
+
+The dbe gigawidget presents a collection of dew widgets in a frame where
+their contents can be viewed and modified.  It is generally used to edit
+database records but can be used to edit any set of data fields that go
+together somehow.
+
+Generally, a dbe is linked to a dbp widget or some similar mechanism where a
+database record can be singled out and loaded into the dbe.  From there, the
+user may want to edit certain fields and then update those changes back to
+the database.  Using built-in functions, the user can also create new records
+or delete existing records.
+
+Each data field in the dbe is identified by a tag.  This is normally the same
+as the name of the field in the database table (but that can be overridden).
+
+A dbe generally consists of a container frame, a title bar (see mbar widget),
+and one or more inner frames that contain dew's to display the data fields.
+You should be able to use any geometry manager (pack, place or grid) to locate
+the dew's within the frame.  The default behavior is to use grid.
+
+External Procedures:
+------------------------------------------
+dbe::dbe {w args}		Creates a new dbe widget
+    All arguments not among those enumerated below are passed along to the
+    creation of a frame to contain the dbe.  If the frame already exists, the
+    program will attempt to configure it and use it.
+
+Args:
+    w:	The name of the new widget to create
+    
+Shortcuts:	table, pkey, text
+
+Switches:
+    -table	Specifies the name of the database table or view this widget
+	accesses.  This can be ommitted if the dbe will be used only to edit
+	program data.
+	
+    -pkey	Specifies the name of the fields in the database table that
+	constitute the primary key.  This is a set of fields whose values
+	uniquely identify a record.  If the table is specified, it is a
+	requirement to have a primary key field.  If none is specified, the
+	program will attempt to find a field in the database called oid or
+	_oid.  If none exists, an error will be generated.
+
+    -menu	Specifies arguments to be used for a menubutton that goes in
+	the title bar.  See the syntax for the -mb switch in the mbar widget
+	for details on this syntax, but it generally consists of a text
+	string for the button and a help message.
+    
+    -and	Specifies an SQL expression to include in the "where clause"
+	when a record is loaded, updated, or deleted.
+    
+    -auto	If a dbp is associated with this dbe and this switch is true
+	the dbp will be reloaded when a record is updated, added, or deleted.
+	This is helpful to refresh the preview to show the latest changes.
+    
+    -nulemp	If this is true, fields that are empty will be skipped over
+	when inserting or written as a null when updating the database.  If
+	it is false, the field will be written as an empty string (this will
+	cause a runtime error on a numeric field).
+	
+    -pksep	This specifies a character to use as a separator between
+	field values when displaying the currently loaded primary key.  It
+	is set by default to a space.  Sometimes it is useful to set this
+	to a '-' or something similar.
+    
+    -preclear	If true, the widget will execute a "clear" command right 
+	after it is created.  This will reset all the data fields to their
+	default values.
+
+    -pwidget	Specify a list of dbp widget names.  If specified, these dbp's
+	will be reloaded according to the state of the "auto" switch.
+
+    -ifocus	Specify tag of a field to focus on after doing a clear.
+    
+    -ldrec.pst	The value specifies a command to execute each time after a
+	record is loaded into the widget.
+
+    -adr.<xyz>	Specify certain default arguments to be supplied to the
+	"adr" widget command.  <xyz> may be any of the following: 
+	pre, pst, prompt, msg, reload.
+	See the adr widget command for details about what each switch does.
+
+    -clr.<xyz>	Specify certain default arguments to be supplied to the
+	"clr" widget command.  <xyz> may be any of the following: 
+	pre, pst, prompt, msg.
+	See the clr widget command for details about what each switch does.
+
+    -upr.<xyz>	Specify certain default arguments to be supplied to the
+	"upr" widget command.  <xyz> may be any of the following: 
+	pre, pst, prompt, msg, sql, auto.
+	See the upr widget command for details about what each switch does.
+
+    -dlr.<xyz>	Specify certain default arguments to be supplied to the
+	"dlr" widget command.  <xyz> may be any of the following: 
+	pre, pst, prompt, msg, sql, clear, auto.
+	See the dlr widget command for details about what each switch does.
+
+    -f		Each time this field is invoked, the arguments are passed
+	to the "f" widget command, causing a field to be created (or
+	configured, if it already exists).  See the "f" widget command for
+	more details.
+
+    -m		Each time this field is invoked, the arguments are passed
+	to the "m" widget command, causing a menu item to be created (or
+	configured, if it already exists).  See the "m" widget command for
+	more details.
+
+Widget Command {widget_name command args}:
+------------------------------------------
+If the command argument is other than what is enumerated below, the command
+is checked to see if it is the name of a dbe field.  If so, the arguments
+are passed down to the dew for that field.  Otherwise, the arguments are
+passed to the underlying frame widget.
+
+Command:
+    w		Return the name of the widget.
+
+--- vvv ---
+
+insert widget commands here
+    btag	The tag name to identify the button.  If this is one of the
+    		following reserved words, the button will trigger the
+    		respective built-in function:
+    		    addrec
+    		    updrec
+    		    delrec
+    title	The string that will display on the button
+    
+    In addition, you may specify command line switches with values to set 
+    other characteristics of the button:
+
+    gmc		Geom manager cmd for this button in button lines
+    
+    prompt	Ask before executing the associated command
+    hide	Don't show this button (hotkey only)
+    help	Display this help text over the button
+    s		Display button in this subfield
+    pre		Execute this command before allowing command to execute.  If
+    		the procedure returns 0, the command will be aborted.
+    post	Execute this command after executing command
+    hotkey	Link this hotkey to the button    
+
+    Any other switches are passed to the button (text, bitmap, command, etc.)
+
+The field switch above is given a list that consists of the following
+arguments in this order:
+
+    ftag	The tag name to identify this field.  This must be unique in
+    		the widget.  If you have two tables with the same field name
+    		that both need to be referenced in the same widget, you must
+    		give them unique names and use the field switch to specify
+    		the name of the field in the database.
+
+    type	Display type must be one of the following:
+	ent	entry field
+	mle	multi-line entry (text box)
+	pdm	pull-down menu
+		For this type, the -data argument must contain a list of
+		values for the pull-down menu.  This is a list of lists that
+		look like:  {value tag title}
+		The value is what will be written to the database in this
+		field if this item is selected.  The tag is what will be
+		displayed on the button.  This may be slightly longer if
+		desired but should still be rather brief.  The title can
+		be much more lengthy and will only appear while making a
+		menu selection.  It will default to the tag if not present.
+	chk	check box
+	inv	totally invisible (still can hold a value)
+	nul	shows title only (no entry)
+
+    size	Normally just an integer specifying the length of the entry.
+    		For mle type, this is of the form x:y where x is the width
+    		and y is the height of the text box.  This is not used for
+    		chk,inv,nul types.
+    		
+    title	The title that will show next to the field
+    
+    In addition, you may specify command line switches with values to set 
+    other characteristics of the field:
+
+    spf		Special chooser for Button-3 (and/or PD button)	menu
+	edw	Open a larger editing window
+	tod	Input today's date
+	uid	Input my user id
+	mdy	Pull up a month-day spinner
+	dat	Pull up a year-month-day spinner
+	cal	Pull up a calendar date selector
+	clc	Pull up a calculator
+	prj	Pull up a project selector
+	emp	Pull up an employee selector
+        fsm	Like scm but the user is forced to select a valid choice
+        	from the menu.
+        scm	Scrolled selector menu.  This opens a selector menu that
+        	allows the user to choose one of a number of choices from a
+        	list.  If the data argument contains a single tag the computer
+        	will look for a predefined list format from among the following:
+        	
+        	state	A list of US states
+        	country	A list of World countries
+        	empl	A list of current employees
+        	
+        	Otherwise, data must contain all the necessary switches to be
+        	passed to a standard scmenu widget (see the scmenu manual).
+
+    data	Some spf functions (and pdm's) require additional data to 
+		specify how they work.  This can be specified by this switch.
+    ro		Prevent the user from typing into this field (default 0)
+    wr		Actually write this field to the database (default 1)
+    hide	Don't display this field
+    help	Display this help text over the field
+    def		Default value to apply when widget cleared
+    tw		Width of the field title
+    s		Specify a subframe (field line) to put this field in.  This is
+		a digit starting at 0 and numbering upward.
+    fkey	This field is a foreign key into a table.  Specify a list
+    		consisting of {fname table alias}.  Fname is the name of the
+    		field in the foreign table.  Table is the name of the foreign
+    		table.  Alias is optional.  If you specify a 0 here, the
+    		normal tendency to create a reference to a separate table
+    		alias will be suppressed.  This is helpful if dependent fields
+    		are updated by a function rather than a join.
+    fdep	This field is not part of the main table but is derived
+		separately (either by a join with another table or by a
+		function).  Specify another field tag here.  This refers to 
+		the field which serves as a link to the other table or to the
+		generated data for this field.  When the referenced field is
+		changed or updated, this field is expected to change too.
+    field	Normally the field tag will refer to the database field name.
+    		If this needs to be overridden, you can specify the real
+    		field name here.  You can also specify a function or a
+    		combination of field names to be used in queries to generate
+    		this field's data (but you should probably be careful to see
+    		that this field can't be written to the database).
+    		
+    		If the expression contains one or more %'s, these will be
+    		replaced by the table alias symbol when the table is queried
+    		(assuming there is a multiple table join being formed).
+    alias	You can specify an alias here to override any default alias
+		that will be generated by the fdep, fkey fields.
+    eoth	Specify any switches you want to be applied to the field entry.
+    tpt		Specify a template this field should be checked against prior
+    		to writing it to the database.  This is normally a structured
+    		list consisting of:
+    		
+    		{templates example dependencies}
+    		
+    		The templates element is a list of regular expressions, any of
+    		which are considered to be a valid value for the field.
+    		
+    		The example is simply a string which can be displayed to the
+    		user if a match is not found to show them what kind of format
+    		is expected.
+    		
+    		The dependencies element is a list consisting of one or more
+    		of the following lists:  {field value}  This will refer to 
+    		another field in the record.  Any templates specified will
+    		only be applied if the other fields specified contain any of
+    		the specified values.  Otherwise the template will be ignored.
+    		If the dependencies element is missing, the template will
+    		always be applied.
+    		
+    		If the template argument has only a single element, it is
+    		assumed to be a tag specifying a built in template.  Currently
+    		defined templates exist for:
+    		
+    		zip	zip codes
+    		phone	phone numbers
+    		email	email addresses
+    		date	ISO format dates
+    		dollar	dollar values
+
+    seq		DB Sequence to apply to this field on inserts (not supported yet)
+    proc	Procedure to apply to this field on writes (not supported yet)
+    nulemp	Do not write this field to the database if it is blank.  On
+    		updates, write a null if the field is blank rather than a
+    		blank string.
+    table	Name of the database table this field refers to (defaults to
+    		the widget table specification)
+    
+    gmc		Geom manager cmd for fields in field lines
+    e_gmc	Geom manager to pack field title/entry elements into fields
+
+    Any other switches should be passed to configure the frame that holds
+    the field title and entry borderwidth, relief, background, etc.
+
+
+------------------------------------------
+Procedure: dbe::ft {t f}
+	This returns the type of a database field (int, varchar, date, etc>)
+Arguments:	
+	t:	The name of the table this field is in.
+	f:	The name of the field.
+------------------------------------------
+Procedure: dbe::q {t f}
+	If the database field specified requires quoting (varchar, date, etc.)
+	a single quote (') will be returned, otherwise, an empty string is
+	returned ({}).
+Arguments:	
+	t:	The name of the table this field is in.
+	f:	The name of the field.
+------------------------------------------
+Procedure: dbe::ldrec {w id args}
+	Loads the specified record from the database into the dbe widget.  
+Arguments:	
+	w:	The widget to load.
+	id:	The value(s) of the primary key for the record.  If there
+		are multiple fields in the key, the values are specified as
+		a list.
+Switches:	
+	-oid	string		default: {}
+		If non-empty, the name of a field to load by rather than 
+		the proper primary key.  This is generally used for loading
+		by the oid.
+	-post	boolean		default: 1
+		Eval the post function if one is defined.
+------------------------------------------
+Procedure: dbe::clear {w args}
+	Clears all fields in the widget, setting them to their default values
+	as defined when the widget was created.  This is invoked by the
+	Clear button if it is created.
+Arguments:	
+	w:	The widget to clear.
+Switches:	
+	-pre	command		default: as defined when button created
+		A command to execute before clearing the widget.  If the
+		command returns true, the clear will proceed, else it will
+		be aborted.
+	-pst	command		default: as defined when button created
+		A command to execute after clearing the widget.
+	-prompt	boolean		default: as defined when button created 
+		Ask the user before clearing.
+------------------------------------------
+Procedure: dbe::pkwhere {w}
+	Returns a where clause that matches the primary key of the currently
+	loaded record.
+------------------------------------------
+Procedure: dbe::delrec {w args}
+	Deletes the currently showing record from the database.  This is
+	invoked by the delrec button if it was created.
+Arguments:	
+	w:	The widget in which to find the record to delete.
+Switches:	
+	-pre	command		default: as defined when button created
+		A command to execute before doing the delete.  If the
+		command returns true, the delete will proceed, else it will
+		be aborted.
+	-pst	command		default: as defined when button created
+		A command to execute after doing the delete.
+	-prompt	boolean		default: as defined when button created 
+		Ask the user before deleting.
+	-sql	boolean		default: 0
+		Just return the SQL that would do the delete.
+	-clear	boolean		default: 1
+		Clear the widget after the delete
+	-auto	boolean		default: as defined when button created 
+		Reload any associated preview widgets after the delete.
+------------------------------------------
+Procedure: dbe::addrec {w args}
+	Add the currently showing data as a new record in the database.  
+	This is invoked by the addrec button if it was created.
+Arguments:	
+	w:	The widget in which to find the record to add.
+Switches:	
+	-pre	command		default: as defined when button created
+		A command to execute before doing the insert.  If the
+		command returns true, the insert will proceed, else it will
+		be aborted.
+	-pst	command		default: as defined when button created
+		A command to execute after doing the insert.
+	-prompt	boolean		default: as defined when button created 
+		Ask the user before insert.
+	-sql	boolean		default: 0
+		Just return the SQL that would do the insert.
+	-reload	boolean		default: as defined when button created 
+		After the insert, load the newly created record back into
+		the widget.  This is helpful when certain parts of the
+		record are created in the backend (like a serialized
+		primary key).
+	-auto	boolean		default: as defined when button created 
+		Reload any associated preview widgets after the delete.
+------------------------------------------
+Procedure: dbe::updrec {w args}
+	Updates the currently showing record.  Any changes to the record
+	will be written to the database.  This is invoked by the delrec 
+	button if it was created.
+Arguments:	
+	w:	The widget in which to find the record to update.
+Switches:	
+	-pre	command		default: as defined when button created
+		A command to execute before doing the update.  If the
+		command returns true, the update will proceed, else it will
+		be aborted.
+	-pst	command		default: as defined when button created
+		A command to execute after doing the update.
+	-prompt	boolean		default: as defined when button created 
+		Ask the user before updating.
+	-sql	boolean		default: 0
+		Just return the SQL that would do the update.
+	-auto	boolean		default: as defined when button created 
+		Reload any associated preview widgets after the update.
+------------------------------------------
+Procedure: dbe::b_config {w btag args}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::b_cget {w btag option}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::b_add {w btag args}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::f_config {w ftag args}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::f_cget {w ftag option}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::f_add {w ftag args}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+Procedure: dbe::f_clear {w ftag}
+Arguments:	
+	w:	
+Switches:	
+------------------------------------------
+
+--- ^^^ ---
+
+    cget, configure	These are just like standard TK behavior.  Any
+	queries not relevant at the dew level are passed down to the
+	underlying entry widget.
+    
+XXXXXXXX
+
+
+
+
+Examples:	
+------------------------------------------
+
+When accessing fields that really belong to another table, it is possible to
+note the field in our native table and how the foreign field depends on it.
+You can cause a subquery to be generated to update the foreign field or you
+can cause a join between the two tables.
+
+The join method is probably better SQL but it causes a problem if the native
+field (foreign key) is ever null because with a standard (inner) join, the
+record will come up as "record not found."  So if it is ever possible that
+the foreign data will be non-existent, you should always use the subquery
+method.
+
+The foreign field is implemented usign the -fkey, -field, and -fdep switches.
+
+Here's an example of using a subselect within the parameter section.  Note
+that proj_id is the field in our native table that is a foreign key into the
+proj table.  We expect project_name to update on the screen any time proj_id
+is updated.
+
+    -f {proj_id		ent 5 	{Project:}	-s 2 -spf prj}\
+    -f {project_name 	inf 20 	{:} 		-s 2 -ro 1 -wr 0 -fdep proj_id -field {(select title from proj where proj_id = %proj_id)}}\
+
+Here's an example of using a join within the parameter section.  Note we have
+to provide the -fkey switch to the foreign key field so the library will know
+how to do the join.
+    -f {proj_id	    ent     5       {Project:}	-s 2 -spf prj -fkey {proj_id proj}}\
+    -f {project_name    inf     20      {:}     -s 2 -ro 1 -wr 0 -fdep proj_id -field %title}\
+
+
+Packing dbe & dbp
+------------------------------------------
+When packing a dbe - never expand it
+When packing a dbp - always expand it
+
+For example:
+
+pack $::PIE $::POMTRE -side top -fill both  
+pack $::PIP $::POMTRP $::WMMTRP -side top -fill both -expand yes
+    

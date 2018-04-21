@@ -1,0 +1,58 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+set oper {\
+ -o {eq	Equals		-h {The left and right values are exactly the same}}\
+ -o {cn	Contains	-h {The value on the right can be found somewhere inside the value on the left}}\
+ -o {re	Matches		-h {The value on the left matches the regular expression (.*[]) on the right}}\
+ -o {ex	Exists		-case 0 -rhs 0 -val 0 -h {The field specified exists and has a valid value}}\
+}
+
+set flds {\
+ -f {tto To:		-h {The intended recipient of the email}}\
+ -f {tfr From:		-h {Who sent the email}}\
+ -f {tsb Subject:	-h {The email's subject line}}\
+ -f {tbd Body:		-h {The text content (not enclosures) of the email}}\
+ -f {tat Attachment:	-h {Fields belonging to an attachment}}\
+ -f {ato To:		-p tat -h {The intended recipient of the email}}\
+ -f {afr From:		-p tat -h {Who sent the email}}\
+ -f {asb Subject:	-p tat -h {The email's subject line}}\
+ -f {abd Body:		-p tat -h {The text content (not enclosures) of the email}}\
+}
+
+# Close an existing toplevel window
+#------------------------------------------
+proc closeit {w tag} {
+    variable cfig
+    eval pref::auto $tag [$w.f pref]		;#save prefs
+    destroy $w
+}
+
+set tag loglst_test
+set w [uwin .$tag]				;#create unique window name
+
+toplevel $w
+#    wm transient $w .
+wm geometry $w 450x200
+wm title $w {Loglst Test:}
+
+#loglst::loglst $w.f
+eval loglst::loglst $w.f tto eq $oper $flds
+
+#frame $w.b
+#button $w.b.more -text More -command "$w.f add" -help {Add more comparison clauses}
+#button $w.b.less -text Fewer -command "$w.f delete" -help {Remove the last comparison clause}
+#button $w.b.clear -text Clear -command "$w.f clear" -help {Reset to the default state}
+#pack $w.b -side bottom -fill x -exp 1
+#pack $w.b.more $w.b.less $w.b.clear -side left -fill x -exp 1
+
+pack $w.f -fill both -exp 1 -side top
+
+wm protocol $w WM_DELETE_WINDOW "closeit $w $tag"
+eval $w.f pref [pref::auto $tag]	;#restore preferences
+dia::place $w -xo -100 -yo -100
+    
+#$w.f menu file mi sep
+#$w.f menu file mi z Close "loglst::closeit $w $tag" -help {Close this search window} -hot C-w
+#$w.f add

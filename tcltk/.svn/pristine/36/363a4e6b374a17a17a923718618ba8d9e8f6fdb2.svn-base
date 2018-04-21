@@ -1,0 +1,2 @@
+#define	PACKAGE		"wylib"
+#define VERSION		"0.33"

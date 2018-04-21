@@ -1,0 +1,258 @@
+package provide wylib 0.20	;#Oct 2001
+#Bring up a listbox with multiple items to choose from
+#The choice in process shows up in an entry at the bottom
+#------------------------------------------
+#Copyright (C) 1999-2003 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software. You can redistribute it and/or modify it under the terms of the Open Public License as published by PIC Development Group and the Open Solutions Group.
+#The program is distributed with the hope that it will be useful and beneficial, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCAHANTABILLITY or FITNESS FOR A PARTICULAR PURPOSE. See the license agreement for further details.
+#You should have received a copy of the Open Public License along with this program. If you did not, please visit www.opl.org to obtain a copy.
+#TODO:
+#- Use mlb for listbox
+#- Implement nested widgets
+#- search only in token or on whole line
+#- 
+
+option add *Scmenu*Label.font {Helvetica 12 bold} widgetDefault
+option add *Scmenu*Listbox.font {Courier 12} widgetDefault
+option add *Scmenu*Listbox.width 30 widgetDefault
+option add *Scmenu*Listbox.height 15 widgetDefault
+
+namespace eval scmenu {
+    namespace export top scmenu bindf
+    variable cfig		;#keep configuration options
+    variable ev			;#characters typed into a forced entry
+    variable v			;#values in process
+
+    set cfig(as) {{key NaK} {list {}} {expr {}} {eval {}} {dest {}} {format {%s}} {force no} {width {}} {height {}} {title {Select:}} {token 0} {delim " \t"} {stok 1} {post {}} {wait 0} {xoff -40} {yoff -20}}
+}
+
+#Create new binding class that doesn't allow direct modifications of an entry
+foreach e [bind Entry] {
+    if {[lsearch {<<Copy>> <Tab> <B2-Motion> <Button-2> <Control-Key-backslash> <Control-Key-slash> <Key-Right> <Key-Left> <ButtonRelease-2> <Control-Button-1> <ButtonRelease-1> <B1-Enter> <B1-Leave> <Triple-Shift-Button-1> <Double-Shift-Button-1> <Shift-Button-1> <Tripple-Button-1> <Double-Button-1> <B1-Motion> <Button-1>} $e] < 0} continue   
+#puts "bind Fentry $e [bind Entry $e]"
+    bind Fentry $e [bind Entry $e]
+} 
+
+# Set a binding on an entry to make it use a mandatory scrolled menu
+#------------------------------------------
+proc scmenu::bindf {w entry args} {
+    variable ev
+#puts "bt:[bindtags $entry]"
+    bindtags $entry "$entry Fentry . all"
+    bind Fentry <Key> {scmenu::launchf %W %A}
+    set ev(args$entry) "-dest $entry -force yes $args"
+#puts "args:$ev(args$entry)"
+    set ev(w$entry) $w
+    set ev(ai$entry) {}
+}
+
+# Launch an scmenu on a forced entry field
+#------------------------------------------
+proc scmenu::launchf {en args} {
+    variable ev
+#puts "Launch:$en $args"
+    if {[winfo exists $ev(w$en)]} {
+        if {$args != {}} {
+#puts "$ev(w$en).ef.e insert insert $args"
+            $ev(w$en).ef.e insert insert $args
+            locate $ev(w$en)
+        }
+    } else {
+        if {$args != {}} {set args "-key $args"}
+        focus $en
+        eval scmenu::top $ev(w$en) $args $ev(args$en)
+    }
+}
+
+# Load the listbox with its values
+#------------------------------------------
+proc scmenu::load {w} {
+    variable cfig
+    variable v
+
+    if {$cfig(expr$w) != {}} {		;#get list from an expression
+        set list [expr $cfig(expr$w)]
+    } elseif {$cfig(eval$w) != {}} {		;#get list from a eval
+        set list [eval $cfig(eval$w)]
+    } else {
+        set list $cfig(list$w)
+    }
+#puts "list:$list format:$cfig(format$w)"
+    $w.lb delete 0 end
+    set j 0; foreach i $list {		;#for each item in the list
+        if {$cfig(format$w) != {}} {		;#if a format string given
+            $w.lb insert end [eval "format \{$cfig(format$w)\} $i"]	;#format it
+        } else {
+            $w.lb insert end $i		;#else insert it as is
+        }
+    }
+}
+
+# Get selected item in the listbox and load it into the entry field
+#------------------------------------------
+proc scmenu::select {w} {
+    variable v
+    set line [$w.lb get [$w.lb index active]]
+    set v($w) [token $w $line]
+}
+
+# Get the appropriate token from a line
+#------------------------------------------
+proc scmenu::token {w line} {
+    variable cfig
+    if {$cfig(token$w) == {all}} {		;#use last token only
+        set result $line
+    } else {				;#else use nth token
+        set result [lindex [split $line $cfig(delim$w)] $cfig(token$w)]
+    }
+#puts "Token token:$cfig(token$w) line:$line: result:$result:"
+    return $result
+}
+
+#Check after each key that is entered
+#------------------------------------------
+proc scmenu::locate {w} {
+    variable cfig
+    variable v
+#puts "locate:$v($w)"
+    set line [search $w $v($w) -start -1]
+}
+
+# Search the listbox for a line that matches a pattern
+#------------------------------------------
+proc scmenu::search {w pat args} {
+    variable cfig
+    variable v
+    set lb $w.lb
+    argproc ca(\$s) $args {{start {}} {back {no}} {stok $cfig(stok$w)}}
+#puts "stok:$cfig(stok):$ca(stok):"
+    if {$pat == {}} return
+    if {$ca(start) != {}} {
+        set line $ca(start)
+    } elseif {[set sels [$lb curselection]] != {}} {  ;#use currently selected line
+        set line [lindex $sels 0]
+    } else {
+        set line [$lb index active]             ;#or active line
+    }
+    if {$ca(stok)} {set p {^}} else {set p {}}
+    if {$ca(back)} {set inc -1} else {set inc 1}
+    for {set i [expr $line + $inc]} {$i < [$lb index end] && $i >= 0} {incr i $inc} {
+        set s [$lb get $i]
+        if {$ca(stok)} {set s [token $w $s]}
+#puts "i:$i pat:$p$pat: s:$s:"
+        if {[regexp -nocase -- $p$pat $s]} {
+            set line $i
+            break  
+        }
+    }
+    $lb selection clear 0 end; $lb selection set $line
+    $lb activate $line
+    $lb see $line
+    return $line
+}
+
+# Make multiple choice select box for choosing from a list of values
+#------------------------------------------
+proc scmenu::scmenu {w args} {
+    variable cfig
+    variable v
+    if {$args != {}} {argproc cfig(\$s$w) $args $cfig(as)}
+
+    if {![winfo exists $w]} {frame $w -class Scmenu}
+    frame $w.ef			;#frame for entry
+    label $w.ef.t -text $cfig(title$w)
+    entry $w.ef.e -textvar scmenu::v($w) -help {Type your selection in this entry}
+    frame $w.sf 		;#frame for searching
+    label $w.sf.t -text {Search:}
+    entry $w.sf.e -textvar scmenu::v(search$w) -help {Type in a string to search for in the list}
+    
+    pack $w.ef $w.sf -side top -fill x
+    pack $w.ef.t $w.sf.t -side left
+    pack $w.ef.e $w.sf.e -side right -fill x -expand yes
+    
+    scrollbar $w.ys -command "$w.lb yview"
+    pack $w.ys -side right -fill y
+    set other {}
+    if {$cfig(height$w) != {}} {append other " -height $cfig(height$w)"}
+    if {$cfig(width$w) != {}} {append other " -width $cfig(width$w)"}
+    eval listbox $w.lb -yscroll \{$w.ys set\} -relief sunken -setgrid yes -selectmode single -help \{The list of options you may choose from\} $other
+    pack $w.lb -side left -fill both -expand yes
+
+    bind $w <Key> "$w.ef.e insert insert %A; scmenu::locate $w"	;#some keys get lost while window being created
+    bind $w.lb <ButtonRelease-1>	"scmenu::select $w"
+    bindtags $w.lb "Listbox $w.lb"	;#must select active before doing load
+    bind $w.ef.e <Key>			"if {\"%A\" != {{}}} \"scmenu::locate $w\""
+    bindtags $w.ef.e "Entry $w.ef.e"	;#must insert chars before calling key
+    bind $w.sf.e <Return>		"scmenu::search $w \$scmenu::v(search$w) -stok 0"
+    bind $w.sf.e <Control-Return>	"scmenu::search $w \$scmenu::v(search$w) -back yes -stok 0"
+    bindtags $w.sf.e "Entry $w.sf.e"	;#must insert chars before calling key
+}
+
+# Make multiple choice select box for choosing from a list of values
+#------------------------------------------
+proc scmenu::top {w args} {
+    variable cfig
+    variable v
+    
+    argproc cfig(\$s$w) $args $cfig(as)
+    if {$cfig(key$w) != {NaK} && ![string is print -strict $cfig(key$w)]} return	;#return if non-printable char got us here
+    if {[winfo exists $w]} {return}
+    set dest $cfig(dest$w)
+    set cfig(oldfocus$w) [focus]
+
+#    catch {destroy $w}				;#destroy any predecessor
+    toplevel $w -class Scmenu			;#make the window
+    wm transient $w [winfo parent $w]		;#make it a child window
+    frame $w.b; pack $w.b -side bottom -fill x	;#frame for buttons
+    button $w.b.can -text Cancel -command "scmenu::cleanup $w 0" -help {Close this dialog without making a selection}
+    button $w.b.ok  -text OK     -command "scmenu::cleanup $w 1" -bd 4 -pady 1 -help {Accept the current list item and close this dialog}
+    pack $w.b.ok $w.b.can -side left -fill x -expand yes
+    set v($w) {}
+    scmenu $w
+    focus $w.ef.e
+    load $w
+
+    bind $w.lb <Double-1>		"$w.b.ok invoke"
+    bind $w.ef.e <Return>		"$w.b.ok invoke"
+    bind $w.ef.e <Tab>			"$w.b.ok invoke; after idle \"event generate $scmenu::cfig(oldfocus$w) <Tab>\""
+    bind $w.ef.e <Escape>		"$w.b.can invoke"
+
+    if {$cfig(key$w) != {NaK}} {	;#process initial keystroke
+        $w.ef.e insert insert $cfig(key$w)
+        locate $w
+    } else {
+        if {[string range $dest 0 0] == {.}} {	;#if writing to an entry
+            set v($w) [$dest get]		;#get initial value
+        } elseif {$dest != {}} {		;#if a variable
+            upvar $dest lest			;#link to it
+            if {![info exists lest]} {set lest {}}	;#create it if it doesn't exist
+            set v($w) $lest				;#get initial value
+        }
+        $w.ef.e selection range 0 end
+    }
+    dia::place $w -xo $cfig(xoff$w) -yo $cfig(yoff$w)	;#place our toplevel near cursor
+    if {$cfig(wait$w)} {tkwait window $w; return $v(status$w)}
+}
+
+# Cleanup after a toplevel window button is pushed
+#------------------------------------------
+proc scmenu::cleanup {w status} {
+    variable cfig
+    variable v
+
+    set dest $cfig(dest$w)
+    if {$cfig(force$w)} {select $w}
+    if {$status && $dest != {}} {
+        if {[string range $dest 0 0] != {.}} {	;#if writing to a variable
+            upvar $dest var		;#write to a local in level above
+            set var $v($w)
+        } else {
+            $dest delete 0 end
+            $dest insert 0 $v($w)
+        }
+    }
+    set v(status$w) $status
+    destroy $w
+    if {$cfig(post$w) != {}} {eval $cfig(post$w)}
+    catch {focus -force $cfig(oldfocus$w)}
+}

@@ -1,0 +1,14 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+tim::tim .t1 -bd 2 -relief raised
+pack .t1 -side top -fill both -exp 1
+
+bind .t1 <<Ok>> {puts OK}
+
+set ::value [date::tim]
+while 1 {
+    tim::dia ::value "Select a time: "
+    puts "value:$::value"
+}

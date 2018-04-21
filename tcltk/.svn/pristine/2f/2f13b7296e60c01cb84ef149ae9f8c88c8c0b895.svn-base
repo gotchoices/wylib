@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article id="Wylib Pref">
+ <articleinfo>
+  <title>Wylib Paragraph Widget</title>
+  <publisher>
+   <publishername>WyattERP</publishername>
+   <address>
+    <otheraddr>Provo, Utah</otheraddr>
+    <otheraddr>
+     <ulink url="http://www.wyatterp.com/">WyattERP.com</ulink>
+    </otheraddr>
+   </address>
+  </publisher>
+ </articleinfo>
+
+ <sect1>
+  <title>Introduction</title>
+  <para>
+   The paragraph Embedded Text Widget (ETW) allows you to produce a number
+   of paragraphs within your document that are formatted like an outline.
+  </para><para>
+   For example, sometimes it is desirable to create a set of numbered
+   paragraphs. 
+   Although this widget does not do automatic numbering, it does take care
+   of indenting the paragraphs correctly.
+  </para><para>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Standard Fields</title>
+
+   <variablelist>
+    <varlistentry>
+      <term>(Indent level)</term>
+      <listitem>
+       <para>
+        This entry contains a number and indicates how many levels deep this
+        paragraph should be intended.
+        For example, the first paragraph, and all paragraphs like it should 
+        be numbered "1".
+        Sub-paragraphs of these paragraphs should be numbered "2".
+        Sub-sub-paragraphs should be numbered "3", etc.
+       </para><para>
+        These indent levels can be incremented or decremented with the spinner buttons just to the right of the entry.
+       </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>(Title)</term>
+      <listitem>
+       <para>
+        This entry (the larger one on the right) can contain an optional
+        title that will be shown at the beginning of the paragraph.
+        The title, if present, will hang out to the left of the paragraph
+        when formatted.
+       </para><para>
+        For example, main paragraphs, might have titles: 1., 2., 3., etc.
+        For example, sub-paragraphs, might have titles: a., b., c., and so on.
+       </para>
+      </listitem>
+    </varlistentry>
+
+   </variablelist>
+ </sect1>
+
+</article>

@@ -1,0 +1,11 @@
+#!/usr/bin/wish
+#include(Copyright)
+
+package require wylib
+
+text .t1 -width 40 -height 10
+.t1 insert 0.0 "Now is the time for\nall good men to come\nto the aid of their country."
+search::search .s1 -top 0 -par .t1
+pack .t1 .s1 -side top
+
+#search::search .s2 -par .t1

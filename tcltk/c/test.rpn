@@ -1,0 +1,40 @@
+#!/usr/bin/tclsh
+#include(Copyright)
+
+if {$::tcl_platform(pointerSize) == 8} {
+    load ./libwylib-x86_64.so
+} else {
+    load ./libwylib.so
+}
+
+puts {}
+puts "This should = 7.00:"
+puts "              [rpn fix2 3 4 +]"
+
+puts {}
+puts "This should = 7.00:"
+puts "              [rpn {fix2 3 4 +}]"
+
+puts {}
+puts "This should = PI:"
+puts "              [rpn {fix32 _PI}]"
+
+#puts {}
+#rpn {fix2}
+#puts "This should yield an illegal character:"
+#puts "[rpn {4 a +}]
+
+puts {}
+rpn {fix2}
+puts "This should yield 7.00"
+puts "                  [rpn {4 3 + st:joe clr 2 2 + joe}]"
+
+puts {}
+rpn {fix2}
+puts "This should yield an improper numeric value:"
+puts [rpn 7d]
+
+puts {}
+rpn {fix2}
+puts "This should yield an illegal memory location:"
+puts [rpn {4 3 + st:1000}]

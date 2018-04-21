@@ -1,0 +1,40 @@
+_fmtver {Noedit Version 0.50} 2
+_version {1.4} 0
+_ntype {oper} 0
+mark insert 1.0 _subw psm:0 a:d92 window psm:0 1.0 text {
+} 1.1 _subw cmt:0 {{TODO:
+1. We might want to fix this.
+2. It would be good to add some things.
+3. We need to redo the spreadsheet.
+4. Check the price margins.
+}} window cmt:0 2.0 text {
+} 2.1 text {
+} 3.0 _subw sec:intro {1 Introductionn} window sec:intro 4.0 tagon s_bold 4.1 text {
+} 4.1 text {Here's the firsst sentence.} 5.0 tagoff s_bold 5.27 text {  It is in the first paragraph.  And this sentence will go long enough to wrap so we can see how that workes.  It looks pretty good so far.  I'm getting pretty excited about how this thing is panning out.
+} 5.27 text {
+} 6.0 text {Here is a second sentence too.
+} 7.0 _subw qcc:3 {{Fix stuff}} window qcc:3 8.0 _subw qcc:4 {{Check stuff out}} window qcc:4 8.1 text {
+} 8.2 text {
+} 9.0 mark current 10.0 _subw tab:test {{A big table} Figure: 2 2 {{Hi there} {big boy}} {{{} 16} {{} 16}} 0} window tab:test 10.0 text {
+} 10.1 _subw tab:atab {{} Plain: 3 3 {{This is a} {relatively plain table} {on the page}} {{{} 16} {{} 16} {{} 16}} 0.5} window tab:atab 11.0 text {
+} 11.1 text {
+} 12.0 text {Here's a third line.  This stuff is } 13.0 _subw fmt:1 {{Copyright Symbol}} window fmt:1 13.36 text { Action Target Inc.  This is in section } 13.37 _subw ref:2 intro window ref:2 13.77 text {.  Please see figure } 13.78 _subw ref:3 tfig window ref:3 13.99 text {.  Please see table } 13.100 _subw ref:4 bom window ref:4 13.120 text { for a Bill of Materials.
+} 13.121 _subw fmt:0 {{New Page}} window fmt:0 14.0 text {A bit more text here.
+} 14.1 text {
+} 15.0 _subw bom:bom {bom {One Level} none {} {The Bill of Materials}} window bom:bom 16.0 text {
+} 16.1 _subw fig:tfig {a:d92 Width: 5i Portrait {A figure or two} assy {} fig} window fig:tfig 17.0 text {
+} 17.1 text {Here's } 18.0 tagon s_bold 18.7 text another 18.7 tagoff s_bold 18.14 text { line or twwo.
+} 18.14 _subw qcc:0 {{Verify the leads are trimmmed as noted above}} window qcc:0 19.0 text {
+} 19.1 _subw qcc:2 {{Here's another check}} window qcc:2 20.0 text {
+} 20.1 text {And some more text after them.
+} 21.0 text {
+} 22.0 _subw sec:sec2 {1 Procedure} window sec:sec2 23.0 text {
+} 23.1 text {Here's some stuff in another section.
+} 24.0 _subw sec:proc1 {2 Preparation} window sec:proc1 25.0 text {
+} 25.1 text {Get ready, get set.
+} 26.0 text {
+} 27.0 _subw sec:proc2 {2 Execution} window sec:proc2 28.0 text {
+} 28.1 text {Go.
+} 29.0 text {
+} 30.0 _subw fig:fig1 {b:hx Width: 3.5i Portrait {Another Figure} assy {} fig} window fig:fig1 31.0 text {
+} 31.1 

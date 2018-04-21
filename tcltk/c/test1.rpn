@@ -1,0 +1,38 @@
+#!/usr/bin/tclsh
+#include(Copyright)
+
+if {$::tcl_platform(pointerSize) == 8} {
+    load ./libwylib-x86_64.so
+} else {
+    load ./libwylib.so
+}
+
+set hypot {sqr xch sqr + sqrt}	;#form the hypotenuse from two sides
+
+puts {}
+puts "This should = 7.00:"
+puts "              [rpn {fix2 3 4 +}]"
+
+puts ""
+puts "This should = 21.000000000:"
+puts "              [rpn fix9 3 4 + st:tmp clr tmp 3 *]"
+
+puts ""
+puts "This should = 5.00:"
+puts "              [rpn fix2 3 4 $hypot]"
+
+puts ""
+puts "This should = 3.000:"
+puts "              [rpn fix3 3.00 0.00 -]"
+
+puts ""
+puts "This should = 1.41...:"
+puts "              [rpn fix15 1 1 $hypot]"
+
+puts ""
+puts "This should = 27.0000:"
+puts "              [rpn fix4 3 4 + st:tmp clr tmp 3 * st+tmp 1 st-tmp tmp]"
+
+#puts ""
+#puts "This should give error for invalid symbol:"
+#puts "              [rpn 12 st:11]"

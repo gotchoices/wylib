@@ -1,0 +1,12 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+calc::calc .c1
+pack .c1 -side top
+
+set ::value 1234
+while 1 {
+    calc::dia ::value "What is the value: "
+    puts "value:$::value"
+}

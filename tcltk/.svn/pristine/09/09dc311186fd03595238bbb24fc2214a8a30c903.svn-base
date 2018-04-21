@@ -1,0 +1,44 @@
+#!/usr/bin/tclsh
+#include(Copyright)
+if {$::tcl_platform(pointerSize) == 8} {
+    load ./libwylib-x86_64.so
+} else {
+    load ./libwylib.so
+}
+
+#These values are known to cause math errors in the low bits
+set A	1537.44
+set B	 161.40
+set C	1698.84
+
+puts "C:[rpn fix4  $A $B + $C] A+B:[rpn xch]"
+puts "C:[rpn fix14 $A $B + $C] A+B:[rpn xch] diff:[expr $A + $B - $C]"
+
+#Fix still 14
+puts -nonewline "Using rpn:  "
+if {[rpn $A $B + $C =]} {
+	puts "expr:[expr $A + $B] = $C"
+} elseif {[rpn $A $B + $C >]} {
+	puts "expr:[expr $A + $B] > $C"
+} else {
+	puts "expr:[expr $A + $B] < $C"
+}
+
+rpn fix6		;#now rpn should check to 11 digits
+puts -nonewline "Using rpn:  "
+if {[rpn $A $B + $C =]} {
+	puts "expr:[expr $A + $B] = $C"
+} elseif {[rpn $A $B + $C >]} {
+	puts "expr:[expr $A + $B] > $C"
+} else {
+	puts "expr:[expr $A + $B] < $C"
+}
+
+puts -nonewline "Using expr: "
+if {[expr $A + $B == $C]} {
+	puts "expr:[expr $A + $B] = $C"
+} elseif {[expr $A + $B > $C]} {
+	puts "expr:[expr $A + $B] > $C"
+} else {
+	puts "expr:[expr $A + $B] < $C"
+}

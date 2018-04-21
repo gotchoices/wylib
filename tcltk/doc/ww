@@ -1,0 +1,153 @@
+WW: Wyatt Wrappers
+
+Wyatt provides enhanced functionality to each of the native TK widget types.
+This is accomplished by creating a "wrapper" module for each widget type.
+The wrapper is just a set of functions which we install in place of the 
+original TK widgets.  So when you call a standard TK widget, you really get
+the wrapper function.  The wrapper evaluates your commands, processes all the
+enhanced stuff and passes the rest on to the native TK command (which it has
+saved safely away by renaming it with a _w_ on the front of it).
+
+Standard enhancements: (applicable to all (or many) widget wrappers)
+
+    -help	A "help balloon" message which will be shown any time the
+	user waives the mouse over the field for longer than the delay time
+	specified in the wyatt help module.
+	
+	This is applicable to all widget types.
+
+    -initialize	This specifies an initial value the widget will be set to
+	when it is created.  If it is not present, the widget will not be
+	initialized.  Subsequent calls to "initialize" will reset the widget
+	to a reasonable (like blank) value.
+	
+	This is applicable to:
+	checkbutton, entry, 
+	
+    The following widget commands are added/enhanced:
+    
+    w		Returns the name of the widget itself.  This seems to be
+    	not very valuable since the returned value is also passed in as an
+    	argument.  However, it can be handy in some cases as the example
+    	code may show.
+    
+    cget
+    configure	These handle all new switches in the wrapper and then
+	pass the rest down to the native widget.
+    
+
+Button enhancements:
+    The following shortcut arguments are available: text, command, help
+    
+    -rep	This enables automatic repeating of a button.  If you
+	specify a number greater than 1, it specifies the number of 
+	milliseconds between repeats on the button.  A value of 0 disables
+	repeating.  A value of 1 sets the repeat to a reasonable built-in
+	value (180 default).
+
+    -acc	This allows the repeat rate to accelerate.  (It gets faster
+    	the longer you hold the button down.)  With each repeat, the delay
+    	is decreased by this value so a value of 1 or 2 is generally good.
+
+    -min	This specifies the lowest value the repeat delay will get
+	to as a result of accelleration (the fastest it will go).
+
+Label enhancements:
+    The following shortcut arguments are available: text, help
+    
+Radiobutton enhancements:
+    The following shortcut arguments are available: text, variable, help
+
+Entry enhancements:
+    -edwin	If this boolean value is true, a right click on the entry
+	will bring up an edwin text editing box on the contents of the
+	entry.
+
+Menu enhancements:
+    -tag	This is not really a menu switch.  Rather, it applies to
+	menu entries.  Entries may now be referred to by an alpha tag in 
+	addition to the numeric index inherent with TK.  The advantage of
+	the tag is that it will remain associated with the desired menu 
+	entry even if other entries are inserted or deleted from the menu.
+    
+	When creating a menu entry using the menu widget commands "add" or 
+	"insert", you may define a tag for the entry as shown:
+	
+	    .my_menu add command -tag save -label {Save My File}
+	
+	The tag should start with an alphabetic character and should
+	contain only alphanumeric characters.  You should be able to use 
+	the tag anywhere you would normally use an index to refer to the
+	menu item.
+	
+	When adding or inserting menu items, the following shortcut
+	arguments are recognized: tag, label
+	So the following should work too:
+
+	    .my_menu add command save {Save My File}
+	
+	In addition, each tagname you create is added to the list of widget
+	commands for the menu.  So if you call the menu widget command with
+	the name of the tag for the command, the rest of the command will
+	be passed to the entry for execution.  So the following should work
+	the identically:
+    
+            .my_menu save configure -state disabled
+            .my_menu entryconfigure save -state disabled
+    
+	The only widget commands recognized by menu items are:
+	cget and configure.
+
+Menubutton enhancements:
+    The following shortcut arguments are available: text, menu, help
+
+    The following widget commands are added:
+    
+    m		This indicates that the following command should be
+	passed down to the menu associated with this button.  Note that
+	the default behavior is to pass anything other than a cget or
+	a configure down to the associated menu so this should only be
+	needed when doing a cget or configure on the menu.
+	
+	For example if you create a menubutton:
+	
+	    menubutton .b.mb File .b.mb.m
+	
+	You should be able to add an item in any of these ways:
+	    
+	    .b.mb.m add command save {Save My File}
+	    .b.mb m add command save {Save My File}
+	    .b.mb add command save {Save My File}
+	
+	You should also be able to talk to the menu items directly through
+	the menubutton via their tag names as in:
+	
+	    .mb save configure -state disabled
+
+	Note that it is probably a bad idea to use valid menu widget 
+	commands as tags since you won't be able to access the entries
+	directly via their tag widget commands.  Here is a
+	list of tag names to avoid:
+
+	    activate, add, cget, clone, configure, delete, entrycget,
+	    entryconfigure, index, insert, invoke, post, postcascade,
+	    type, unpost, yposition
+
+Text enhancements:
+    -winc	This allows the user to specify a command that can be used
+	to create embedded subwindows inside the text widget.  This is
+	especially important when a delete is done on an embedded window
+	and then an undo operation must recreate that subwindow.
+    
+    In addition to switches, the text window has some new widget commands:
+    
+    undo	Undo the last change made to the window
+    redo	Redo the undo'ed change
+    clearundo	Reset the undo stack like when the widget was created
+
+    slave	This will tell the called widget (the master) that a specified
+    		widget (the slave) is to behave as an exact copy of the master.
+    		When this is executed, the slave widget will populate itself
+    		with the same data as the master and from then on, the slave
+    		widget command will be called each time the master is (with
+    		the same arguments).

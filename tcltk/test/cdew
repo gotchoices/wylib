@@ -1,0 +1,30 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+#Font: {family size style}
+cdew::cdew .d1 -init {Helvetica 12 bold} \
+    -f {pdm Font: -width 8 -data {Helvetica Courier Times}}\
+    -f {ent : -width 3 -spin int}\
+    -f {pdm : -width 5 -data {{} bold italic bold/italic}} -bg beige -textv v1 -help {A font selector}
+
+cdew::cdew .d2 -fr {-bd 2 -relief raised -bg red} -delim -\
+    -f {ent Date: -width 4 -init 2003 -spin int}\
+    -f {ent -title - -width 3 -spin {enum {Jan Feb Mar}}}\
+    -f {ent -title - -width 2 -spin int}\
+    -bg yellow -textv v2 -help {A font selector}	;#-init [date::date]
+
+#cdew::date .d3 -title Date:
+label .d3 -text Date:
+
+pack .d1 .d2 .d3 -side top -anchor w
+
+button .b1 -text Reset -command {
+    foreach i {.d1 .d2} {$i init}
+}
+button .b2 -text Fetch -command {puts "v2:$v2"}
+pack .b1 .b2 -side top -fill x
+
+foreach i {.d1 .d2} {
+    bind $i <<Modified>> {puts "modified: %W [%W modified]"}
+}

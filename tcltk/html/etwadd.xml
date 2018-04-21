@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article id="Wylib Pref">
+ <articleinfo>
+  <title>Wylib Address Widget</title>
+  <publisher>
+   <publishername>WyattERP</publishername>
+   <address>
+    <otheraddr>Provo, Utah</otheraddr>
+    <otheraddr>
+     <ulink url="http://www.wyatterp.com/">WyattERP.com</ulink>
+    </otheraddr>
+   </address>
+  </publisher>
+ </articleinfo>
+
+ <sect1>
+  <title>Introduction</title>
+  <para>
+   The address Embedded Text Widget (ETW) contains the data necessary to
+   create the address and opening greeting (Dear John:) at the top of your 
+   letter.
+  </para><para>
+   Like all ETW's, there is a main menu in the upper left part of the widget
+   where all the widget's functionality can be accessed.
+   Just under the menu button are two shortcut buttons (Get and Label)
+   to allow faster access to two common functions also found in the menu.
+  </para><para>
+   It is possible to include multiple address widgets in your letter as
+   long as only one of them is listed as a primary recipient (To:).
+   Other widgets can be copy (CC:) recipients and they will be listed
+   appropriately at the bottom of your letter.
+  </para><para>
+   When the letter editor is launched from a contact manager, the first
+   address widget should already be filled out for with the correct data
+   for the person you are writing to.
+   But when the letter editor is used as a stand-alone application, you
+   will have to fill out all fields manually.
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Standard Fields</title>
+
+   <variablelist>
+    <varlistentry>
+      <term>Recip:</term>
+      <listitem>
+       Specify whether this recipient is the primary recipient (the main
+       person you are writing to) or someone who is to receive a copy of 
+       the letter.  
+       A normal copy recipient will be listed at the bottom of the letter.
+       A blind (or hidden) copy recipient will not be shown on the letter.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>(Name):</term>
+      <listitem>
+       This entry (just to the right of Recip) has no title shown (except ":").
+       It should contain the full name of the person you are writing the
+       letter to.
+       This name will show up at the top of additional pages of a multiple
+       page letter.
+       It will also become the first line of any address labels you generate.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>ID:</term>
+      <listitem>
+       This field is not editable.
+       It gets filled in automatically by the program and is the ID number
+       of the contact you are writing to if the letter was launched from a
+       contact manager.
+       Typically, when the letter is sent, a copy will be logged to the
+       database by the contact manager program.
+       This ID number is used to tell the program where to log the letter
+       so if no number is shown in this field, no logging will be done.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>(Address)</term>
+      <listitem>
+       This (untitled) multi-line entry area contains the mailing address
+       of the person you are writing to.
+       This area should not include the name of the person--only the address.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Salu:</term>
+      <listitem>
+       This field specifies the salutation (Dear Bob:) or greeting that will
+       be used as an opening for the letter.
+       The pull-down button should enable a dialog of several optional
+       greetings based on the data you entered in the name field.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Email:</term>
+      <listitem>
+       Enter the email address of the person this letter is going to.
+       This will facilitate distributing the letter electronically.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>FAX:</term>
+      <listitem>
+       Enter the FAX number of the person this letter is going to.
+       This will facilitate distributing the letter via facsimile.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+ <sect1>
+  <title>Menu Options</title>
+   The widget menu contains a number of functions to allow you to control
+   the address information.
+   The menu functions are as follows:
+
+   <variablelist>
+    <varlistentry>
+      <term>Get Contact Info</term>
+      <listitem>
+       If the letter editor was launched from a contact manager, this
+       option should load all the fields automatically with data from the
+       "current contact" loaded in the contact manager.
+       
+       This avoids the need of filling out the address fields manually.
+       Just select the contact you want to reference in the contact manager
+       and press the Get button to fill out all the fields.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Print Label</term>
+      <listitem>
+       This will generate an address label in the print dialog.
+       The first time you use this, select the correct label printer and
+       size the window down so it is a convenient size.
+       From then on, it should retain those default settings.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Select Salutaion</term>
+      <listitem>
+       This allows you to select one of several optional opening greetings.
+       This is the same function as the pull-down button on the salutation field.
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>Clear</term>
+      <listitem>
+       This will reset all fields back to their default (typically blank)
+       vallues.
+      </listitem>
+    </varlistentry>
+   </variablelist>
+ </sect1>
+
+</article>

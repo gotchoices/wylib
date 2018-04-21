@@ -1,0 +1,189 @@
+#sizer.tcl	0.10	Apr 2001
+#Manage the help menu for applications
+#------------------------------------------
+#Copyright (C) 1999-2001 Wyatt-ERP LLC.  All other rights reserved.
+#This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+#This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+package provide wylib 0.10
+#TODO:
+#- where to store help files for wyatt release?
+#- 
+
+namespace eval help {
+    namespace export init help
+    variable cfig
+    set bal(lastw)	{}
+    set cfig(balloons)	1
+    set cfig(pause)	800
+    set cfig(browser)	{netscape -remote "openURL(%s,new_window)"}
+    set cfig(about)	{This application uses the Wyatt-ERP library.  See Wyatt-ERP.com for copyright information.}
+}
+
+option add *Help.hf.txt.height 45 widgetDefault
+option add *Help.hf.txt.width 80 widgetDefault
+option add *Helpbal*background yellow widgetDefault
+
+#------------------------------------------------------------------------------
+# Display a file in a top-level text window.
+proc help::display {fname args} {
+    variable cfig
+    argproc ca(\$s) $args {{data {no}}}
+
+    if {$ca(data)} {
+        set contents $fname
+        set fname {data}
+    } else {
+        if {[catch {set contents [read_file $fname]} msg]} {
+            set contents $msg
+        }
+    }
+    set w ".disp_help-[translit {.} {_} $fname]"
+
+    if {[winfo exists $w]} {destroy $w}
+    toplevel $w -class Help
+    wm title $w "Help page '$fname'"
+    wm iconname $w "Help: $fname"
+    wm minsize $w 1 1
+    frame $w.ti -borderwidth 2
+    pack $w.ti -side top -fill x
+
+    button $w.ti.qu -text {Dismiss} -command "destroy $w" -pady 1
+    entry $w.ti.se
+    button $w.ti.sf -text {Search >>} -command "help::dosearch $w 1" -pady 1
+    button $w.ti.sb -text {Search <<} -command "help::dosearch $w 0" -pady 1
+    pack $w.ti.qu -side left -expand yes -fill x
+    pack $w.ti.se $w.ti.sf $w.ti.sb -side right
+    bind $w.ti.se <Return> "help::dosearch $w 1"
+
+    frame $w.hf -borderwidth 2
+
+    scrollbar $w.hf.ys -relief sunken -command "$w.hf.txt yview"
+    text $w.hf.txt -yscrollcommand "$w.hf.ys set" -wrap word
+    focus $w.hf.txt
+    bind $w.hf.txt <space> [bind Text <Next>]
+    bind $w.hf.txt <Delete> [bind Text <Prior>]
+    bind $w.hf.txt <BackSpace> [bind text <Prior>]
+
+    pack $w.hf.ys -side right -fill y
+    pack $w.hf.txt -side top -expand 1 -fill both
+
+    $w.hf.txt insert 0.0 $contents
+    $w.hf.txt configure -state disabled
+    pack $w.hf -side top -fill both -expand 1
+
+    init $w.ti.sf {Search forward through the text}
+    init $w.ti.sb {Search backward through the text}
+    init $w.ti.se {Enter the word to search for here}
+    init $w.ti.qu {Close this window}
+}
+
+#------------------------------------------------------------------------------
+# Perform a search on the text window
+proc help::dosearch {w direction} {
+    set t $w.hf.txt
+    set string [$w.ti.se get]
+    set index [lindex [$t tag ranges sel] 0]
+    if {$index == {}} {
+	set index insert
+    }
+    if {$string == {}} {
+	set string [$t tag ranges sel]
+	if {$string != {}} {
+	    set string [eval $t get $string]
+	} else {
+	    return
+	}
+    }
+    if {$direction} {
+	set index [$t search -forwards -nocase $string "$index + 1 char"]
+    } else {
+	set index [$t search -backwards -nocase $string "$index - 1 char"]
+    }
+    if {$index == {}} {
+	dia::err "String \"$string\" not found"
+	return
+    }
+    set index2 [$t index "$index + [string length $string] char"]
+    $t tag remove sel 1.0 end
+    $t tag add sel $index $index2
+    $t see $index
+}
+
+#Make a default Help menu
+#------------------------------------------
+proc help::help {w args} {
+    variable cfig
+    argproc cfig(\$s) $args {{appname {This Program}} {version {}} {height 40} {width 80}}
+    menubutton $w -text Help -menu $w.m -under 0
+    pack $w -side right -padx 10
+    mitems [menu $w.m]
+}
+
+#Include entries in help menu
+#------------------------------------------
+proc help::mitems {m} {
+    $m add checkbutton -label "Enable Help Balloons" -variable help::cfig(balloons)
+}
+
+option add *Helpup.l.background lightyellow widgetDefault
+
+#Create a help balloon toplevel
+#------------------------------------------
+proc help::balloon {w txt} {
+    variable bal
+    set b .balloon
+    if {![winfo exists $w]} return
+    catch {destroy $b}
+    toplevel $b -class Helpbal
+    wm transient $b .
+    label $b.l -text $txt -justify left
+    pack $b.l -side top
+    catch {place_near $b {} 20}
+    bind $w <Destroy> "help::leave $w"
+}
+
+#We're in the widget so get ready to display a baloon
+#------------------------------------------
+proc help::motion {w txt} {
+    variable bal
+    variable cfig
+    if {!$cfig(balloons)} return
+    catch {destroy .balloon}
+    catch {after cancel $bal(aid)}
+    if {[winfo class $w] == {Menu}} {
+        if {[set idx [$w index active]] == {none} || [$w type $idx] == {tearoff}} return
+        set mw $w:$idx
+        set txt [lindex $txt $idx]
+#puts "Menu help:$w:$idx:$txt:[$w type $idx]"
+    } else {
+        set mw $w
+    }
+#puts "w:$w mw:$mw last:$bal(lastw)"
+    if {$mw != $bal(lastw)} {
+        set bal(aid) [after $cfig(pause) "help::balloon $w {$txt}; set help::bal(lastw) $mw"]
+    }
+}
+
+#Cancel any balloons
+#------------------------------------------
+proc help::leave {w} {
+    variable bal
+    catch {destroy .balloon}
+    catch {after cancel $bal(aid)}
+}
+
+#Initialize a widget to handle help balloons
+#------------------------------------------
+proc help::init {w txt} {
+#puts "help::init $w $txt"
+    if {$txt != {}} {
+        bind $w <Motion>	[list help::motion $w $txt]
+        bind $w <Leave>		"help::leave $w"
+    } else {
+        bind $w <Motion>	{}
+        bind $w <Leave>		{}
+    }
+}
+
+if {[info commands customize] != {}} {customize help}

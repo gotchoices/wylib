@@ -1,0 +1,29 @@
+#!/usr/bin/wish
+#include(Copyright)
+package require wylib
+
+puts "Sorry, macros are not implemented yet"; exit
+
+wm geometry . 400x300
+set v1 [read_file test.txt]
+
+etext::etext .t1 -textv v1
+pack .t1 -side top
+.t1 mark set insert 1.0
+focus .t1
+
+#Capture for a macro
+#bind . <Button> "puts {BUT:%b: w:%W}"
+#bind . <ButtonRelease> "puts {but:%b: w:%W}"
+
+#puts "bindKey:[bind . <Key>]:"
+#puts ".bindtags:[bindtags .]:"
+#puts "tbindtags:[bindtags .t1]:"
+#bind . <Key> "puts {KEY:%A: w:%W}"
+
+#proc hookproc {w cmd args} {
+#    puts "trap: w:$w cmd:$cmd args:$args"
+#}
+#ww::hook hookproc
+
+macro::macro .macro
