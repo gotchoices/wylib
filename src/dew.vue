@@ -1,0 +1,180 @@
+//Database record editing component
+//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+// -----------------------------------------------------------------------------
+//TODO:
+//X- Pass in a configuration object at any time to rebuild the widget
+//X- Select has an object describing the choices
+//X- Harvest the value, how?
+//X- Pass option argument in for pdms
+//X- Check contents against validator regexp
+//X- Indicator changes from red, yellow, white on validator
+//X- Emit event when data changed
+//- 
+//- Display special function indicator on right side?
+//- How to invoke special function
+//- Handlers for each kind of special function
+//X-   Calendar
+//-   Calculator
+//-   Spinner
+//-   Scrolled menu (static data, or callback to parent somewhere)
+//-   Editing window
+//- 
+//X- Check all dew types from old wylib
+//X-   Multi-line text entry (rowspan)
+//- 
+//- Use subframe arguments to place in grid?
+//- Implement date/time selector
+//- Implement calculator selector
+//- Implement integer spinners
+//- 
+<template>
+  <div class="wylib wylib-dew" :title="lang ? lang.help : null">
+    <div v-if="state.style == 'chk'" class="check" :style="genStyle">
+      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="changed($event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
+    </div>
+    <textarea ref="input" v-else-if="state.style == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
+    <select ref="input" v-else-if="state.style == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
+      <option v-for="val in values" :label="val.title" :value="val.value" :title="val.help"/>
+    </select>
+    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" :autofocus="state.focus" :placeholder="this.state.hint" :disabled="disabled" :style="genStyle"/>
+  </div>
+</template>
+
+<script>
+import Com from './common.js'
+import InDate from './indate.vue'
+import DatePicker from './date.js'
+
+export default {
+  name: 'wylib-dew',
+  components: {'wylib-indate': InDate},
+  props: {
+    state:	{type: Object, default: () => ({})},	//Configuration
+    lang:	{type: Object},
+    value:	{default: null},			//value to compare dirty to
+    values:	{type: Array, default: () => []},	//valid values for select
+    field:	{default: null},			//column or field code
+    top:	null,					//communication with toplevel
+    bus:	null,					//message bus from parent
+  },
+  data() { return {
+    pr:		require('./prefs'),
+    userValue:	null,					//Value, as modified by user
+    datePicker: null,
+  }},
+
+  computed: {
+    disabled: function() {				//No user data entry, just for looking at
+      return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide)
+    },
+    dirty() {						//The user has changed the value
+      let dirty = (this.userValue != this.value)
+//console.log("dirty:", this.field, this.value, this.userValue, dirty)
+      return dirty
+    },
+    valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
+//console.log("Valid:", this.field, this.userValue, this.state.template)
+      let isValid = false
+      if (this.state.style == 'chk' || this.state.style == 'inf') {
+        isValid = true
+      } else if (this.state.style == 'pdm') {
+//console.log(' values:', this.userValues ? this.values.map(e=>(e.value)) : null)
+        isValid = this.values ? this.values.map(e=>(e.value)).includes(this.userValue || '') : true
+      } else if (!this.state.template) {
+        isValid = true
+      } else if (RegExp(this.state.template).test(this.userValue)) {
+        isValid = true
+      }
+      return isValid
+    },
+    genStyle() { return {		//Generate style, based on data state
+      borderLeftColor: this.disabled ? this.pr.dataBackground : (this.valid ? this.pr.dewBorderColor : this.pr.dewInvalidColor),
+      borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
+      background: ('background' in this.state) ? this.state.background : this.pr.dataBackground,
+      borderLeftWidth: this.pr.dewFlagWidth + 'px',
+      borderRightWidth: this.pr.dewFlagWidth + 'px',
+      borderColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor)
+    }},
+    height: function() {
+//console.log("Height:", this.state.size)
+      return this.state.size.split(' ')[1] || this.pr.dewDefHeight || 2
+    },
+    width: function() {
+//console.log("Width:", this.state.size)
+      return this.state.size.split(' ')[0] || this.pr.dewDefWidth || 40
+    },
+  },
+
+  watch: {
+    value: function(val) {
+      this.userValue = val
+//console.log("Watched value:", this.field, val, this.userValue)
+    },
+  },
+
+  methods: {
+    input(ev) {this.changed(ev.target.value)},
+    changed(val) {
+//console.log("Dew input:", this.field, val)
+      this.userValue = val
+      this.$emit('input', val, this.field, this.dirty, this.valid)
+    },
+    focus() {			//Focus cursor on this entry field
+//console.log("Focusing:", this.$refs, this.field)
+      this.$refs.input.focus()
+    },
+    set(val) {return([this.userValue = val, this.field, this.dirty, this.valid])},
+    clear() {return this.set(this.state.initial)}
+//    init() {return this.set(this.value)},
+  },
+
+  beforeMount: function() {
+//console.log("Dew state:", this.field, JSON.stringify(this.state))
+    Com.react(this, {style: 'ent', size: null, state: null, template: null, special: {}})
+    
+    if (!('initial' in this.state)) this.state.initial = null
+//console.log(" Refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
+
+    if (this.bus) this.bus.register(this.field, (msg, data) => {
+//console.log('dew', this.field, 'got bus message:', msg, data)
+      if (msg == 'clear') return this.clear()
+      else if (msg == 'set') return this.set(data)
+//      else if (msg == 'init') return this.init(data)
+    })
+  },
+
+  mounted: function() {
+//console.log(" refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
+    if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
+    if (this.state.focus && this.top) this.top.onPosted(() => {this.focus()})
+  },
+  beforeDestroy: function() {
+    if (this.datePicker) this.datePicker.destroy()
+  }
+}
+</script>
+
+<style lang="less">
+  .wylib-dew {
+//    padding: 1px 7px 1px 1px;
+//    position: relative;
+//border: 1px solid black;
+  }
+  .wylib-dew input.text, .wylib-dew div.check {
+    border-style: solid;
+    border-bottom-width: 1px;
+    border-top-width: 0;
+    border-radius: 3px;
+//border: 1px solid blue;
+  }
+  .wylib-dew input.text {
+    width: 100%;
+  }
+  .wylib-dew div.check {
+    width: 1.7em;
+  }
+  .wylib-dew input.checkbox {
+//border: 3px solid blue;
+    margin: 0 0 2px 4px;;
+  }
+</style>

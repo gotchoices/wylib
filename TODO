@@ -1,0 +1,80 @@
+Wylib TODO
+
+-X Get mlb single and multi-row selection working
+-X Write dbp to wrap mlb
+-X   Get columns, text from database
+-X   Get data from database
+-X Write dbe to wrap ldew
+-X Launch dbe from selected row in dbp
+-X Backend module for dbp calls (just call wyseman?)
+-X Can push/query prefs from subwidgets
+-X Integrate button changes into menudock
+-X dbe posting toggles correctly from dbp
+-X Windows are opaque throughout (no empty transparent spots)
+-X Find quoting library/method for building queries
+-X Get prefs working enough to fetch language data from DB
+-X Fix dbp/dbe to get meta-data from Wyseman and language text from prefs
+-X Show space between menudock buttons
+-X Get rid of border on mlb (especially when it is inside a win)
+-X mlb fills win height
+-X Redo Dew to not include stretcher (or label, by default)
+-X Get basic dbe insert, update, delete working
+- Multiview delete doesn't delete entity--just user
+- Dbp should save/restore state per table/view to wylib.data
+- 
+- Login/validation facility (passport?)
+-   Distributed symmetric keys to secure machine
+-   Password access to database
+- 
+- Later Wylib:
+- Fix language text in wylib/app, wylib/connect
+- Generalize menu to work for window state: implement save/restore dialog
+- Dbe grid layout working
+- Preference editor component
+- Save named state from toplevel win
+- Implement dbp row menu?
+- Preference save/restore; use local storage, optional propagate to back end (wyseman)
+-   Layout: Widget menu/window size/locations, sort order, searches, columns, summaries
+-   Language: Widget text/helps, database text/helps
+-   Snapshot: Application window layout, language, prefs
+- Port wysegi; can browse and modify wyseman database tables
+- 
+- Port additional widgets:
+-   Mdew: grid of dews
+-   Calendar selector
+-   Time selector
+-   Cdew: compound data editor
+-   Spinners: spin integers
+-   LoadBy/Loglist: query logic builder
+-   SCM Scrolled item selector
+-   Dia: Modal data queries using existing data editing widgets
+-   Edwin: Text editing window
+- 
+- Implement ledgers
+-   Can view ledger in dbp?
+-   Can expand to split editor
+- ERP GUI
+-   User editor
+-   System parameters
+-   Chart of Accounts editor
+-   Project editor
+-   General Journal editor
+- Reports module
+-   Implement balance sheet
+-   Implement income statement
+- Import bank statements
+- Test: is this enough to replace Gnucash?
+- 
+- ERP Modules:
+-   Can link module journals into GL dynamically
+-   Employee editor
+-   Payroll
+-   Vendor editor
+-   AP
+-   Customer editor
+-   Order entry
+-   AR
+-   Capital Equipment
+-   Inventory
+-   Point of Sale
+- 
