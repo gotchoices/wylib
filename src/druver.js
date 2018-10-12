@@ -33,7 +33,8 @@ export default {
   setupDragMove(element, dragIgnore, dragAllow, sizeIgnore, sizeAllow) {
     let sizeConfig = {
       inertia: true,
-      edges: {left: true, right: true, bottom: true},		/* Can't do top: true without losing dragability! */
+      border: 2,
+      edges: {top:true, left: true, right: true, bottom: true},		/* Can't do top: true without losing dragability! */
       restrictSize: {min: {width: 50, height: 50}},
       onmove: this.sizeHandler
     }

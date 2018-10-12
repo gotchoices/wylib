@@ -23,8 +23,8 @@
 //- 
 <template>
   <div class="wylib wylib-win" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
-    <div class="header wylib-win-nosize" :title="lang.help" :style="headerStyle">
-      <div class="headerbar wylib-win-nosize">
+    <div class="header" :title="lang.help" :style="headerStyle">
+      <div class="headerbar">
         <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
         <wylib-button v-if="!topLevel && pinnable" :size="headerHeight" icon="pushpin" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
         <div ref="childMenu" class="childmenu"></div>
@@ -34,7 +34,7 @@
           {{ lang.title }}
         </div>
       </div>
-      <div class="headerbar operations wylib-win-nosize">
+      <div class="headerbar operations">
         <div ref="childStatus" class="childstatus"></div>
         <wylib-button class="closebutton" v-if="topLevel || state.pinned" :size="headerHeight" icon="close" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
       </div>
@@ -197,9 +197,9 @@ console.log("Restore State: ", "Not yet implemented")
 
   mounted: function() {
     Interact(this.$el).resizable({
-      ignoreFrom: '.wylib-win-nosize',
       inertia: true,
-      edges: {left: true, right: true, bottom: true},	//Can't do top: true without losing dragability!
+      margin: 3,
+      edges: {top:true, left: true, right: true, bottom: true},	//Can't do top: true without losing dragability!
       restrictSize: {min: {width: 50, height: 50}},
       onmove: this.sizeHandler
     }).draggable({
