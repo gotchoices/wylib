@@ -3,28 +3,32 @@
 // -----------------------------------------------------------------------------
 import Vue from 'vue'
 Vue.config.productionTip = false
-import WylibDew from '../src/dew.vue'
-//import WylibView from '../src/preview.js'
+import WylibWin from '../src/win.vue'
+import WylibVector from '../src/vector.vue'
 
 const Template = `
   <div>
     <h4>Preview:</h4>
-    <button @click="open" title="Open a preview tab/window">Open</button>
-    <button @click="modify" title="Modify the document contents">Modify</button>
+    <button @click="openDoc" title="Open a preview tab/window">Open Doc</button>
+    <button @click="modifyDoc" title="Modify the document contents">Modify Doc</button>
+    <button @click="openVector" title="Open a preview tab/window">Open Vector</button>
     <hr>
   </div>`
 
 const Config = {
-  components: {'wylib-dew': WylibDew},
+  components: {'wylib-vector': WylibVector},
   data() { return {
     abc:	null,
   }},
   methods: {
-    open() {
+    openDoc() {
 console.log("Open preview:")
     },
-    modify() {
+    modifyDoc() {
 console.log("Modify data:")
+    },
+    openVector() {
+console.log("Open vector:")
     },
   },
   created: function() {

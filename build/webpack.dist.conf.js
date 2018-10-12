@@ -1,6 +1,7 @@
 // webpack.config.js
 const path = require('path');
-const nodeExternals = require('webpack-node-externals');
+const nodeExternals = require('webpack-node-externals')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
                 
 module.exports = {
   entry: './src/index.js',
@@ -25,6 +26,9 @@ module.exports = {
     }
   },
   devtool: 'source-map',
+  plugins: [
+    new VueLoaderPlugin()
+  ],
   module: {
     rules: [
       {

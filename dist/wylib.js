@@ -46,17 +46,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
 /******/ 		}
 /******/ 	};
 /******/
 /******/ 	// define __esModule on exports
 /******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
 /******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -456,6 +471,10 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 //
 //
 //
+//
+//
+//
+//
 
 var _common = __webpack_require__(/*! ./common.js */ "./src/common.js");
 
@@ -503,8 +522,31 @@ exports.default = {
     id: function id() {
       return 'dbe_' + this._uid + '_';
     },
+    actMenu: function actMenu() {
+      var _this = this;
+
+      var acts = [];
+      //console.log("actMenu:", this.viewMeta.ui)
+      if (this.viewMeta && this.viewMeta.ui) this.viewMeta.ui.actions.forEach(function (act) {
+        acts.push({ idx: act, lang: _this.viewMeta.msg[act] || { title: act }, call: function call() {
+            _this.perform(act);
+          } });
+      });
+      return acts;
+    },
+    subMenu: function subMenu() {
+      var _this2 = this;
+
+      var subs = [];
+      if (this.viewMeta && this.viewMeta.ui) this.viewMeta.ui.subs.forEach(function (sub) {
+        subs.push({ idx: sub, lang: _this2.viewMeta.msg[sub] || { title: sub }, call: function call() {
+            _this2.preview(sub);
+          } });
+      });
+      return subs;
+    },
     dockConfig: function dockConfig() {
-      return [{ idx: 'adr', lang: this.wm.dbeInsert, call: this.insert, icon: 'plus', shortcut: true, disabled: !this.valid }, { idx: 'upd', lang: this.wm.dbeUpdate, call: this.update, icon: 'arrowup', shortcut: true, disabled: !this.dirty || !this.valid }, { idx: 'del', lang: this.wm.dbeDelete, call: this.delete, icon: 'minus', disabled: !!this.state.key }, { idx: 'clr', lang: this.wm.dbeClear, call: this.clear, icon: 'circle', shortcut: true }, { idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'circle' }];
+      return [{ idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu }, { idx: 'sub', lang: this.wm.dbeSubords, menu: this.subMenu }, { idx: 'adr', lang: this.wm.dbeInsert, call: this.insert, icon: 'plus', shortcut: true, disabled: !this.valid }, { idx: 'upd', lang: this.wm.dbeUpdate, call: this.update, icon: 'arrowup', shortcut: true, disabled: !this.dirty || !this.valid }, { idx: 'del', lang: this.wm.dbeDelete, call: this.delete, icon: 'minus', disabled: !!this.state.key }, { idx: 'clr', lang: this.wm.dbeClear, call: this.clear, icon: 'circle', shortcut: true }, { idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'circle' }, { idx: 'pre', lang: this.wm.dbePreview, call: this.docPrev, icon: 'circle', shortcut: true }];
     },
     headerHeight: function headerHeight() {
       return this.pr.winFullHeader - 1; //Fit in parent header, plus top border
@@ -541,17 +583,17 @@ exports.default = {
       return whereObj;
     },
     load: function load(key) {
-      var _this = this;
+      var _this3 = this;
 
       //console.log("Key:", this.state.key)
       this.dirty = false;
       this.valid = true;
       this.dataRequest('tuple', { where: this.keyWhere(key) }, false, function () {
-        _this.state.key = key;
+        _this3.state.key = key;
       });
     },
     insert: function insert() {
-      var _this2 = this;
+      var _this4 = this;
 
       var fields = Object.assign({}, this.dbData, this.$refs.mdew.userData);
       console.log("Insert:", fields);
@@ -565,10 +607,10 @@ exports.default = {
       });
       console.log("insert:", fields);
       this.dataRequest('insert', { fields: fields }, true, function (data) {
-        var keyVal = [];_this2.viewMeta.pkey.forEach(function (fld) {
+        var keyVal = [];_this4.viewMeta.pkey.forEach(function (fld) {
           keyVal.push(data[fld]);
         });
-        _this2.state.key = keyVal;
+        _this4.state.key = keyVal;
       });
     },
     update: function update() {
@@ -577,16 +619,16 @@ exports.default = {
       this.dataRequest('update', { fields: fields, where: this.keyWhere() });
     },
     delete: function _delete() {
-      var _this3 = this;
+      var _this5 = this;
 
       console.log("Delete");
       this.dataRequest('delete', { where: this.keyWhere() }, true, function () {
-        _this3.state.key = null;
+        _this5.state.key = null;
       });
       //console.log(" after delete:", this.dbData)
     },
     clear: function clear() {
-      var _this4 = this;
+      var _this6 = this;
 
       var answers = this.msgBus.notify('clear')[0];
       //console.log("Clear", answers)
@@ -599,9 +641,9 @@ exports.default = {
 
         value = _el[0];
         field = _el[1];
-        _this4.dirty = _el[2];
-        _this4.valid = _el[3];
-        _this4.dbData[field] = value;
+        _this6.dirty = _el[2];
+        _this6.valid = _el[3];
+        _this6.dbData[field] = value;
       });
       this.top.posted(); //Act like we just posted
     },
@@ -612,29 +654,32 @@ exports.default = {
       //console.log("Dbe input:", field, value, dirty, valid)
     },
     dataRequest: function dataRequest(action, options) {
-      var _this5 = this;
+      var _this7 = this;
 
       var modifies = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var cb = arguments[3];
 
       //console.log("Dbe dataRequest:", action, options)
-      _wyseman2.default.request('_dbe' + this._uid, action, Object.assign({ view: this.state.dbView }, options), function (data, err) {
+      _wyseman2.default.request(this.id + 'dr', action, Object.assign({ view: this.state.dbView }, options), function (data, err) {
         //console.log("   data:", err, data)
-        if (err) _this5.top.error(err);else {
-          if (data) _this5.dbData = data; //If a record was returned
-          if (modifies) _this5.$emit('modified', data); //Tell parent dbp to update
+        if (err) _this7.top.error(err);else {
+          if (data) _this7.dbData = data; //If a record was returned
+          if (modifies) _this7.$emit('modified', data); //Tell parent dbp to update
           if (cb) cb(data);
         }
       });
     },
+    docPrev: function docPrev() {
+      _common2.default.docView(this.state.dbView);
+    },
     mdewLayout: function mdewLayout() {
-      var _this6 = this;
+      var _this8 = this;
 
       //Make the column description format mdew is looking for
       var fieldArray = [];
       if (this.viewMeta) this.viewMeta.columns.forEach(function (meta) {
         //console.log("Col:", meta.col, " Meta:", meta.styles)
-        var stateElem = _this6.state.dews.fields.find(function (e) {
+        var stateElem = _this8.state.dews.fields.find(function (e) {
           return e.field == meta.col;
         });
         if (!stateElem) stateElem = {
@@ -646,6 +691,12 @@ exports.default = {
         };fieldArray.push(stateElem);
       });
       return fieldArray;
+    },
+    perform: function perform(act) {
+      console.log("Perform action:", act);
+    },
+    preview: function preview(sub) {
+      console.log("Open preview:", sub);
     }
   },
 
@@ -655,13 +706,13 @@ exports.default = {
     //      if (key && key.length > 0) this.load(key); else this.dbData = {}
     //    },
     'state.dbView': function stateDbView() {
-      var _this7 = this;
+      var _this9 = this;
 
       //If we change our view, reset data, columns
       this.recData = [];
       this.viewMeta = null;
-      _wyseman2.default.request('dbe_' + this._uid, 'meta', this.state.dbView, function (data) {
-        _this7.viewMeta = data;
+      _wyseman2.default.request(this.id + 'xm', 'meta', this.state.dbView, function (data) {
+        _this9.viewMeta = data;
       });
     },
     viewMeta: function viewMeta() {
@@ -670,25 +721,24 @@ exports.default = {
   },
 
   created: function created() {
-    var _this8 = this;
+    var _this10 = this;
 
     _wyseman2.default.register(this.id + 'wm', 'wylib.data', function (data) {
-      _this8.wm = data.msg;
+      _this10.wm = data.msg;
     });
-    _wyseman2.default.request(this.id + 'cv', 'meta', this.state.dbView, function (data) {
-      _this8.viewMeta = data;
+    if (this.state.dbView) _wyseman2.default.register(this.id + 'cv', this.state.dbView, function (data) {
+      _this10.viewMeta = data;
     });
-    //    this.$on('posted', () => {this.$refs.mdew.focus()})		//init focus when first posted
   },
 
   beforeMount: function beforeMount() {
-    var _this9 = this;
+    var _this11 = this;
 
     //console.log("Dbe before, state: ", this.state);
     _common2.default.react(this, { dock: {}, dbView: '', key: [], dews: { fields: [] } });
     if (this.bus) this.bus.register(this.id, function (msg, data) {
       //console.log("Dbe bus message: ", msg, data);
-      if (msg == 'load') return _this9.load(data);
+      if (msg == 'load') return _this11.load(data);
     });
   },
 
@@ -829,7 +879,7 @@ exports.default = {
       return flds;
     },
     dockConfig: function dockConfig() {
-      return [{ idx: 'lod', lang: this.wm.dbpLoad, call: this.load, icon: 'circle', shortcut: false }, { idx: 'rld', lang: this.wm.dbpReload, call: this.reload, icon: 'spinner11', shortcut: true }, { idx: 'all', lang: this.wm.dbpLoadAll, call: this.loadAll, icon: 'circle', shortcut: false }, { idx: 'fil', lang: this.wm.dbpFilter, call: this.loadBy, icon: 'filter', shortcut: true, toggled: this.state.filter.posted }, { idx: 'edi', lang: this.wm.dbe, call: this.editTog, icon: 'pencil', toggled: this.state.edit.posted }, { idx: 'prv', lang: this.wm.dbpPrev, call: this.prev, icon: 'arrowup', shortcut: true }, { idx: 'nxt', lang: this.wm.dbpNext, call: this.next, icon: 'arrowdown', shortcut: true }, { idx: 'dec', lang: this.wm.dbpDefault, call: this.defColumns, icon: null }, { idx: 'tst', lang: { title: 'T', help: 'H' }, call: this.test, icon: 'circle', shortcut: true }, { idx: 'cvi', lang: this.wm.dbpVisible, menu: [{ idx: 'c1', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c2', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c3', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c4', lang: this.wm.dbpVisCheck, input: 'checkbox' }] }];
+      return [{ idx: 'lod', lang: this.wm.dbpLoad, call: this.load, icon: 'circle', shortcut: false }, { idx: 'rld', lang: this.wm.dbpReload, call: this.reload, icon: 'spinner11', shortcut: true }, { idx: 'all', lang: this.wm.dbpLoadAll, call: this.loadAll, icon: 'circle', shortcut: false }, { idx: 'fil', lang: this.wm.dbpFilter, call: this.loadBy, icon: 'filter', shortcut: true, toggled: this.state.filter.posted }, { idx: 'edi', lang: this.wm.dbe, call: this.editTog, icon: 'pencil', toggled: this.state.edit.posted }, { idx: 'prv', lang: this.wm.dbpPrev, call: this.prev, icon: 'arrowup', shortcut: true }, { idx: 'nxt', lang: this.wm.dbpNext, call: this.next, icon: 'arrowdown', shortcut: true }, { idx: 'dec', lang: this.wm.dbpDefault, call: this.defColumns, icon: 'circle' }, { idx: 'tst', lang: { title: 'T', help: 'H' }, call: this.test, icon: 'circle', shortcut: true }, { idx: 'cvi', lang: this.wm.dbpVisible, menu: [{ idx: 'c1', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c2', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c3', lang: this.wm.dbpVisCheck, input: 'checkbox' }, { idx: 'c4', lang: this.wm.dbpVisCheck, input: 'checkbox' }] }];
     },
     colMenuConfig: function colMenuConfig() {
       return [{ idx: 'siz', lang: this.wm.dbpColAuto, call: this.autoSize, icon: 'circle' }, { idx: 'hid', lang: this.wm.dbpColHide, call: this.hideColumn, icon: 'circle' }];
@@ -840,18 +890,21 @@ exports.default = {
   },
 
   watch: {
-    'state.dbView': function stateDbView() {
+    'state.dbView': function stateDbView(newVal, oldVal) {
       var _this = this;
 
       //If we change our view, reset data, columns
-      //console.log("Dbp dbView changed!")
+      console.log("Dbp dbView changed!");
       this.gridData = [];
       this.viewMeta = null;
-      _wyseman2.default.request(this.id + 'wm', 'meta', this.state.dbView, function (data) {
+      var zid = this.id + 'cv'; //Must be the same as in created:
+      if (oldVal) _wyseman2.default.register(zid, oldVal);
+      if (newVal) _wyseman2.default.register(zid, newVal, function (data) {
         _this.viewMeta = data;
       });
     },
-    viewMeta: function viewMeta() {
+    viewMeta: function viewMeta(newVal, oldVal) {
+      console.log("viewMeta updated");
       this.state.grid.columns = this.mlbLayout();
     },
     gridData: function gridData() {
@@ -1005,7 +1058,9 @@ exports.default = {
       _this6.wm = data.msg;
     });
     if (this.state.dbView) _wyseman2.default.register(this.id + 'cv', this.state.dbView, function (data) {
+      console.log("Dbp got new metadata:", data.help);
       _this6.viewMeta = data;
+      //this.viewMeta = 'sludge'
     });
   },
 
@@ -1896,71 +1951,82 @@ exports.default = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+
+var _common = __webpack_require__(/*! ./common.js */ "./src/common.js");
+
+var _common2 = _interopRequireDefault(_common);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Icons = __webpack_require__(/*! ./icons.js */ "./src/icons.js");
 //import Win from './win.vue'		//Recursive, defined in beforeCreate
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 exports.default = {
   name: 'wylib-menu',
   //components: {'wylib-win': Win}
   props: {
-    config: Array,
-    isPinned: Boolean
+    state: { type: Object, default: function _default() {
+        return {};
+      } },
+    layout: { type: Array, default: function _default() {
+        return ['icon', 'lang', 'input'];
+      } },
+    config: Array
+    //    isPinned:	Boolean,
   },
   data: function data() {
     return {
-      subMenuPosted: {},
-      subMenuPinned: {}
+      pr: __webpack_require__(/*! ./prefs */ "./src/prefs.js")
     };
   },
 
@@ -1973,17 +2039,17 @@ exports.default = {
       this.$emit('close');
     },
     closeCheck: function closeCheck() {
-      if (!this.isPinned) this.$emit('close');
+      //      if (!this.state.pinned) this.$emit('close')	//Fixme: should window decide?
     },
-    enterItem: function enterItem(idx, isMenu) {
+    enterItem: function enterItem(idx, itemMenu) {
       var _this = this;
 
-      console.log("Entering menu item: " + idx + " isMenu:" + isMenu);
-      Object.keys(this.subMenuPosted).forEach(function (key) {
-        if (_this.subMenuPosted[key]) _this.subMenuPosted[key] = false;
+      console.log("Entering menu item: ", idx, "itemMenu:", itemMenu, this.state.subs);
+      Object.keys(this.state.subs).forEach(function (key) {
+        if (_this.state.subs[key]) _this.state.subs[key].posted = false;
       });
-      if (isMenu) this.$set(this.subMenuPosted, idx, true);
-      console.log("  Posted: " + JSON.stringify(this.subMenuPosted));
+      if (itemMenu) this.state.subs[idx].posted = true;
+      //console.log("  Posted: ", this.state.subs[idx])
     },
     execute: function execute(cb) {
       //Execute the specified callback
@@ -1997,16 +2063,15 @@ exports.default = {
   created: function created() {
     var _this2 = this;
 
-    Object.keys(this.config).forEach(function (key) {
+    _common2.default.react(this, { subs: {} });
+    this.config.forEach(function (item, x) {
       //Set object properties that are not known until now
-      var item = _this2.config[key];
       if (item.menu) {
-        //console.log("Set default for: " + item.idx)
-        _this2.$set(_this2.subMenuPosted, item.idx, false);
-        _this2.$set(_this2.subMenuPinned, item.idx, false);
+        //console.log("Set default for: ", item.idx)
+        _this2.$set(_this2.state.subs, item.idx, { posted: false, pinned: false, client: {} });
       }
     });
-    //console.log("Posted: " + JSON.stringify(this.subMenuPosted) + "\nPinned: " + JSON.stringify(this.subMenuPinned))
+    //console.log("State client: ", JSON.stringify(this.state))
   },
   mounted: function mounted() {
     //console.log("Menu components: " + JSON.stringify(this.$options.components))
@@ -2086,7 +2151,7 @@ exports.default = {
 
   beforeMount: function beforeMount() {
     //console.log("MenuDock:", JSON.stringify(this.config))
-    _common2.default.react(this, { menu: {} });
+    _common2.default.react(this, { menu: { client: {} } });
   },
   mounted: function mounted() {}
 };
@@ -2781,9 +2846,9 @@ exports.default = {
     var _this4 = this;
 
     (0, _interactjs2.default)(this.$el).resizable({
-      ignoreFrom: '.wylib-win-nosize',
       inertia: true,
-      edges: { left: true, right: true, bottom: true }, //Can't do top: true without losing dragability!
+      margin: 3,
+      edges: { top: true, left: true, right: true, bottom: true }, //Can't do top: true without losing dragability!
       restrictSize: { min: { width: 50, height: 50 } },
       onmove: this.sizeHandler
     }).draggable({
@@ -2823,7 +2888,7 @@ exports = module.exports = __webpack_require__(/*! ../../../css-loader/lib/css-b
 
 
 // module
-exports.push([module.i, ".flatpickr-calendar {\n  background: transparent;\n  overflow: hidden;\n  max-height: 0;\n  opacity: 0;\n  visibility: hidden;\n  text-align: center;\n  padding: 0;\n  -webkit-animation: none;\n  animation: none;\n  direction: ltr;\n  border: 0;\n  display: none;\n  font-size: 14px;\n  line-height: 24px;\n  border-radius: 5px;\n  position: absolute;\n  width: 307.875px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -ms-touch-action: manipulation;\n  touch-action: manipulation;\n  -webkit-box-shadow: 0 3px 13px rgba(0, 0, 0, 0.08);\n  box-shadow: 0 3px 13px rgba(0, 0, 0, 0.08);\n}\n.flatpickr-calendar.open,\n.flatpickr-calendar.inline {\n  opacity: 1;\n  visibility: visible;\n  overflow: visible;\n  max-height: 640px;\n}\n.flatpickr-calendar.open {\n  display: inline-block;\n  z-index: 99999;\n}\n.flatpickr-calendar.animate.open {\n  -webkit-animation: fpFadeInDown 200ms cubic-bezier(0.23, 1, 0.32, 1);\n  animation: fpFadeInDown 200ms cubic-bezier(0.23, 1, 0.32, 1);\n}\n.flatpickr-calendar.inline {\n  display: block;\n  position: relative;\n  top: 2px;\n}\n.flatpickr-calendar.static {\n  position: absolute;\n  top: calc(100% + 2px);\n}\n.flatpickr-calendar.static.open {\n  z-index: 999;\n  display: block;\n}\n.flatpickr-calendar.hasWeeks {\n  width: auto;\n}\n.flatpickr-calendar .hasWeeks .dayContainer,\n.flatpickr-calendar .hasTime .dayContainer {\n  border-bottom: 0;\n  border-bottom-right-radius: 0;\n  border-bottom-left-radius: 0;\n}\n.flatpickr-calendar .hasWeeks .dayContainer {\n  border-left: 0;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-time {\n  height: 40px;\n  border-top: 1px solid #eceef1;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-innerContainer {\n  border-bottom: 0;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-time {\n  border: 1px solid #eceef1;\n}\n.flatpickr-calendar.noCalendar.hasTime .flatpickr-time {\n  height: auto;\n}\n.flatpickr-calendar:before,\n.flatpickr-calendar:after {\n  position: absolute;\n  display: block;\n  pointer-events: none;\n  border: solid transparent;\n  content: '';\n  height: 0;\n  width: 0;\n  left: 22px;\n}\n.flatpickr-calendar.rightMost:before,\n.flatpickr-calendar.rightMost:after {\n  left: auto;\n  right: 22px;\n}\n.flatpickr-calendar:before {\n  border-width: 5px;\n  margin: 0 -5px;\n}\n.flatpickr-calendar:after {\n  border-width: 4px;\n  margin: 0 -4px;\n}\n.flatpickr-calendar.arrowTop:before,\n.flatpickr-calendar.arrowTop:after {\n  bottom: 100%;\n}\n.flatpickr-calendar.arrowTop:before {\n  border-bottom-color: #eceef1;\n}\n.flatpickr-calendar.arrowTop:after {\n  border-bottom-color: #eceef1;\n}\n.flatpickr-calendar.arrowBottom:before,\n.flatpickr-calendar.arrowBottom:after {\n  top: 100%;\n}\n.flatpickr-calendar.arrowBottom:before {\n  border-top-color: #eceef1;\n}\n.flatpickr-calendar.arrowBottom:after {\n  border-top-color: #eceef1;\n}\n.flatpickr-calendar:focus {\n  outline: 0;\n}\n.flatpickr-wrapper {\n  position: relative;\n  display: inline-block;\n}\n.flatpickr-month {\n  border-radius: 5px 5px 0 0;\n  background: #eceef1;\n  color: #5a6171;\n  fill: #5a6171;\n  height: 28px;\n  line-height: 1;\n  text-align: center;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n  overflow: hidden;\n}\n.flatpickr-prev-month,\n.flatpickr-next-month {\n  text-decoration: none;\n  cursor: pointer;\n  position: absolute;\n  top: 0px;\n  line-height: 16px;\n  height: 28px;\n  padding: 10px calc(3.57% - 1.5px);\n  z-index: 3;\n}\n.flatpickr-prev-month i,\n.flatpickr-next-month i {\n  position: relative;\n}\n.flatpickr-prev-month.flatpickr-prev-month,\n.flatpickr-next-month.flatpickr-prev-month {\n  /*\n    /*rtl:begin:ignore*/\n  /*\n    */\n  left: 0;\n  /*\n    /*rtl:end:ignore*/\n  /*\n    */\n}\n/*\n    /*rtl:begin:ignore*/\n/*\n    /*rtl:end:ignore*/\n.flatpickr-prev-month.flatpickr-next-month,\n.flatpickr-next-month.flatpickr-next-month {\n  /*\n    /*rtl:begin:ignore*/\n  /*\n    */\n  right: 0;\n  /*\n    /*rtl:end:ignore*/\n  /*\n    */\n}\n/*\n    /*rtl:begin:ignore*/\n/*\n    /*rtl:end:ignore*/\n.flatpickr-prev-month:hover,\n.flatpickr-next-month:hover {\n  color: #bbb;\n}\n.flatpickr-prev-month:hover svg,\n.flatpickr-next-month:hover svg {\n  fill: #f64747;\n}\n.flatpickr-prev-month svg,\n.flatpickr-next-month svg {\n  width: 14px;\n  height: 14px;\n}\n.flatpickr-prev-month svg path,\n.flatpickr-next-month svg path {\n  -webkit-transition: fill 0.1s;\n  transition: fill 0.1s;\n  fill: inherit;\n}\n.numInputWrapper {\n  position: relative;\n  height: auto;\n}\n.numInputWrapper input,\n.numInputWrapper span {\n  display: inline-block;\n}\n.numInputWrapper input {\n  width: 100%;\n}\n.numInputWrapper input::-ms-clear {\n  display: none;\n}\n.numInputWrapper span {\n  position: absolute;\n  right: 0;\n  width: 14px;\n  padding: 0 4px 0 2px;\n  height: 50%;\n  line-height: 50%;\n  opacity: 0;\n  cursor: pointer;\n  border: 1px solid rgba(72, 72, 72, 0.15);\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.numInputWrapper span:hover {\n  background: rgba(0, 0, 0, 0.1);\n}\n.numInputWrapper span:active {\n  background: rgba(0, 0, 0, 0.2);\n}\n.numInputWrapper span:after {\n  display: block;\n  content: \"\";\n  position: absolute;\n}\n.numInputWrapper span.arrowUp {\n  top: 0;\n  border-bottom: 0;\n}\n.numInputWrapper span.arrowUp:after {\n  border-left: 4px solid transparent;\n  border-right: 4px solid transparent;\n  border-bottom: 4px solid rgba(72, 72, 72, 0.6);\n  top: 26%;\n}\n.numInputWrapper span.arrowDown {\n  top: 50%;\n}\n.numInputWrapper span.arrowDown:after {\n  border-left: 4px solid transparent;\n  border-right: 4px solid transparent;\n  border-top: 4px solid rgba(72, 72, 72, 0.6);\n  top: 40%;\n}\n.numInputWrapper span svg {\n  width: inherit;\n  height: auto;\n}\n.numInputWrapper span svg path {\n  fill: rgba(90, 97, 113, 0.5);\n}\n.numInputWrapper:hover {\n  background: rgba(0, 0, 0, 0.05);\n}\n.numInputWrapper:hover span {\n  opacity: 1;\n}\n.flatpickr-current-month {\n  font-size: 135%;\n  line-height: inherit;\n  font-weight: 300;\n  color: inherit;\n  position: absolute;\n  width: 75%;\n  left: 12.5%;\n  padding: 6.16px 0 0 0;\n  line-height: 1;\n  height: 28px;\n  display: inline-block;\n  text-align: center;\n  -webkit-transform: translate3d(0px, 0px, 0px);\n  transform: translate3d(0px, 0px, 0px);\n}\n.flatpickr-current-month span.cur-month {\n  font-family: inherit;\n  font-weight: 700;\n  color: inherit;\n  display: inline-block;\n  margin-left: 0.5ch;\n  padding: 0;\n}\n.flatpickr-current-month span.cur-month:hover {\n  background: rgba(0, 0, 0, 0.05);\n}\n.flatpickr-current-month .numInputWrapper {\n  width: 6ch;\n  width: 7ch\\0;\n  display: inline-block;\n}\n.flatpickr-current-month .numInputWrapper span.arrowUp:after {\n  border-bottom-color: #5a6171;\n}\n.flatpickr-current-month .numInputWrapper span.arrowDown:after {\n  border-top-color: #5a6171;\n}\n.flatpickr-current-month input.cur-year {\n  background: transparent;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  color: inherit;\n  cursor: text;\n  padding: 0 0 0 0.5ch;\n  margin: 0;\n  display: inline-block;\n  font-size: inherit;\n  font-family: inherit;\n  font-weight: 300;\n  line-height: inherit;\n  height: auto;\n  border: 0;\n  border-radius: 0;\n  vertical-align: initial;\n}\n.flatpickr-current-month input.cur-year:focus {\n  outline: 0;\n}\n.flatpickr-current-month input.cur-year[disabled],\n.flatpickr-current-month input.cur-year[disabled]:hover {\n  font-size: 100%;\n  color: rgba(90, 97, 113, 0.5);\n  background: transparent;\n  pointer-events: none;\n}\n.flatpickr-weekdays {\n  background: #eceef1;\n  text-align: center;\n  overflow: hidden;\n  width: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-align: center;\n  -webkit-align-items: center;\n  -ms-flex-align: center;\n  align-items: center;\n  height: 28px;\n}\nspan.flatpickr-weekday {\n  cursor: default;\n  font-size: 90%;\n  background: #eceef1;\n  color: #5a6171;\n  line-height: 1;\n  margin: 0;\n  text-align: center;\n  display: block;\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  font-weight: bolder;\n}\n.dayContainer,\n.flatpickr-weeks {\n  padding: 1px 0 0 0;\n}\n.flatpickr-days {\n  position: relative;\n  overflow: hidden;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  width: 307.875px;\n  border-left: 1px solid #eceef1;\n  border-right: 1px solid #eceef1;\n}\n.flatpickr-days:focus {\n  outline: 0;\n}\n.dayContainer {\n  padding: 0;\n  outline: 0;\n  text-align: left;\n  width: 307.875px;\n  min-width: 307.875px;\n  max-width: 307.875px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  display: inline-block;\n  display: -ms-flexbox;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: flex;\n  -webkit-flex-wrap: wrap;\n  flex-wrap: wrap;\n  -ms-flex-wrap: wrap;\n  -ms-flex-pack: justify;\n  -webkit-justify-content: space-around;\n  justify-content: space-around;\n  -webkit-transform: translate3d(0px, 0px, 0px);\n  transform: translate3d(0px, 0px, 0px);\n  opacity: 1;\n}\n.flatpickr-day {\n  background: none;\n  border: 1px solid transparent;\n  border-radius: 150px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  color: #484848;\n  cursor: pointer;\n  font-weight: 400;\n  width: 14.2857143%;\n  -webkit-flex-basis: 14.2857143%;\n  -ms-flex-preferred-size: 14.2857143%;\n  flex-basis: 14.2857143%;\n  max-width: 39px;\n  height: 39px;\n  line-height: 39px;\n  margin: 0;\n  display: inline-block;\n  position: relative;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n  -ms-flex-pack: center;\n  justify-content: center;\n  text-align: center;\n}\n.flatpickr-day.inRange,\n.flatpickr-day.prevMonthDay.inRange,\n.flatpickr-day.nextMonthDay.inRange,\n.flatpickr-day.today.inRange,\n.flatpickr-day.prevMonthDay.today.inRange,\n.flatpickr-day.nextMonthDay.today.inRange,\n.flatpickr-day:hover,\n.flatpickr-day.prevMonthDay:hover,\n.flatpickr-day.nextMonthDay:hover,\n.flatpickr-day:focus,\n.flatpickr-day.prevMonthDay:focus,\n.flatpickr-day.nextMonthDay:focus {\n  cursor: pointer;\n  outline: 0;\n  background: #e2e2e2;\n  border-color: #e2e2e2;\n}\n.flatpickr-day.today {\n  border-color: #bbb;\n}\n.flatpickr-day.today:hover,\n.flatpickr-day.today:focus {\n  border-color: #bbb;\n  background: #bbb;\n  color: #fff;\n}\n.flatpickr-day.selected,\n.flatpickr-day.startRange,\n.flatpickr-day.endRange,\n.flatpickr-day.selected.inRange,\n.flatpickr-day.startRange.inRange,\n.flatpickr-day.endRange.inRange,\n.flatpickr-day.selected:focus,\n.flatpickr-day.startRange:focus,\n.flatpickr-day.endRange:focus,\n.flatpickr-day.selected:hover,\n.flatpickr-day.startRange:hover,\n.flatpickr-day.endRange:hover,\n.flatpickr-day.selected.prevMonthDay,\n.flatpickr-day.startRange.prevMonthDay,\n.flatpickr-day.endRange.prevMonthDay,\n.flatpickr-day.selected.nextMonthDay,\n.flatpickr-day.startRange.nextMonthDay,\n.flatpickr-day.endRange.nextMonthDay {\n  background: #ff5a5f;\n  -webkit-box-shadow: none;\n  box-shadow: none;\n  color: #fff;\n  border-color: #ff5a5f;\n}\n.flatpickr-day.selected.startRange,\n.flatpickr-day.startRange.startRange,\n.flatpickr-day.endRange.startRange {\n  border-radius: 50px 0 0 50px;\n}\n.flatpickr-day.selected.endRange,\n.flatpickr-day.startRange.endRange,\n.flatpickr-day.endRange.endRange {\n  border-radius: 0 50px 50px 0;\n}\n.flatpickr-day.selected.startRange + .endRange,\n.flatpickr-day.startRange.startRange + .endRange,\n.flatpickr-day.endRange.startRange + .endRange {\n  -webkit-box-shadow: -10px 0 0 #ff5a5f;\n  box-shadow: -10px 0 0 #ff5a5f;\n}\n.flatpickr-day.selected.startRange.endRange,\n.flatpickr-day.startRange.startRange.endRange,\n.flatpickr-day.endRange.startRange.endRange {\n  border-radius: 50px;\n}\n.flatpickr-day.inRange {\n  border-radius: 0;\n  -webkit-box-shadow: -5px 0 0 #e2e2e2, 5px 0 0 #e2e2e2;\n  box-shadow: -5px 0 0 #e2e2e2, 5px 0 0 #e2e2e2;\n}\n.flatpickr-day.disabled,\n.flatpickr-day.disabled:hover,\n.flatpickr-day.prevMonthDay,\n.flatpickr-day.nextMonthDay,\n.flatpickr-day.notAllowed,\n.flatpickr-day.notAllowed.prevMonthDay,\n.flatpickr-day.notAllowed.nextMonthDay {\n  color: rgba(72, 72, 72, 0.3);\n  background: transparent;\n  border-color: transparent;\n  cursor: default;\n}\n.flatpickr-day.disabled,\n.flatpickr-day.disabled:hover {\n  cursor: not-allowed;\n  color: rgba(72, 72, 72, 0.1);\n}\n.flatpickr-day.week.selected {\n  border-radius: 0;\n  -webkit-box-shadow: -5px 0 0 #ff5a5f, 5px 0 0 #ff5a5f;\n  box-shadow: -5px 0 0 #ff5a5f, 5px 0 0 #ff5a5f;\n}\n.rangeMode .flatpickr-day {\n  margin-top: 1px;\n}\n.flatpickr-weekwrapper {\n  display: inline-block;\n  float: left;\n}\n.flatpickr-weekwrapper .flatpickr-weeks {\n  padding: 0 12px;\n  border-left: 1px solid #eceef1;\n}\n.flatpickr-weekwrapper .flatpickr-weekday {\n  float: none;\n  width: 100%;\n  line-height: 28px;\n}\n.flatpickr-weekwrapper span.flatpickr-day,\n.flatpickr-weekwrapper span.flatpickr-day:hover {\n  display: block;\n  width: 100%;\n  max-width: none;\n  color: rgba(72, 72, 72, 0.3);\n  background: transparent;\n  cursor: default;\n  border: none;\n}\n.flatpickr-innerContainer {\n  display: block;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n  background: #fff;\n  border-bottom: 1px solid #eceef1;\n}\n.flatpickr-rContainer {\n  display: inline-block;\n  padding: 0;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.flatpickr-time {\n  text-align: center;\n  outline: 0;\n  display: block;\n  height: 0;\n  line-height: 40px;\n  max-height: 40px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  background: #fff;\n  border-radius: 0 0 5px 5px;\n}\n.flatpickr-time:after {\n  content: \"\";\n  display: table;\n  clear: both;\n}\n.flatpickr-time .numInputWrapper {\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  width: 40%;\n  height: 40px;\n  float: left;\n}\n.flatpickr-time .numInputWrapper span.arrowUp:after {\n  border-bottom-color: #484848;\n}\n.flatpickr-time .numInputWrapper span.arrowDown:after {\n  border-top-color: #484848;\n}\n.flatpickr-time.hasSeconds .numInputWrapper {\n  width: 26%;\n}\n.flatpickr-time.time24hr .numInputWrapper {\n  width: 49%;\n}\n.flatpickr-time input {\n  background: transparent;\n  -webkit-box-shadow: none;\n  box-shadow: none;\n  border: 0;\n  border-radius: 0;\n  text-align: center;\n  margin: 0;\n  padding: 0;\n  height: inherit;\n  line-height: inherit;\n  cursor: pointer;\n  color: #484848;\n  font-size: 14px;\n  position: relative;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.flatpickr-time input.flatpickr-hour {\n  font-weight: bold;\n}\n.flatpickr-time input.flatpickr-minute,\n.flatpickr-time input.flatpickr-second {\n  font-weight: 400;\n}\n.flatpickr-time input:focus {\n  outline: 0;\n  border: 0;\n}\n.flatpickr-time .flatpickr-time-separator,\n.flatpickr-time .flatpickr-am-pm {\n  height: inherit;\n  display: inline-block;\n  float: left;\n  line-height: inherit;\n  color: #484848;\n  font-weight: bold;\n  width: 2%;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n  -webkit-align-self: center;\n  -ms-flex-item-align: center;\n  align-self: center;\n}\n.flatpickr-time .flatpickr-am-pm {\n  outline: 0;\n  width: 18%;\n  cursor: pointer;\n  text-align: center;\n  font-weight: 400;\n}\n.flatpickr-time .flatpickr-am-pm:hover,\n.flatpickr-time .flatpickr-am-pm:focus {\n  background: #ececec;\n}\n.flatpickr-input[readonly] {\n  cursor: pointer;\n}\n@-webkit-keyframes fpFadeInDown {\n  from {\n    opacity: 0;\n    -webkit-transform: translate3d(0, -20px, 0);\n    transform: translate3d(0, -20px, 0);\n  }\n  to {\n    opacity: 1;\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n@keyframes fpFadeInDown {\n  from {\n    opacity: 0;\n    -webkit-transform: translate3d(0, -20px, 0);\n    transform: translate3d(0, -20px, 0);\n  }\n  to {\n    opacity: 1;\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\nspan.flatpickr-day.selected {\n  font-weight: bold;\n}\n", ""]);
+exports.push([module.i, ".flatpickr-calendar {\n  background: transparent;\n  opacity: 0;\n  display: none;\n  text-align: center;\n  visibility: hidden;\n  padding: 0;\n  -webkit-animation: none;\n  animation: none;\n  direction: ltr;\n  border: 0;\n  font-size: 14px;\n  line-height: 24px;\n  border-radius: 5px;\n  position: absolute;\n  width: 307.875px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -ms-touch-action: manipulation;\n  touch-action: manipulation;\n  -webkit-box-shadow: 0 3px 13px rgba(0, 0, 0, 0.08);\n  box-shadow: 0 3px 13px rgba(0, 0, 0, 0.08);\n}\n.flatpickr-calendar.open,\n.flatpickr-calendar.inline {\n  opacity: 1;\n  max-height: 640px;\n  visibility: visible;\n}\n.flatpickr-calendar.open {\n  display: inline-block;\n  z-index: 99999;\n}\n.flatpickr-calendar.animate.open {\n  -webkit-animation: fpFadeInDown 300ms cubic-bezier(0.23, 1, 0.32, 1);\n  animation: fpFadeInDown 300ms cubic-bezier(0.23, 1, 0.32, 1);\n}\n.flatpickr-calendar.inline {\n  display: block;\n  position: relative;\n  top: 2px;\n}\n.flatpickr-calendar.static {\n  position: absolute;\n  top: calc(100% + 2px);\n}\n.flatpickr-calendar.static.open {\n  z-index: 999;\n  display: block;\n}\n.flatpickr-calendar.multiMonth .flatpickr-days .dayContainer:nth-child(n+1) .flatpickr-day.inRange:nth-child(7n+7) {\n  -webkit-box-shadow: none !important;\n  box-shadow: none !important;\n}\n.flatpickr-calendar.multiMonth .flatpickr-days .dayContainer:nth-child(n+2) .flatpickr-day.inRange:nth-child(7n+1) {\n  -webkit-box-shadow: -2px 0 0 #e6e6e6, 5px 0 0 #e6e6e6;\n  box-shadow: -2px 0 0 #e6e6e6, 5px 0 0 #e6e6e6;\n}\n.flatpickr-calendar .hasWeeks .dayContainer,\n.flatpickr-calendar .hasTime .dayContainer {\n  border-bottom: 0;\n  border-bottom-right-radius: 0;\n  border-bottom-left-radius: 0;\n}\n.flatpickr-calendar .hasWeeks .dayContainer {\n  border-left: 0;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-time {\n  height: 40px;\n  border-top: 1px solid #eceef1;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-innerContainer {\n  border-bottom: 0;\n}\n.flatpickr-calendar.showTimeInput.hasTime .flatpickr-time {\n  border: 1px solid #eceef1;\n}\n.flatpickr-calendar.noCalendar.hasTime .flatpickr-time {\n  height: auto;\n}\n.flatpickr-calendar:before,\n.flatpickr-calendar:after {\n  position: absolute;\n  display: block;\n  pointer-events: none;\n  border: solid transparent;\n  content: '';\n  height: 0;\n  width: 0;\n  left: 22px;\n}\n.flatpickr-calendar.rightMost:before,\n.flatpickr-calendar.rightMost:after {\n  left: auto;\n  right: 22px;\n}\n.flatpickr-calendar:before {\n  border-width: 5px;\n  margin: 0 -5px;\n}\n.flatpickr-calendar:after {\n  border-width: 4px;\n  margin: 0 -4px;\n}\n.flatpickr-calendar.arrowTop:before,\n.flatpickr-calendar.arrowTop:after {\n  bottom: 100%;\n}\n.flatpickr-calendar.arrowTop:before {\n  border-bottom-color: #eceef1;\n}\n.flatpickr-calendar.arrowTop:after {\n  border-bottom-color: #eceef1;\n}\n.flatpickr-calendar.arrowBottom:before,\n.flatpickr-calendar.arrowBottom:after {\n  top: 100%;\n}\n.flatpickr-calendar.arrowBottom:before {\n  border-top-color: #eceef1;\n}\n.flatpickr-calendar.arrowBottom:after {\n  border-top-color: #eceef1;\n}\n.flatpickr-calendar:focus {\n  outline: 0;\n}\n.flatpickr-wrapper {\n  position: relative;\n  display: inline-block;\n}\n.flatpickr-months {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n}\n.flatpickr-months .flatpickr-month {\n  border-radius: 5px 5px 0 0;\n  background: #eceef1;\n  color: #5a6171;\n  fill: #5a6171;\n  height: 28px;\n  line-height: 1;\n  text-align: center;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n  overflow: hidden;\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n}\n.flatpickr-months .flatpickr-prev-month,\n.flatpickr-months .flatpickr-next-month {\n  text-decoration: none;\n  cursor: pointer;\n  position: absolute;\n  top: 0px;\n  line-height: 16px;\n  height: 28px;\n  padding: 10px;\n  z-index: 3;\n  color: #5a6171;\n  fill: #5a6171;\n}\n.flatpickr-months .flatpickr-prev-month.disabled,\n.flatpickr-months .flatpickr-next-month.disabled {\n  display: none;\n}\n.flatpickr-months .flatpickr-prev-month i,\n.flatpickr-months .flatpickr-next-month i {\n  position: relative;\n}\n.flatpickr-months .flatpickr-prev-month.flatpickr-prev-month,\n.flatpickr-months .flatpickr-next-month.flatpickr-prev-month {\n  /*\n      /*rtl:begin:ignore*/\n  /*\n      */\n  left: 0;\n  /*\n      /*rtl:end:ignore*/\n  /*\n      */\n}\n/*\n      /*rtl:begin:ignore*/\n/*\n      /*rtl:end:ignore*/\n.flatpickr-months .flatpickr-prev-month.flatpickr-next-month,\n.flatpickr-months .flatpickr-next-month.flatpickr-next-month {\n  /*\n      /*rtl:begin:ignore*/\n  /*\n      */\n  right: 0;\n  /*\n      /*rtl:end:ignore*/\n  /*\n      */\n}\n/*\n      /*rtl:begin:ignore*/\n/*\n      /*rtl:end:ignore*/\n.flatpickr-months .flatpickr-prev-month:hover,\n.flatpickr-months .flatpickr-next-month:hover {\n  color: #bbb;\n}\n.flatpickr-months .flatpickr-prev-month:hover svg,\n.flatpickr-months .flatpickr-next-month:hover svg {\n  fill: #f64747;\n}\n.flatpickr-months .flatpickr-prev-month svg,\n.flatpickr-months .flatpickr-next-month svg {\n  width: 14px;\n  height: 14px;\n}\n.flatpickr-months .flatpickr-prev-month svg path,\n.flatpickr-months .flatpickr-next-month svg path {\n  -webkit-transition: fill 0.1s;\n  transition: fill 0.1s;\n  fill: inherit;\n}\n.numInputWrapper {\n  position: relative;\n  height: auto;\n}\n.numInputWrapper input,\n.numInputWrapper span {\n  display: inline-block;\n}\n.numInputWrapper input {\n  width: 100%;\n}\n.numInputWrapper input::-ms-clear {\n  display: none;\n}\n.numInputWrapper span {\n  position: absolute;\n  right: 0;\n  width: 14px;\n  padding: 0 4px 0 2px;\n  height: 50%;\n  line-height: 50%;\n  opacity: 0;\n  cursor: pointer;\n  border: 1px solid rgba(72, 72, 72, 0.15);\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.numInputWrapper span:hover {\n  background: rgba(0, 0, 0, 0.1);\n}\n.numInputWrapper span:active {\n  background: rgba(0, 0, 0, 0.2);\n}\n.numInputWrapper span:after {\n  display: block;\n  content: \"\";\n  position: absolute;\n}\n.numInputWrapper span.arrowUp {\n  top: 0;\n  border-bottom: 0;\n}\n.numInputWrapper span.arrowUp:after {\n  border-left: 4px solid transparent;\n  border-right: 4px solid transparent;\n  border-bottom: 4px solid rgba(72, 72, 72, 0.6);\n  top: 26%;\n}\n.numInputWrapper span.arrowDown {\n  top: 50%;\n}\n.numInputWrapper span.arrowDown:after {\n  border-left: 4px solid transparent;\n  border-right: 4px solid transparent;\n  border-top: 4px solid rgba(72, 72, 72, 0.6);\n  top: 40%;\n}\n.numInputWrapper span svg {\n  width: inherit;\n  height: auto;\n}\n.numInputWrapper span svg path {\n  fill: rgba(90, 97, 113, 0.5);\n}\n.numInputWrapper:hover {\n  background: rgba(0, 0, 0, 0.05);\n}\n.numInputWrapper:hover span {\n  opacity: 1;\n}\n.flatpickr-current-month {\n  font-size: 135%;\n  line-height: inherit;\n  font-weight: 300;\n  color: inherit;\n  position: absolute;\n  width: 75%;\n  left: 12.5%;\n  padding: 6.16px 0 0 0;\n  line-height: 1;\n  height: 28px;\n  display: inline-block;\n  text-align: center;\n  -webkit-transform: translate3d(0px, 0px, 0px);\n  transform: translate3d(0px, 0px, 0px);\n}\n.flatpickr-current-month span.cur-month {\n  font-family: inherit;\n  font-weight: 700;\n  color: inherit;\n  display: inline-block;\n  margin-left: 0.5ch;\n  padding: 0;\n}\n.flatpickr-current-month span.cur-month:hover {\n  background: rgba(0, 0, 0, 0.05);\n}\n.flatpickr-current-month .numInputWrapper {\n  width: 6ch;\n  width: 7ch\\0;\n  display: inline-block;\n}\n.flatpickr-current-month .numInputWrapper span.arrowUp:after {\n  border-bottom-color: #5a6171;\n}\n.flatpickr-current-month .numInputWrapper span.arrowDown:after {\n  border-top-color: #5a6171;\n}\n.flatpickr-current-month input.cur-year {\n  background: transparent;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  color: inherit;\n  cursor: text;\n  padding: 0 0 0 0.5ch;\n  margin: 0;\n  display: inline-block;\n  font-size: inherit;\n  font-family: inherit;\n  font-weight: 300;\n  line-height: inherit;\n  height: auto;\n  border: 0;\n  border-radius: 0;\n  vertical-align: initial;\n}\n.flatpickr-current-month input.cur-year:focus {\n  outline: 0;\n}\n.flatpickr-current-month input.cur-year[disabled],\n.flatpickr-current-month input.cur-year[disabled]:hover {\n  font-size: 100%;\n  color: rgba(90, 97, 113, 0.5);\n  background: transparent;\n  pointer-events: none;\n}\n.flatpickr-weekdays {\n  background: #eceef1;\n  text-align: center;\n  overflow: hidden;\n  width: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-align: center;\n  -webkit-align-items: center;\n  -ms-flex-align: center;\n  align-items: center;\n  height: 28px;\n}\n.flatpickr-weekdays .flatpickr-weekdaycontainer {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n}\nspan.flatpickr-weekday {\n  cursor: default;\n  font-size: 90%;\n  background: #eceef1;\n  color: #5a6171;\n  line-height: 1;\n  margin: 0;\n  text-align: center;\n  display: block;\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  font-weight: bolder;\n}\n.dayContainer,\n.flatpickr-weeks {\n  padding: 1px 0 0 0;\n}\n.flatpickr-days {\n  position: relative;\n  overflow: hidden;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-align: start;\n  -webkit-align-items: flex-start;\n  -ms-flex-align: start;\n  align-items: flex-start;\n  width: 307.875px;\n  border-left: 1px solid #eceef1;\n  border-right: 1px solid #eceef1;\n}\n.flatpickr-days:focus {\n  outline: 0;\n}\n.dayContainer {\n  padding: 0;\n  outline: 0;\n  text-align: left;\n  width: 307.875px;\n  min-width: 307.875px;\n  max-width: 307.875px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  display: inline-block;\n  display: -ms-flexbox;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: flex;\n  -webkit-flex-wrap: wrap;\n  flex-wrap: wrap;\n  -ms-flex-wrap: wrap;\n  -ms-flex-pack: justify;\n  -webkit-justify-content: space-around;\n  justify-content: space-around;\n  -webkit-transform: translate3d(0px, 0px, 0px);\n  transform: translate3d(0px, 0px, 0px);\n  opacity: 1;\n}\n.dayContainer + .dayContainer {\n  -webkit-box-shadow: -1px 0 0 #eceef1;\n  box-shadow: -1px 0 0 #eceef1;\n}\n.flatpickr-day {\n  background: none;\n  border: 1px solid transparent;\n  border-radius: 150px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  color: #484848;\n  cursor: pointer;\n  font-weight: 400;\n  width: 14.2857143%;\n  -webkit-flex-basis: 14.2857143%;\n  -ms-flex-preferred-size: 14.2857143%;\n  flex-basis: 14.2857143%;\n  max-width: 39px;\n  height: 39px;\n  line-height: 39px;\n  margin: 0;\n  display: inline-block;\n  position: relative;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n  -ms-flex-pack: center;\n  justify-content: center;\n  text-align: center;\n}\n.flatpickr-day.inRange,\n.flatpickr-day.prevMonthDay.inRange,\n.flatpickr-day.nextMonthDay.inRange,\n.flatpickr-day.today.inRange,\n.flatpickr-day.prevMonthDay.today.inRange,\n.flatpickr-day.nextMonthDay.today.inRange,\n.flatpickr-day:hover,\n.flatpickr-day.prevMonthDay:hover,\n.flatpickr-day.nextMonthDay:hover,\n.flatpickr-day:focus,\n.flatpickr-day.prevMonthDay:focus,\n.flatpickr-day.nextMonthDay:focus {\n  cursor: pointer;\n  outline: 0;\n  background: #e2e2e2;\n  border-color: #e2e2e2;\n}\n.flatpickr-day.today {\n  border-color: #bbb;\n}\n.flatpickr-day.today:hover,\n.flatpickr-day.today:focus {\n  border-color: #bbb;\n  background: #bbb;\n  color: #fff;\n}\n.flatpickr-day.selected,\n.flatpickr-day.startRange,\n.flatpickr-day.endRange,\n.flatpickr-day.selected.inRange,\n.flatpickr-day.startRange.inRange,\n.flatpickr-day.endRange.inRange,\n.flatpickr-day.selected:focus,\n.flatpickr-day.startRange:focus,\n.flatpickr-day.endRange:focus,\n.flatpickr-day.selected:hover,\n.flatpickr-day.startRange:hover,\n.flatpickr-day.endRange:hover,\n.flatpickr-day.selected.prevMonthDay,\n.flatpickr-day.startRange.prevMonthDay,\n.flatpickr-day.endRange.prevMonthDay,\n.flatpickr-day.selected.nextMonthDay,\n.flatpickr-day.startRange.nextMonthDay,\n.flatpickr-day.endRange.nextMonthDay {\n  background: #ff5a5f;\n  -webkit-box-shadow: none;\n  box-shadow: none;\n  color: #fff;\n  border-color: #ff5a5f;\n}\n.flatpickr-day.selected.startRange,\n.flatpickr-day.startRange.startRange,\n.flatpickr-day.endRange.startRange {\n  border-radius: 50px 0 0 50px;\n}\n.flatpickr-day.selected.endRange,\n.flatpickr-day.startRange.endRange,\n.flatpickr-day.endRange.endRange {\n  border-radius: 0 50px 50px 0;\n}\n.flatpickr-day.selected.startRange + .endRange:not(:nth-child(7n+1)),\n.flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n+1)),\n.flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n+1)) {\n  -webkit-box-shadow: -10px 0 0 #ff5a5f;\n  box-shadow: -10px 0 0 #ff5a5f;\n}\n.flatpickr-day.selected.startRange.endRange,\n.flatpickr-day.startRange.startRange.endRange,\n.flatpickr-day.endRange.startRange.endRange {\n  border-radius: 50px;\n}\n.flatpickr-day.inRange {\n  border-radius: 0;\n  -webkit-box-shadow: -5px 0 0 #e2e2e2, 5px 0 0 #e2e2e2;\n  box-shadow: -5px 0 0 #e2e2e2, 5px 0 0 #e2e2e2;\n}\n.flatpickr-day.disabled,\n.flatpickr-day.disabled:hover,\n.flatpickr-day.prevMonthDay,\n.flatpickr-day.nextMonthDay,\n.flatpickr-day.notAllowed,\n.flatpickr-day.notAllowed.prevMonthDay,\n.flatpickr-day.notAllowed.nextMonthDay {\n  color: rgba(72, 72, 72, 0.3);\n  background: transparent;\n  border-color: transparent;\n  cursor: default;\n}\n.flatpickr-day.disabled,\n.flatpickr-day.disabled:hover {\n  cursor: not-allowed;\n  color: rgba(72, 72, 72, 0.1);\n}\n.flatpickr-day.week.selected {\n  border-radius: 0;\n  -webkit-box-shadow: -5px 0 0 #ff5a5f, 5px 0 0 #ff5a5f;\n  box-shadow: -5px 0 0 #ff5a5f, 5px 0 0 #ff5a5f;\n}\n.flatpickr-day.hidden {\n  visibility: hidden;\n}\n.rangeMode .flatpickr-day {\n  margin-top: 1px;\n}\n.flatpickr-weekwrapper {\n  display: inline-block;\n  float: left;\n}\n.flatpickr-weekwrapper .flatpickr-weeks {\n  padding: 0 12px;\n  border-left: 1px solid #eceef1;\n}\n.flatpickr-weekwrapper .flatpickr-weekday {\n  float: none;\n  width: 100%;\n  line-height: 28px;\n}\n.flatpickr-weekwrapper span.flatpickr-day,\n.flatpickr-weekwrapper span.flatpickr-day:hover {\n  display: block;\n  width: 100%;\n  max-width: none;\n  color: rgba(72, 72, 72, 0.3);\n  background: transparent;\n  cursor: default;\n  border: none;\n}\n.flatpickr-innerContainer {\n  display: block;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n  background: #fff;\n  border-bottom: 1px solid #eceef1;\n}\n.flatpickr-rContainer {\n  display: inline-block;\n  padding: 0;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.flatpickr-time {\n  text-align: center;\n  outline: 0;\n  display: block;\n  height: 0;\n  line-height: 40px;\n  max-height: 40px;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  overflow: hidden;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  background: #fff;\n  border-radius: 0 0 5px 5px;\n}\n.flatpickr-time:after {\n  content: \"\";\n  display: table;\n  clear: both;\n}\n.flatpickr-time .numInputWrapper {\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  width: 40%;\n  height: 40px;\n  float: left;\n}\n.flatpickr-time .numInputWrapper span.arrowUp:after {\n  border-bottom-color: #484848;\n}\n.flatpickr-time .numInputWrapper span.arrowDown:after {\n  border-top-color: #484848;\n}\n.flatpickr-time.hasSeconds .numInputWrapper {\n  width: 26%;\n}\n.flatpickr-time.time24hr .numInputWrapper {\n  width: 49%;\n}\n.flatpickr-time input {\n  background: transparent;\n  -webkit-box-shadow: none;\n  box-shadow: none;\n  border: 0;\n  border-radius: 0;\n  text-align: center;\n  margin: 0;\n  padding: 0;\n  height: inherit;\n  line-height: inherit;\n  color: #484848;\n  font-size: 14px;\n  position: relative;\n  -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n}\n.flatpickr-time input.flatpickr-hour {\n  font-weight: bold;\n}\n.flatpickr-time input.flatpickr-minute,\n.flatpickr-time input.flatpickr-second {\n  font-weight: 400;\n}\n.flatpickr-time input:focus {\n  outline: 0;\n  border: 0;\n}\n.flatpickr-time .flatpickr-time-separator,\n.flatpickr-time .flatpickr-am-pm {\n  height: inherit;\n  display: inline-block;\n  float: left;\n  line-height: inherit;\n  color: #484848;\n  font-weight: bold;\n  width: 2%;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n  -webkit-align-self: center;\n  -ms-flex-item-align: center;\n  align-self: center;\n}\n.flatpickr-time .flatpickr-am-pm {\n  outline: 0;\n  width: 18%;\n  cursor: pointer;\n  text-align: center;\n  font-weight: 400;\n}\n.flatpickr-time input:hover,\n.flatpickr-time .flatpickr-am-pm:hover,\n.flatpickr-time input:focus,\n.flatpickr-time .flatpickr-am-pm:focus {\n  background: #efefef;\n}\n.flatpickr-input[readonly] {\n  cursor: pointer;\n}\n@-webkit-keyframes fpFadeInDown {\n  from {\n    opacity: 0;\n    -webkit-transform: translate3d(0, -20px, 0);\n    transform: translate3d(0, -20px, 0);\n  }\n  to {\n    opacity: 1;\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n@keyframes fpFadeInDown {\n  from {\n    opacity: 0;\n    -webkit-transform: translate3d(0, -20px, 0);\n    transform: translate3d(0, -20px, 0);\n  }\n  to {\n    opacity: 1;\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\nspan.flatpickr-day.selected {\n  font-weight: bold;\n}\n", ""]);
 
 // exports
 
@@ -2842,7 +2907,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/app.vue"],"names":[],"mappings":";AAAA;EACE,uBAAuB;CACxB;AACD;EACE,YAAY;EACZ,cAAc;EACd,+BAA+B;EAC/B,sBAAsB;EACtB,iBAAiB;CAClB;AACD;EACE,iBAAiB;EACjB,iCAAiC;CAClC;AACD;EACE,mBAAmB;CACpB;AACD;EACE,mBAAmB;EACnB,SAAS;EACT,YAAY;EACZ,eAAe;CAChB;AACD;EACE,YAAY;EACZ,cAAc;CACf;AACD;EACE,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,2BAA2B;EAC3B,8BAA8B;EAC9B,WAAW;EACX,kBAAkB;EAClB,0BAA0B;EAC1B,eAAe;CAChB;AACD;EACE,eAAe;EACf,iCAAiC;CAClC;AACD;EACE,0BAA0B;EAC1B,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,YAAY;EACZ,kBAAkB;EAClB,mBAAmB;EACnB,0BAA0B;EAC1B,uBAAuB;CACxB","file":"app.vue","sourcesContent":[".wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/app.vue"],"names":[],"mappings":";AAAA;EACE,uBAAuB;CACxB;AACD;EACE,YAAY;EACZ,cAAc;EACd,+BAA+B;EAC/B,sBAAsB;EACtB,iBAAiB;CAClB;AACD;EACE,iBAAiB;EACjB,iCAAiC;CAClC;AACD;EACE,mBAAmB;CACpB;AACD;EACE,mBAAmB;EACnB,SAAS;EACT,YAAY;EACZ,eAAe;CAChB;AACD;EACE,YAAY;EACZ,cAAc;CACf;AACD;EACE,iBAAiB;EACjB,gBAAgB;EAChB,0BAA0B;EAC1B,2BAA2B;EAC3B,8BAA8B;EAC9B,WAAW;EACX,kBAAkB;EAClB,0BAA0B;EAC1B,eAAe;CAChB;AACD;EACE,eAAe;EACf,iCAAiC;CAClC;AACD;EACE,0BAA0B;EAC1B,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,YAAY;EACZ,kBAAkB;EAClB,mBAAmB;EACnB,0BAA0B;EAC1B,uBAAuB;CACxB","file":"app.vue","sourcesContent":[".wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2861,7 +2926,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/button.vue"],"names":[],"mappings":";AAAA;EACE,sBAAsB;EACtB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,eAAe;EACf,aAAa;EACb,YAAY;CACb","file":"button.vue","sourcesContent":[".wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/button.vue"],"names":[],"mappings":";AAAA;EACE,sBAAsB;EACtB,kBAAkB;EAClB,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,eAAe;EACf,aAAa;EACb,YAAY;CACb","file":"button.vue","sourcesContent":[".wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2880,7 +2945,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-connect {\n  border: 1px solid black;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  padding: 4px;\n}\n.wylib-connect table label {\n  font-family: Helvetica;\n  font-size: 0.8em;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/connect.vue"],"names":[],"mappings":";AAAA;EACE,wBAAwB;EACxB,mBAAmB;EACnB,kBAAkB;EAClB,aAAa;CACd;AACD;EACE,aAAa;CACd;AACD;EACE,uBAAuB;EACvB,iBAAiB;CAClB","file":"connect.vue","sourcesContent":[".wylib-connect {\n  border: 1px solid black;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  padding: 4px;\n}\n.wylib-connect table label {\n  font-family: Helvetica;\n  font-size: 0.8em;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-connect {\n  border: 1px solid black;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  padding: 4px;\n}\n.wylib-connect table label {\n  font-family: Helvetica;\n  font-size: 0.8em;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/connect.vue"],"names":[],"mappings":";AAAA;EACE,wBAAwB;EACxB,mBAAmB;EACnB,kBAAkB;EAClB,aAAa;CACd;AACD;EACE,aAAa;CACd;AACD;EACE,uBAAuB;EACvB,iBAAiB;CAClB","file":"connect.vue","sourcesContent":[".wylib-connect {\n  border: 1px solid black;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  padding: 4px;\n}\n.wylib-connect table label {\n  font-family: Helvetica;\n  font-size: 0.8em;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2899,7 +2964,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/dbe.vue"],"names":[],"mappings":";AAAA;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;EACf,oBAAoB;EACpB,cAAc;EACd,sBAAsB;CACvB","file":"dbe.vue","sourcesContent":[".wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/dbe.vue"],"names":[],"mappings":";AAAA;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;EACf,oBAAoB;EACpB,cAAc;EACd,sBAAsB;CACvB","file":"dbe.vue","sourcesContent":[".wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2918,7 +2983,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/dbp.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;CACd;AACD;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;EACd,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB","file":"dbp.vue","sourcesContent":[".wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/dbp.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;CACd;AACD;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;EACd,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB","file":"dbp.vue","sourcesContent":[".wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2937,7 +3002,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/dbs.vue"],"names":[],"mappings":";AAAA;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;EACd,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB","file":"dbs.vue","sourcesContent":[".wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/dbs.vue"],"names":[],"mappings":";AAAA;EACE,sDAAsD;EACtD,YAAY;EACZ,cAAc;EACd,cAAc;CACf;AACD;EACE,eAAe;CAChB;AACD;EACE,eAAe;CAChB","file":"dbs.vue","sourcesContent":[".wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2956,7 +3021,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/dew.vue"],"names":[],"mappings":";AAAA;;EAEE,oBAAoB;EACpB,yBAAyB;EACzB,oBAAoB;EACpB,mBAAmB;CACpB;AACD;EACE,YAAY;CACb;AACD;EACE,aAAa;CACd;AACD;EACE,oBAAoB;CACrB","file":"dew.vue","sourcesContent":[".wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/dew.vue"],"names":[],"mappings":";AAAA;;EAEE,oBAAoB;EACpB,yBAAyB;EACzB,oBAAoB;EACpB,mBAAmB;CACpB;AACD;EACE,YAAY;CACb;AACD;EACE,aAAa;CACd;AACD;EACE,oBAAoB;CACrB","file":"dew.vue","sourcesContent":[".wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2975,7 +3040,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem input.inactive {\n  max-width: 0;\n  visibility: hidden;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/logitem.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;EACb,aAAa;EACb,mBAAmB;EACnB,cAAc;EACd,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,eAAe;CAChB;AACD;EACE,aAAa;EACb,mBAAmB;CACpB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB","file":"logitem.vue","sourcesContent":[".wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem input.inactive {\n  max-width: 0;\n  visibility: hidden;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem input.inactive {\n  max-width: 0;\n  visibility: hidden;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/logitem.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;EACb,aAAa;EACb,mBAAmB;EACnB,cAAc;EACd,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,eAAe;CAChB;AACD;EACE,aAAa;EACb,mBAAmB;CACpB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB","file":"logitem.vue","sourcesContent":[".wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem input.inactive {\n  max-width: 0;\n  visibility: hidden;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -2994,7 +3059,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/loglist.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;EACb,0BAA0B;EAC1B,mBAAmB;EACnB,oBAAoB;EACpB,qBAAqB;CACtB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,aAAa;EACb,mBAAmB;EACnB,cAAc;EACd,+BAA+B;CAChC;AACD;EACE,aAAa;EACb,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,UAAU;EACV,YAAY;EACZ,aAAa;EACb,WAAW;EACX,gBAAgB;EAChB,gBAAgB;CACjB;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,UAAU;EACV,aAAa;CACd;AACD;EACE,mBAAmB;CACpB;AACD;EACE,aAAa;EACb,YAAY;CACb;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB","file":"loglist.vue","sourcesContent":[".wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/loglist.vue"],"names":[],"mappings":";AAAA;EACE,aAAa;EACb,0BAA0B;EAC1B,mBAAmB;EACnB,oBAAoB;EACpB,qBAAqB;CACtB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,aAAa;EACb,mBAAmB;EACnB,cAAc;EACd,+BAA+B;CAChC;AACD;EACE,aAAa;EACb,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,UAAU;EACV,YAAY;EACZ,aAAa;EACb,WAAW;EACX,gBAAgB;EAChB,gBAAgB;CACjB;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,UAAU;EACV,aAAa;CACd;AACD;EACE,mBAAmB;CACpB;AACD;EACE,aAAa;EACb,YAAY;CACb;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;CACrB","file":"loglist.vue","sourcesContent":[".wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3013,7 +3078,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n  top: 3px;\n  left: 3px;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/menu.vue"],"names":[],"mappings":";AAAA;EACE,gBAAgB;EAChB,cAAc;CACf;AACD;;EAEE,gBAAgB;CACjB;AACD;EACE,wBAAwB;EACxB,mBAAmB;EACnB,SAAS;EACT,UAAU;CACX;AACD;EACE,sBAAsB;CACvB;AACD;EACE,0BAA0B;EAC1B,oBAAoB;EACpB,kBAAkB;CACnB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,eAAe;EACf,cAAc;EACd,gBAAgB;CACjB","file":"menu.vue","sourcesContent":[".wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n  top: 3px;\n  left: 3px;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n  top: 3px;\n  left: 3px;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/menu.vue"],"names":[],"mappings":";AAAA;EACE,gBAAgB;EAChB,cAAc;CACf;AACD;;EAEE,gBAAgB;CACjB;AACD;EACE,wBAAwB;EACxB,mBAAmB;EACnB,SAAS;EACT,UAAU;CACX;AACD;EACE,sBAAsB;CACvB;AACD;EACE,0BAA0B;EAC1B,oBAAoB;EACpB,kBAAkB;CACnB;AACD;EACE,oBAAoB;CACrB;AACD;EACE,eAAe;EACf,cAAc;EACd,gBAAgB;CACjB","file":"menu.vue","sourcesContent":[".wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n  top: 3px;\n  left: 3px;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3032,7 +3097,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container {\n  overflow: hidden;\n  outline: 0;\n  position: relative;\n  box-sizing: content-box;\n}\n.slickgrid-container .slick-viewport,\n.slickgrid-container .slick-top-panel-scroller,\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  position: relative;\n  width: 100%;\n  border: 1px solid #a0a0a0;\n  border-right-color: transparent;\n  border-bottom-color: transparent;\n  border-right-width: 0;\n  border-bottom-width: 0;\n  margin: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-viewport {\n  overflow: auto;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  border: 2px solid white;\n  /* should match background, can't be transparent */\n  background-color: rgba(0, 0, 0, 0.5);\n}\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  overflow: hidden;\n}\n.slickgrid-container .slick-headerrow {\n  border-top-color: transparent;\n  border-top-width: 0;\n}\n.slickgrid-container .slick-top-panel,\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-headerrow-columns,\n.slickgrid-container .slick-footerrow-columns {\n  position: relative;\n  white-space: nowrap;\n  cursor: default;\n  overflow: hidden;\n  margin: 0;\n  padding: 0;\n  border: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-cell,\n.slickgrid-container .slick-header-column,\n.slickgrid-container .slick-headerrow-column,\n.slickgrid-container .slick-footerrow-column {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  border: 1px solid #a0a0a0;\n  border-top-color: transparent;\n  border-left-color: transparent;\n  border-top-width: 0;\n  border-left-width: 0;\n  margin: 0;\n  padding: 0;\n  overflow-x: scroll;\n  overflow-y: hidden;\n  vertical-align: middle;\n  white-space: nowrap;\n  cursor: default;\n}\n.slickgrid-container .slick-cell.slick-header-is-leaf,\n.slickgrid-container .slick-header-column.slick-header-is-leaf,\n.slickgrid-container .slick-headerrow-column.slick-header-is-leaf,\n.slickgrid-container .slick-footerrow-column.slick-header-is-leaf {\n  border-bottom-color: transparent;\n  border-bottom-width: 0;\n}\n.slickgrid-container .slick-header-column.ui-state-default {\n  position: relative;\n  display: inline-block;\n  box-sizing: content-box !important;\n  overflow: hidden;\n  height: 1em;\n  line-height: 1em;\n  margin: 0;\n  padding: 4px;\n  border-right: 1px solid #a0a0a0;\n  border-left: 0px !important;\n  border-top: 0px !important;\n  border-bottom: 0px !important;\n  float: left;\n}\n.slickgrid-container .slick-cell {\n  box-sizing: border-box;\n  border-style: solid;\n  padding: 1px 2px 1px 2px;\n}\n.slickgrid-container .slick-header-column {\n  padding: 4px 4px 4px 4px;\n}\n.slickgrid-container .grid-canvas {\n  position: relative;\n  outline: 0;\n}\n.slickgrid-container .slick-row {\n  position: absolute;\n  border: 0;\n  width: 100%;\n}\n.slickgrid-container .slick-header-column-sorted {\n  font-style: italic;\n}\n.slickgrid-container .slick-sort-indicator {\n  display: inline-block;\n  width: 10px;\n  height: 5px;\n  margins: 0;\n  position: absolute;\n  left: 2px;\n  bottom: 3px;\n}\n.slickgrid-container .slick-header-column-order {\n  display: inline-block;\n  position: absolute;\n  width: 10px;\n  height: 16px;\n  margins: 0;\n  left: 4px;\n  bottom: 6px;\n  padding: 0;\n  font-size: 0.75em;\n}\n.slickgrid-container .slick-sort-indicator-desc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-top: 5px solid black;\n}\n.slickgrid-container .slick-sort-indicator-asc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-bottom: 5px solid black;\n}\n.slickgrid-container .slick-header-sortable .slick-column-name {\n  margin-left: 10px;\n}\n.slickgrid-container .slick-header.ui-state-default {\n  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n}\n.slickgrid-container .slick-column-name {\n  position: absolute;\n}\n.slickgrid-container .slick-resizable-handle {\n  position: absolute;\n  font-size: 0.1px;\n  display: block;\n  cursor: col-resize;\n  width: 5px;\n  right: 0;\n  top: 0;\n  height: 100%;\n}\n.slickgrid-container .slick-resizable-handle-hover {\n  background-color: #ccc;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver;\n}\n.slickgrid-container .slick-group-toggle {\n  display: inline-block;\n}\n.slickgrid-container .slick-cell.highlighted {\n  background: lightskyblue;\n  background: rgba(0, 0, 255, 0.2);\n  transition: all 0.5s;\n}\n.slickgrid-container .slick-cell.flashing {\n  border: 1px solid red !important;\n}\n.slickgrid-container .slick-cell.editable {\n  overflow: visible;\n  background: white;\n  border-color: black;\n  border-style: solid;\n}\n.slickgrid-container .slick-cell:focus {\n  outline: none;\n}\n.slickgrid-container .slick-reorder-proxy {\n  display: inline-block;\n  background: blue;\n  opacity: 0.15;\n  cursor: move;\n}\n.slickgrid-container .slick-reorder-guide {\n  display: inline-block;\n  height: 2px;\n  background: blue;\n  opacity: 0.7;\n}\n.slickgrid-container .slick-selection {\n  position: absolute;\n  border: 2px dashed black;\n}\n.slickgrid-container .slick-pane {\n  position: absolute;\n  outline: 0;\n  overflow: hidden;\n  width: 100%;\n}\n.interact-placeholder {\n  background: red !important;\n  display: inline-block;\n  float: left;\n  transform: translate(0px, -100%);\n}\n.interact-drop-active {\n  box-shadow: inset 0 0 8px rgba(7, 67, 128, 0.5);\n}\n.interact-can-drop {\n  opacity: .9;\n}\n.scrollbar-fix::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-header-column {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-header-columns {\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column {\n  border-right: 1px solid #a0a0a0;\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column:hover {\n  background: #d3d3d3;\n}\n.slickgrid-container .slick-header-column-active {\n  background: #cbcbcb !important;\n}\n.slickgrid-container .slick-headerrow {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-headerrow-column {\n  background: #fafafa;\n  border-bottom: 0;\n}\n.slickgrid-container .grid-canvas {\n  background: white;\n}\n.slickgrid-container .slick-row {\n  background: white;\n  border: 0;\n  line-height: 20px;\n}\n.slickgrid-container .slick-row .slick-cell {\n  background: white;\n  padding-top: 4px;\n  padding-bottom: 4px;\n  padding-left: 4px;\n  padding-right: 4px;\n  box-sizing: border-box;\n}\n.slickgrid-container .slick-row .slick-cell.invalid {\n  border-color: red;\n  -moz-animation-duration: 0.2s;\n  -webkit-animation-duration: 0.2s;\n  -moz-animation-name: slickgrid-invalid-hilite;\n  -webkit-animation-name: slickgrid-invalid-hilite;\n}\n.slickgrid-container .slick-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row .slick-cell.active {\n  border-color: rgba(0, 0, 0, 0.3);\n  border-style: solid;\n  border-width: 1px;\n  padding-top: 2px;\n  padding-left: 3px;\n}\n.slickgrid-container .slick-row .slick-cell.active input.editor-text {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  border: 0;\n  margin: 0;\n  background: transparent;\n  padding: 2px 3px 2px 3px;\n  transform: translate(-3px, -2px);\n}\n.slickgrid-container .slick-row.odd .slick-cell {\n  background: #fafaff;\n}\n.slickgrid-container .slick-row.odd .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell.selected {\n  background-color: green;\n}\n.slickgrid-container .slick-row.loading {\n  opacity: 0.5;\n}\n.slickgrid-container .slick-group {\n  border-bottom: 2px solid silver;\n}\n.slickgrid-container .slick-group-toggle {\n  width: 9px;\n  height: 9px;\n  margin-right: 5px;\n}\n.slickgrid-container .slick-group-totals {\n  color: gray;\n  background: white;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver !important;\n}\n@-moz-keyframes slickgrid-invalid-hilite {\nfrom {\n    box-shadow: 0 0 6px red;\n}\nto {\n    box-shadow: none;\n}\n}\n@-webkit-keyframes slickgrid-invalid-hilite {\nfrom {\n    box-shadow: 0 0 6px red;\n}\nto {\n    box-shadow: none;\n}\n}\n.slickgrid-container .slick-header-menubutton {\n  background-position: center center;\n  background-repeat: no-repeat;\n  border-left: thin ridge silver;\n  cursor: pointer;\n  display: inline-block;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu {\n  background: none repeat scroll 0 0 white;\n  border: 1px solid #BFBDBD;\n  min-width: 175px;\n  padding: 4px;\n  z-index: 9;\n  cursor: default;\n  display: inline-block;\n  margin: 0;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu button {\n  border: 1px solid #BFBDBD;\n  background-color: white;\n  width: 45px;\n  padding: 4px;\n  margin: 4px 4px 4px 0;\n}\n.slickgrid-container .slick-header-menu .filter {\n  border: 1px solid #BFBDBD;\n  font-size: 8pt;\n  height: 400px;\n  margin-top: 6px;\n  overflow: scroll;\n  padding: 4px;\n  white-space: nowrap;\n  width: 200px;\n}\n.slickgrid-container .slick-header-menu .textfilter > label {\n  display: inline-block;\n  margin-left: 5px;\n  margin-right: 10px;\n}\n.slickgrid-container .slick-header-menu .textfilter > input[type=text] {\n  width: 70%;\n}\n.slickgrid-container label {\n  display: block;\n  margin-bottom: 5px;\n}\n.slickgrid-container .slick-header-menuitem {\n  border: 1px solid transparent;\n  padding: 2px 4px;\n  cursor: pointer;\n  list-style: none outside none;\n  margin: 0;\n}\n.slickgrid-container .slick-header-menuicon {\n  background-position: center center;\n  background-repeat: no-repeat;\n  display: inline-block;\n  height: 16px;\n  margin-right: 4px;\n  vertical-align: middle;\n  width: 16px;\n}\n.slickgrid-container .slick-header-menucontent {\n  display: inline-block;\n  vertical-align: middle;\n}\n.slickgrid-container .slick-header-menuitem:hover {\n  border-color: #BFBDBD;\n}\n.slickgrid-container .header-overlay,\n.slickgrid-container .cell-overlay,\n.slickgrid-container .selection-cell-overlay {\n  display: block;\n  position: absolute;\n  z-index: 4;\n}\n.slickgrid-container .slick-cell > .editor-select {\n  position: absolute;\n  left: 0;\n  right: 0;\n  width: auto;\n  top: 0;\n  bottom: 0;\n  max-width: 100%;\n  min-width: 0;\n  margin: 0;\n}\n.slickgrid-container .slick-range-decorator {\n  z-index: 5;\n  pointer-events: none;\n  background: transparent;\n  border: none;\n  outline: black;\n}\ndiv.slick-large-editor-text {\n  z-index: 5;\n  position: absolute;\n  background: #f0f0f0;\n  padding: 5px;\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.3);\n}\ndiv.slick-large-editor-text textarea {\n  backround: transparent;\n  width: 250px;\n  height: 80px;\n  border: 0;\n  outline: 0;\n}\ndiv.slick-large-editor-text div {\n  text-align: right;\n}\ndiv.slick-large-editor-text div button {\n  background-color: #d7d7d7;\n  border: 1px solid #a0a0a0;\n  cursor: pointer;\n  justify-content: center;\n  padding-left: 0.75em;\n  padding-right: 0.75em;\n  text-align: center;\n  white-space: nowrap;\n}\n.wylib-mlb {\n  height: 100%;\n}\n.wylib-mlb .align-right {\n  text-align: right;\n}\n.wylib-mlb .align-center {\n  text-align: center;\n}\n.wylib-mlb .align-left {\n  text-align: left;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/mlb.vue"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH;EACE,iBAAiB;EACjB,WAAW;EACX,mBAAmB;EACnB,wBAAwB;CACzB;AACD;;;;;EAKE,mBAAmB;EACnB,YAAY;EACZ,0BAA0B;EAC1B,gCAAgC;EAChC,iCAAiC;EACjC,sBAAsB;EACtB,uBAAuB;EACvB,UAAU;EACV,WAAW;CACZ;AACD;EACE,eAAe;CAChB;AACD;EACE,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,wBAAwB;EACxB,mDAAmD;EACnD,qCAAqC;CACtC;AACD;;;EAGE,iBAAiB;CAClB;AACD;EACE,8BAA8B;EAC9B,oBAAoB;CACrB;AACD;;;;EAIE,mBAAmB;EACnB,oBAAoB;EACpB,gBAAgB;EAChB,iBAAiB;EACjB,UAAU;EACV,WAAW;EACX,UAAU;EACV,WAAW;CACZ;AACD;;;;EAIE,mBAAmB;EACnB,OAAO;EACP,UAAU;EACV,0BAA0B;EAC1B,8BAA8B;EAC9B,+BAA+B;EAC/B,oBAAoB;EACpB,qBAAqB;EACrB,UAAU;EACV,WAAW;EACX,mBAAmB;EACnB,mBAAmB;EACnB,uBAAuB;EACvB,oBAAoB;EACpB,gBAAgB;CACjB;AACD;;;;EAIE,iCAAiC;EACjC,uBAAuB;CACxB;AACD;EACE,mBAAmB;EACnB,sBAAsB;EACtB,mCAAmC;EACnC,iBAAiB;EACjB,YAAY;EACZ,iBAAiB;EACjB,UAAU;EACV,aAAa;EACb,gCAAgC;EAChC,4BAA4B;EAC5B,2BAA2B;EAC3B,8BAA8B;EAC9B,YAAY;CACb;AACD;EACE,uBAAuB;EACvB,oBAAoB;EACpB,yBAAyB;CAC1B;AACD;EACE,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,YAAY;CACb;AACD;EACE,mBAAmB;CACpB;AACD;EACE,sBAAsB;EACtB,YAAY;EACZ,YAAY;EACZ,WAAW;EACX,mBAAmB;EACnB,UAAU;EACV,YAAY;CACb;AACD;EACE,sBAAsB;EACtB,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,WAAW;EACX,UAAU;EACV,YAAY;EACZ,WAAW;EACX,kBAAkB;CACnB;AACD;EACE,mCAAmC;EACnC,oCAAoC;EACpC,4BAA4B;CAC7B;AACD;EACE,mCAAmC;EACnC,oCAAoC;EACpC,+BAA+B;CAChC;AACD;EACE,kBAAkB;CACnB;AACD;EACE,yCAAyC;CAC1C;AACD;EACE,mBAAmB;CACpB;AACD;EACE,mBAAmB;EACnB,iBAAiB;EACjB,eAAe;EACf,mBAAmB;EACnB,WAAW;EACX,SAAS;EACT,OAAO;EACP,aAAa;CACd;AACD;EACE,uBAAuB;CACxB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,sBAAsB;CACvB;AACD;EACE,yBAAyB;EACzB,iCAAiC;EACjC,qBAAqB;CACtB;AACD;EACE,iCAAiC;CAClC;AACD;EACE,kBAAkB;EAClB,kBAAkB;EAClB,oBAAoB;EACpB,oBAAoB;CACrB;AACD;EACE,cAAc;CACf;AACD;EACE,sBAAsB;EACtB,iBAAiB;EACjB,cAAc;EACd,aAAa;CACd;AACD;EACE,sBAAsB;EACtB,YAAY;EACZ,iBAAiB;EACjB,aAAa;CACd;AACD;EACE,mBAAmB;EACnB,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,WAAW;EACX,iBAAiB;EACjB,YAAY;CACb;AACD;EACE,2BAA2B;EAC3B,sBAAsB;EACtB,YAAY;EACZ,iCAAiC;CAClC;AACD;EACE,gDAAgD;CACjD;AACD;EACE,YAAY;CACb;AACD;EACE,yBAAyB;CAC1B;AACD;;;;;GAKG;AACH;;EAEE,oBAAoB;CACrB;AACD;EACE,iCAAiC;CAClC;AACD;EACE,gCAAgC;EAChC,iCAAiC;CAClC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,+BAA+B;CAChC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;EACpB,iBAAiB;CAClB;AACD;EACE,kBAAkB;CACnB;AACD;EACE,kBAAkB;EAClB,UAAU;EACV,kBAAkB;CACnB;AACD;EACE,kBAAkB;EAClB,iBAAiB;EACjB,oBAAoB;EACpB,kBAAkB;EAClB,mBAAmB;EACnB,uBAAuB;CACxB;AACD;EACE,kBAAkB;EAClB,8BAA8B;EAC9B,iCAAiC;EACjC,8CAA8C;EAC9C,iDAAiD;CAClD;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,iCAAiC;EACjC,oBAAoB;EACpB,kBAAkB;EAClB,iBAAiB;EACjB,kBAAkB;CACnB;AACD;EACE,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,UAAU;EACV,UAAU;EACV,wBAAwB;EACxB,yBAAyB;EACzB,iCAAiC;CAClC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,wBAAwB;CACzB;AACD;EACE,aAAa;CACd;AACD;EACE,gCAAgC;CACjC;AACD;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,8BAA8B;CAC/B;AACD;AACE;IACE,wBAAwB;CACzB;AACD;IACE,iBAAiB;CAClB;CACF;AACD;AACE;IACE,wBAAwB;CACzB;AACD;IACE,iBAAiB;CAClB;CACF;AACD;EACE,mCAAmC;EACnC,6BAA6B;EAC7B,+BAA+B;EAC/B,gBAAgB;EAChB,sBAAsB;EACtB,mBAAmB;CACpB;AACD;EACE,yCAAyC;EACzC,0BAA0B;EAC1B,iBAAiB;EACjB,aAAa;EACb,WAAW;EACX,gBAAgB;EAChB,sBAAsB;EACtB,UAAU;EACV,mBAAmB;CACpB;AACD;EACE,0BAA0B;EAC1B,wBAAwB;EACxB,YAAY;EACZ,aAAa;EACb,sBAAsB;CACvB;AACD;EACE,0BAA0B;EAC1B,eAAe;EACf,cAAc;EACd,gBAAgB;EAChB,iBAAiB;EACjB,aAAa;EACb,oBAAoB;EACpB,aAAa;CACd;AACD;EACE,sBAAsB;EACtB,iBAAiB;EACjB,mBAAmB;CACpB;AACD;EACE,WAAW;CACZ;AACD;EACE,eAAe;EACf,mBAAmB;CACpB;AACD;EACE,8BAA8B;EAC9B,iBAAiB;EACjB,gBAAgB;EAChB,8BAA8B;EAC9B,UAAU;CACX;AACD;EACE,mCAAmC;EACnC,6BAA6B;EAC7B,sBAAsB;EACtB,aAAa;EACb,kBAAkB;EAClB,uBAAuB;EACvB,YAAY;CACb;AACD;EACE,sBAAsB;EACtB,uBAAuB;CACxB;AACD;EACE,sBAAsB;CACvB;AACD;;;EAGE,eAAe;EACf,mBAAmB;EACnB,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,QAAQ;EACR,SAAS;EACT,YAAY;EACZ,OAAO;EACP,UAAU;EACV,gBAAgB;EAChB,aAAa;EACb,UAAU;CACX;AACD;EACE,WAAW;EACX,qBAAqB;EACrB,wBAAwB;EACxB,aAAa;EACb,eAAe;CAChB;AACD;EACE,WAAW;EACX,mBAAmB;EACnB,oBAAoB;EACpB,aAAa;EACb,qCAAqC;EACrC,+CAA+C;CAChD;AACD;EACE,uBAAuB;EACvB,aAAa;EACb,aAAa;EACb,UAAU;EACV,WAAW;CACZ;AACD;EACE,kBAAkB;CACnB;AACD;EACE,0BAA0B;EAC1B,0BAA0B;EAC1B,gBAAgB;EAChB,wBAAwB;EACxB,qBAAqB;EACrB,sBAAsB;EACtB,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,aAAa;CACd;AACD;EACE,kBAAkB;CACnB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,iBAAiB;CAClB","file":"mlb.vue","sourcesContent":["/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container {\n  overflow: hidden;\n  outline: 0;\n  position: relative;\n  box-sizing: content-box;\n}\n.slickgrid-container .slick-viewport,\n.slickgrid-container .slick-top-panel-scroller,\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  position: relative;\n  width: 100%;\n  border: 1px solid #a0a0a0;\n  border-right-color: transparent;\n  border-bottom-color: transparent;\n  border-right-width: 0;\n  border-bottom-width: 0;\n  margin: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-viewport {\n  overflow: auto;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  border: 2px solid white;\n  /* should match background, can't be transparent */\n  background-color: rgba(0, 0, 0, 0.5);\n}\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  overflow: hidden;\n}\n.slickgrid-container .slick-headerrow {\n  border-top-color: transparent;\n  border-top-width: 0;\n}\n.slickgrid-container .slick-top-panel,\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-headerrow-columns,\n.slickgrid-container .slick-footerrow-columns {\n  position: relative;\n  white-space: nowrap;\n  cursor: default;\n  overflow: hidden;\n  margin: 0;\n  padding: 0;\n  border: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-cell,\n.slickgrid-container .slick-header-column,\n.slickgrid-container .slick-headerrow-column,\n.slickgrid-container .slick-footerrow-column {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  border: 1px solid #a0a0a0;\n  border-top-color: transparent;\n  border-left-color: transparent;\n  border-top-width: 0;\n  border-left-width: 0;\n  margin: 0;\n  padding: 0;\n  overflow-x: scroll;\n  overflow-y: hidden;\n  vertical-align: middle;\n  white-space: nowrap;\n  cursor: default;\n}\n.slickgrid-container .slick-cell.slick-header-is-leaf,\n.slickgrid-container .slick-header-column.slick-header-is-leaf,\n.slickgrid-container .slick-headerrow-column.slick-header-is-leaf,\n.slickgrid-container .slick-footerrow-column.slick-header-is-leaf {\n  border-bottom-color: transparent;\n  border-bottom-width: 0;\n}\n.slickgrid-container .slick-header-column.ui-state-default {\n  position: relative;\n  display: inline-block;\n  box-sizing: content-box !important;\n  overflow: hidden;\n  height: 1em;\n  line-height: 1em;\n  margin: 0;\n  padding: 4px;\n  border-right: 1px solid #a0a0a0;\n  border-left: 0px !important;\n  border-top: 0px !important;\n  border-bottom: 0px !important;\n  float: left;\n}\n.slickgrid-container .slick-cell {\n  box-sizing: border-box;\n  border-style: solid;\n  padding: 1px 2px 1px 2px;\n}\n.slickgrid-container .slick-header-column {\n  padding: 4px 4px 4px 4px;\n}\n.slickgrid-container .grid-canvas {\n  position: relative;\n  outline: 0;\n}\n.slickgrid-container .slick-row {\n  position: absolute;\n  border: 0;\n  width: 100%;\n}\n.slickgrid-container .slick-header-column-sorted {\n  font-style: italic;\n}\n.slickgrid-container .slick-sort-indicator {\n  display: inline-block;\n  width: 10px;\n  height: 5px;\n  margins: 0;\n  position: absolute;\n  left: 2px;\n  bottom: 3px;\n}\n.slickgrid-container .slick-header-column-order {\n  display: inline-block;\n  position: absolute;\n  width: 10px;\n  height: 16px;\n  margins: 0;\n  left: 4px;\n  bottom: 6px;\n  padding: 0;\n  font-size: 0.75em;\n}\n.slickgrid-container .slick-sort-indicator-desc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-top: 5px solid black;\n}\n.slickgrid-container .slick-sort-indicator-asc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-bottom: 5px solid black;\n}\n.slickgrid-container .slick-header-sortable .slick-column-name {\n  margin-left: 10px;\n}\n.slickgrid-container .slick-header.ui-state-default {\n  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n}\n.slickgrid-container .slick-column-name {\n  position: absolute;\n}\n.slickgrid-container .slick-resizable-handle {\n  position: absolute;\n  font-size: 0.1px;\n  display: block;\n  cursor: col-resize;\n  width: 5px;\n  right: 0;\n  top: 0;\n  height: 100%;\n}\n.slickgrid-container .slick-resizable-handle-hover {\n  background-color: #ccc;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver;\n}\n.slickgrid-container .slick-group-toggle {\n  display: inline-block;\n}\n.slickgrid-container .slick-cell.highlighted {\n  background: lightskyblue;\n  background: rgba(0, 0, 255, 0.2);\n  transition: all 0.5s;\n}\n.slickgrid-container .slick-cell.flashing {\n  border: 1px solid red !important;\n}\n.slickgrid-container .slick-cell.editable {\n  overflow: visible;\n  background: white;\n  border-color: black;\n  border-style: solid;\n}\n.slickgrid-container .slick-cell:focus {\n  outline: none;\n}\n.slickgrid-container .slick-reorder-proxy {\n  display: inline-block;\n  background: blue;\n  opacity: 0.15;\n  cursor: move;\n}\n.slickgrid-container .slick-reorder-guide {\n  display: inline-block;\n  height: 2px;\n  background: blue;\n  opacity: 0.7;\n}\n.slickgrid-container .slick-selection {\n  position: absolute;\n  border: 2px dashed black;\n}\n.slickgrid-container .slick-pane {\n  position: absolute;\n  outline: 0;\n  overflow: hidden;\n  width: 100%;\n}\n.interact-placeholder {\n  background: red !important;\n  display: inline-block;\n  float: left;\n  transform: translate(0px, -100%);\n}\n.interact-drop-active {\n  box-shadow: inset 0 0 8px rgba(7, 67, 128, 0.5);\n}\n.interact-can-drop {\n  opacity: .9;\n}\n.scrollbar-fix::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-header-column {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-header-columns {\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column {\n  border-right: 1px solid #a0a0a0;\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column:hover {\n  background: #d3d3d3;\n}\n.slickgrid-container .slick-header-column-active {\n  background: #cbcbcb !important;\n}\n.slickgrid-container .slick-headerrow {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-headerrow-column {\n  background: #fafafa;\n  border-bottom: 0;\n}\n.slickgrid-container .grid-canvas {\n  background: white;\n}\n.slickgrid-container .slick-row {\n  background: white;\n  border: 0;\n  line-height: 20px;\n}\n.slickgrid-container .slick-row .slick-cell {\n  background: white;\n  padding-top: 4px;\n  padding-bottom: 4px;\n  padding-left: 4px;\n  padding-right: 4px;\n  box-sizing: border-box;\n}\n.slickgrid-container .slick-row .slick-cell.invalid {\n  border-color: red;\n  -moz-animation-duration: 0.2s;\n  -webkit-animation-duration: 0.2s;\n  -moz-animation-name: slickgrid-invalid-hilite;\n  -webkit-animation-name: slickgrid-invalid-hilite;\n}\n.slickgrid-container .slick-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row .slick-cell.active {\n  border-color: rgba(0, 0, 0, 0.3);\n  border-style: solid;\n  border-width: 1px;\n  padding-top: 2px;\n  padding-left: 3px;\n}\n.slickgrid-container .slick-row .slick-cell.active input.editor-text {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  border: 0;\n  margin: 0;\n  background: transparent;\n  padding: 2px 3px 2px 3px;\n  transform: translate(-3px, -2px);\n}\n.slickgrid-container .slick-row.odd .slick-cell {\n  background: #fafaff;\n}\n.slickgrid-container .slick-row.odd .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell.selected {\n  background-color: green;\n}\n.slickgrid-container .slick-row.loading {\n  opacity: 0.5;\n}\n.slickgrid-container .slick-group {\n  border-bottom: 2px solid silver;\n}\n.slickgrid-container .slick-group-toggle {\n  width: 9px;\n  height: 9px;\n  margin-right: 5px;\n}\n.slickgrid-container .slick-group-totals {\n  color: gray;\n  background: white;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver !important;\n}\n@-moz-keyframes slickgrid-invalid-hilite {\n  from {\n    box-shadow: 0 0 6px red;\n  }\n  to {\n    box-shadow: none;\n  }\n}\n@-webkit-keyframes slickgrid-invalid-hilite {\n  from {\n    box-shadow: 0 0 6px red;\n  }\n  to {\n    box-shadow: none;\n  }\n}\n.slickgrid-container .slick-header-menubutton {\n  background-position: center center;\n  background-repeat: no-repeat;\n  border-left: thin ridge silver;\n  cursor: pointer;\n  display: inline-block;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu {\n  background: none repeat scroll 0 0 white;\n  border: 1px solid #BFBDBD;\n  min-width: 175px;\n  padding: 4px;\n  z-index: 9;\n  cursor: default;\n  display: inline-block;\n  margin: 0;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu button {\n  border: 1px solid #BFBDBD;\n  background-color: white;\n  width: 45px;\n  padding: 4px;\n  margin: 4px 4px 4px 0;\n}\n.slickgrid-container .slick-header-menu .filter {\n  border: 1px solid #BFBDBD;\n  font-size: 8pt;\n  height: 400px;\n  margin-top: 6px;\n  overflow: scroll;\n  padding: 4px;\n  white-space: nowrap;\n  width: 200px;\n}\n.slickgrid-container .slick-header-menu .textfilter > label {\n  display: inline-block;\n  margin-left: 5px;\n  margin-right: 10px;\n}\n.slickgrid-container .slick-header-menu .textfilter > input[type=text] {\n  width: 70%;\n}\n.slickgrid-container label {\n  display: block;\n  margin-bottom: 5px;\n}\n.slickgrid-container .slick-header-menuitem {\n  border: 1px solid transparent;\n  padding: 2px 4px;\n  cursor: pointer;\n  list-style: none outside none;\n  margin: 0;\n}\n.slickgrid-container .slick-header-menuicon {\n  background-position: center center;\n  background-repeat: no-repeat;\n  display: inline-block;\n  height: 16px;\n  margin-right: 4px;\n  vertical-align: middle;\n  width: 16px;\n}\n.slickgrid-container .slick-header-menucontent {\n  display: inline-block;\n  vertical-align: middle;\n}\n.slickgrid-container .slick-header-menuitem:hover {\n  border-color: #BFBDBD;\n}\n.slickgrid-container .header-overlay,\n.slickgrid-container .cell-overlay,\n.slickgrid-container .selection-cell-overlay {\n  display: block;\n  position: absolute;\n  z-index: 4;\n}\n.slickgrid-container .slick-cell > .editor-select {\n  position: absolute;\n  left: 0;\n  right: 0;\n  width: auto;\n  top: 0;\n  bottom: 0;\n  max-width: 100%;\n  min-width: 0;\n  margin: 0;\n}\n.slickgrid-container .slick-range-decorator {\n  z-index: 5;\n  pointer-events: none;\n  background: transparent;\n  border: none;\n  outline: black;\n}\ndiv.slick-large-editor-text {\n  z-index: 5;\n  position: absolute;\n  background: #f0f0f0;\n  padding: 5px;\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.3);\n}\ndiv.slick-large-editor-text textarea {\n  backround: transparent;\n  width: 250px;\n  height: 80px;\n  border: 0;\n  outline: 0;\n}\ndiv.slick-large-editor-text div {\n  text-align: right;\n}\ndiv.slick-large-editor-text div button {\n  background-color: #d7d7d7;\n  border: 1px solid #a0a0a0;\n  cursor: pointer;\n  justify-content: center;\n  padding-left: 0.75em;\n  padding-right: 0.75em;\n  text-align: center;\n  white-space: nowrap;\n}\n.wylib-mlb {\n  height: 100%;\n}\n.wylib-mlb .align-right {\n  text-align: right;\n}\n.wylib-mlb .align-center {\n  text-align: center;\n}\n.wylib-mlb .align-left {\n  text-align: left;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container {\n  overflow: hidden;\n  outline: 0;\n  position: relative;\n  box-sizing: content-box;\n}\n.slickgrid-container .slick-viewport,\n.slickgrid-container .slick-top-panel-scroller,\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  position: relative;\n  width: 100%;\n  border: 1px solid #a0a0a0;\n  border-right-color: transparent;\n  border-bottom-color: transparent;\n  border-right-width: 0;\n  border-bottom-width: 0;\n  margin: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-viewport {\n  overflow: auto;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  border: 2px solid white;\n  /* should match background, can't be transparent */\n  background-color: rgba(0, 0, 0, 0.5);\n}\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  overflow: hidden;\n}\n.slickgrid-container .slick-headerrow {\n  border-top-color: transparent;\n  border-top-width: 0;\n}\n.slickgrid-container .slick-top-panel,\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-headerrow-columns,\n.slickgrid-container .slick-footerrow-columns {\n  position: relative;\n  white-space: nowrap;\n  cursor: default;\n  overflow: hidden;\n  margin: 0;\n  padding: 0;\n  border: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-cell,\n.slickgrid-container .slick-header-column,\n.slickgrid-container .slick-headerrow-column,\n.slickgrid-container .slick-footerrow-column {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  border: 1px solid #a0a0a0;\n  border-top-color: transparent;\n  border-left-color: transparent;\n  border-top-width: 0;\n  border-left-width: 0;\n  margin: 0;\n  padding: 0;\n  overflow-x: scroll;\n  overflow-y: hidden;\n  vertical-align: middle;\n  white-space: nowrap;\n  cursor: default;\n}\n.slickgrid-container .slick-cell.slick-header-is-leaf,\n.slickgrid-container .slick-header-column.slick-header-is-leaf,\n.slickgrid-container .slick-headerrow-column.slick-header-is-leaf,\n.slickgrid-container .slick-footerrow-column.slick-header-is-leaf {\n  border-bottom-color: transparent;\n  border-bottom-width: 0;\n}\n.slickgrid-container .slick-header-column.ui-state-default {\n  position: relative;\n  display: inline-block;\n  box-sizing: content-box !important;\n  overflow: hidden;\n  height: 1em;\n  line-height: 1em;\n  margin: 0;\n  padding: 4px;\n  border-right: 1px solid #a0a0a0;\n  border-left: 0px !important;\n  border-top: 0px !important;\n  border-bottom: 0px !important;\n  float: left;\n}\n.slickgrid-container .slick-cell {\n  box-sizing: border-box;\n  border-style: solid;\n  padding: 1px 2px 1px 2px;\n}\n.slickgrid-container .slick-header-column {\n  padding: 4px 4px 4px 4px;\n}\n.slickgrid-container .grid-canvas {\n  position: relative;\n  outline: 0;\n}\n.slickgrid-container .slick-row {\n  position: absolute;\n  border: 0;\n  width: 100%;\n}\n.slickgrid-container .slick-header-column-sorted {\n  font-style: italic;\n}\n.slickgrid-container .slick-sort-indicator {\n  display: inline-block;\n  width: 10px;\n  height: 5px;\n  margins: 0;\n  position: absolute;\n  left: 2px;\n  bottom: 3px;\n}\n.slickgrid-container .slick-header-column-order {\n  display: inline-block;\n  position: absolute;\n  width: 10px;\n  height: 16px;\n  margins: 0;\n  left: 4px;\n  bottom: 6px;\n  padding: 0;\n  font-size: 0.75em;\n}\n.slickgrid-container .slick-sort-indicator-desc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-top: 5px solid black;\n}\n.slickgrid-container .slick-sort-indicator-asc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-bottom: 5px solid black;\n}\n.slickgrid-container .slick-header-sortable .slick-column-name {\n  margin-left: 10px;\n}\n.slickgrid-container .slick-header.ui-state-default {\n  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n}\n.slickgrid-container .slick-column-name {\n  position: absolute;\n}\n.slickgrid-container .slick-resizable-handle {\n  position: absolute;\n  font-size: 0.1px;\n  display: block;\n  cursor: col-resize;\n  width: 5px;\n  right: 0;\n  top: 0;\n  height: 100%;\n}\n.slickgrid-container .slick-resizable-handle-hover {\n  background-color: #ccc;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver;\n}\n.slickgrid-container .slick-group-toggle {\n  display: inline-block;\n}\n.slickgrid-container .slick-cell.highlighted {\n  background: lightskyblue;\n  background: rgba(0, 0, 255, 0.2);\n  transition: all 0.5s;\n}\n.slickgrid-container .slick-cell.flashing {\n  border: 1px solid red !important;\n}\n.slickgrid-container .slick-cell.editable {\n  overflow: visible;\n  background: white;\n  border-color: black;\n  border-style: solid;\n}\n.slickgrid-container .slick-cell:focus {\n  outline: none;\n}\n.slickgrid-container .slick-reorder-proxy {\n  display: inline-block;\n  background: blue;\n  opacity: 0.15;\n  cursor: move;\n}\n.slickgrid-container .slick-reorder-guide {\n  display: inline-block;\n  height: 2px;\n  background: blue;\n  opacity: 0.7;\n}\n.slickgrid-container .slick-selection {\n  position: absolute;\n  border: 2px dashed black;\n}\n.slickgrid-container .slick-pane {\n  position: absolute;\n  outline: 0;\n  overflow: hidden;\n  width: 100%;\n}\n.interact-placeholder {\n  background: red !important;\n  display: inline-block;\n  float: left;\n  transform: translate(0px, -100%);\n}\n.interact-drop-active {\n  box-shadow: inset 0 0 8px rgba(7, 67, 128, 0.5);\n}\n.interact-can-drop {\n  opacity: 0.9;\n}\n.scrollbar-fix::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-header-column {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-header-columns {\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column {\n  border-right: 1px solid #a0a0a0;\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column:hover {\n  background: #d3d3d3;\n}\n.slickgrid-container .slick-header-column-active {\n  background: #cbcbcb !important;\n}\n.slickgrid-container .slick-headerrow {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-headerrow-column {\n  background: #fafafa;\n  border-bottom: 0;\n}\n.slickgrid-container .grid-canvas {\n  background: white;\n}\n.slickgrid-container .slick-row {\n  background: white;\n  border: 0;\n  line-height: 20px;\n}\n.slickgrid-container .slick-row .slick-cell {\n  background: white;\n  padding-top: 4px;\n  padding-bottom: 4px;\n  padding-left: 4px;\n  padding-right: 4px;\n  box-sizing: border-box;\n}\n.slickgrid-container .slick-row .slick-cell.invalid {\n  border-color: red;\n  -moz-animation-duration: 0.2s;\n  -webkit-animation-duration: 0.2s;\n  -moz-animation-name: slickgrid-invalid-hilite;\n  -webkit-animation-name: slickgrid-invalid-hilite;\n}\n.slickgrid-container .slick-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row .slick-cell.active {\n  border-color: rgba(0, 0, 0, 0.3);\n  border-style: solid;\n  border-width: 1px;\n  padding-top: 2px;\n  padding-left: 3px;\n}\n.slickgrid-container .slick-row .slick-cell.active input.editor-text {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  border: 0;\n  margin: 0;\n  background: transparent;\n  padding: 2px 3px 2px 3px;\n  transform: translate(-3px, -2px);\n}\n.slickgrid-container .slick-row.odd .slick-cell {\n  background: #fafaff;\n}\n.slickgrid-container .slick-row.odd .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell.selected {\n  background-color: green;\n}\n.slickgrid-container .slick-row.loading {\n  opacity: 0.5;\n}\n.slickgrid-container .slick-group {\n  border-bottom: 2px solid silver;\n}\n.slickgrid-container .slick-group-toggle {\n  width: 9px;\n  height: 9px;\n  margin-right: 5px;\n}\n.slickgrid-container .slick-group-totals {\n  color: gray;\n  background: white;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver !important;\n}\n@-moz-keyframes slickgrid-invalid-hilite {\nfrom {\n    box-shadow: 0 0 6px red;\n}\nto {\n    box-shadow: none;\n}\n}\n@-webkit-keyframes slickgrid-invalid-hilite {\nfrom {\n    box-shadow: 0 0 6px red;\n}\nto {\n    box-shadow: none;\n}\n}\n.slickgrid-container .slick-header-menubutton {\n  background-position: center center;\n  background-repeat: no-repeat;\n  border-left: thin ridge silver;\n  cursor: pointer;\n  display: inline-block;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu {\n  background: none repeat scroll 0 0 white;\n  border: 1px solid #BFBDBD;\n  min-width: 175px;\n  padding: 4px;\n  z-index: 9;\n  cursor: default;\n  display: inline-block;\n  margin: 0;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu button {\n  border: 1px solid #BFBDBD;\n  background-color: white;\n  width: 45px;\n  padding: 4px;\n  margin: 4px 4px 4px 0;\n}\n.slickgrid-container .slick-header-menu .filter {\n  border: 1px solid #BFBDBD;\n  font-size: 8pt;\n  height: 400px;\n  margin-top: 6px;\n  overflow: scroll;\n  padding: 4px;\n  white-space: nowrap;\n  width: 200px;\n}\n.slickgrid-container .slick-header-menu .textfilter > label {\n  display: inline-block;\n  margin-left: 5px;\n  margin-right: 10px;\n}\n.slickgrid-container .slick-header-menu .textfilter > input[type=text] {\n  width: 70%;\n}\n.slickgrid-container label {\n  display: block;\n  margin-bottom: 5px;\n}\n.slickgrid-container .slick-header-menuitem {\n  border: 1px solid transparent;\n  padding: 2px 4px;\n  cursor: pointer;\n  list-style: none outside none;\n  margin: 0;\n}\n.slickgrid-container .slick-header-menuicon {\n  background-position: center center;\n  background-repeat: no-repeat;\n  display: inline-block;\n  height: 16px;\n  margin-right: 4px;\n  vertical-align: middle;\n  width: 16px;\n}\n.slickgrid-container .slick-header-menucontent {\n  display: inline-block;\n  vertical-align: middle;\n}\n.slickgrid-container .slick-header-menuitem:hover {\n  border-color: #BFBDBD;\n}\n.slickgrid-container .header-overlay,\n.slickgrid-container .cell-overlay,\n.slickgrid-container .selection-cell-overlay {\n  display: block;\n  position: absolute;\n  z-index: 4;\n}\n.slickgrid-container .slick-cell > .editor-select {\n  position: absolute;\n  left: 0;\n  right: 0;\n  width: auto;\n  top: 0;\n  bottom: 0;\n  max-width: 100%;\n  min-width: 0;\n  margin: 0;\n}\n.slickgrid-container .slick-range-decorator {\n  z-index: 5;\n  pointer-events: none;\n  background: transparent;\n  border: none;\n  outline: black;\n}\ndiv.slick-large-editor-text {\n  z-index: 5;\n  position: absolute;\n  background: #f0f0f0;\n  padding: 5px;\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.3);\n}\ndiv.slick-large-editor-text textarea {\n  backround: transparent;\n  width: 250px;\n  height: 80px;\n  border: 0;\n  outline: 0;\n}\ndiv.slick-large-editor-text div {\n  text-align: right;\n}\ndiv.slick-large-editor-text div button {\n  background-color: #d7d7d7;\n  border: 1px solid #a0a0a0;\n  cursor: pointer;\n  justify-content: center;\n  padding-left: 0.75em;\n  padding-right: 0.75em;\n  text-align: center;\n  white-space: nowrap;\n}\n.wylib-mlb {\n  height: 100%;\n}\n.wylib-mlb .align-right {\n  text-align: right;\n}\n.wylib-mlb .align-center {\n  text-align: center;\n}\n.wylib-mlb .align-left {\n  text-align: left;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/mlb.vue"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH;EACE,iBAAiB;EACjB,WAAW;EACX,mBAAmB;EACnB,wBAAwB;CACzB;AACD;;;;;EAKE,mBAAmB;EACnB,YAAY;EACZ,0BAA0B;EAC1B,gCAAgC;EAChC,iCAAiC;EACjC,sBAAsB;EACtB,uBAAuB;EACvB,UAAU;EACV,WAAW;CACZ;AACD;EACE,eAAe;CAChB;AACD;EACE,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,wBAAwB;EACxB,mDAAmD;EACnD,qCAAqC;CACtC;AACD;;;EAGE,iBAAiB;CAClB;AACD;EACE,8BAA8B;EAC9B,oBAAoB;CACrB;AACD;;;;EAIE,mBAAmB;EACnB,oBAAoB;EACpB,gBAAgB;EAChB,iBAAiB;EACjB,UAAU;EACV,WAAW;EACX,UAAU;EACV,WAAW;CACZ;AACD;;;;EAIE,mBAAmB;EACnB,OAAO;EACP,UAAU;EACV,0BAA0B;EAC1B,8BAA8B;EAC9B,+BAA+B;EAC/B,oBAAoB;EACpB,qBAAqB;EACrB,UAAU;EACV,WAAW;EACX,mBAAmB;EACnB,mBAAmB;EACnB,uBAAuB;EACvB,oBAAoB;EACpB,gBAAgB;CACjB;AACD;;;;EAIE,iCAAiC;EACjC,uBAAuB;CACxB;AACD;EACE,mBAAmB;EACnB,sBAAsB;EACtB,mCAAmC;EACnC,iBAAiB;EACjB,YAAY;EACZ,iBAAiB;EACjB,UAAU;EACV,aAAa;EACb,gCAAgC;EAChC,4BAA4B;EAC5B,2BAA2B;EAC3B,8BAA8B;EAC9B,YAAY;CACb;AACD;EACE,uBAAuB;EACvB,oBAAoB;EACpB,yBAAyB;CAC1B;AACD;EACE,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,UAAU;EACV,YAAY;CACb;AACD;EACE,mBAAmB;CACpB;AACD;EACE,sBAAsB;EACtB,YAAY;EACZ,YAAY;EACZ,WAAW;EACX,mBAAmB;EACnB,UAAU;EACV,YAAY;CACb;AACD;EACE,sBAAsB;EACtB,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,WAAW;EACX,UAAU;EACV,YAAY;EACZ,WAAW;EACX,kBAAkB;CACnB;AACD;EACE,mCAAmC;EACnC,oCAAoC;EACpC,4BAA4B;CAC7B;AACD;EACE,mCAAmC;EACnC,oCAAoC;EACpC,+BAA+B;CAChC;AACD;EACE,kBAAkB;CACnB;AACD;EACE,yCAAyC;CAC1C;AACD;EACE,mBAAmB;CACpB;AACD;EACE,mBAAmB;EACnB,iBAAiB;EACjB,eAAe;EACf,mBAAmB;EACnB,WAAW;EACX,SAAS;EACT,OAAO;EACP,aAAa;CACd;AACD;EACE,uBAAuB;CACxB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,sBAAsB;CACvB;AACD;EACE,yBAAyB;EACzB,iCAAiC;EACjC,qBAAqB;CACtB;AACD;EACE,iCAAiC;CAClC;AACD;EACE,kBAAkB;EAClB,kBAAkB;EAClB,oBAAoB;EACpB,oBAAoB;CACrB;AACD;EACE,cAAc;CACf;AACD;EACE,sBAAsB;EACtB,iBAAiB;EACjB,cAAc;EACd,aAAa;CACd;AACD;EACE,sBAAsB;EACtB,YAAY;EACZ,iBAAiB;EACjB,aAAa;CACd;AACD;EACE,mBAAmB;EACnB,yBAAyB;CAC1B;AACD;EACE,mBAAmB;EACnB,WAAW;EACX,iBAAiB;EACjB,YAAY;CACb;AACD;EACE,2BAA2B;EAC3B,sBAAsB;EACtB,YAAY;EACZ,iCAAiC;CAClC;AACD;EACE,gDAAgD;CACjD;AACD;EACE,aAAa;CACd;AACD;EACE,yBAAyB;CAC1B;AACD;;;;;GAKG;AACH;;EAEE,oBAAoB;CACrB;AACD;EACE,iCAAiC;CAClC;AACD;EACE,gCAAgC;EAChC,iCAAiC;CAClC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,+BAA+B;CAChC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,oBAAoB;EACpB,iBAAiB;CAClB;AACD;EACE,kBAAkB;CACnB;AACD;EACE,kBAAkB;EAClB,UAAU;EACV,kBAAkB;CACnB;AACD;EACE,kBAAkB;EAClB,iBAAiB;EACjB,oBAAoB;EACpB,kBAAkB;EAClB,mBAAmB;EACnB,uBAAuB;CACxB;AACD;EACE,kBAAkB;EAClB,8BAA8B;EAC9B,iCAAiC;EACjC,8CAA8C;EAC9C,iDAAiD;CAClD;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,iCAAiC;EACjC,oBAAoB;EACpB,kBAAkB;EAClB,iBAAiB;EACjB,kBAAkB;CACnB;AACD;EACE,mBAAmB;EACnB,YAAY;EACZ,aAAa;EACb,UAAU;EACV,UAAU;EACV,wBAAwB;EACxB,yBAAyB;EACzB,iCAAiC;CAClC;AACD;EACE,oBAAoB;CACrB;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,0BAA0B;CAC3B;AACD;EACE,wBAAwB;CACzB;AACD;EACE,aAAa;CACd;AACD;EACE,gCAAgC;CACjC;AACD;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,8BAA8B;CAC/B;AACD;AACE;IACE,wBAAwB;CACzB;AACD;IACE,iBAAiB;CAClB;CACF;AACD;AACE;IACE,wBAAwB;CACzB;AACD;IACE,iBAAiB;CAClB;CACF;AACD;EACE,mCAAmC;EACnC,6BAA6B;EAC7B,+BAA+B;EAC/B,gBAAgB;EAChB,sBAAsB;EACtB,mBAAmB;CACpB;AACD;EACE,yCAAyC;EACzC,0BAA0B;EAC1B,iBAAiB;EACjB,aAAa;EACb,WAAW;EACX,gBAAgB;EAChB,sBAAsB;EACtB,UAAU;EACV,mBAAmB;CACpB;AACD;EACE,0BAA0B;EAC1B,wBAAwB;EACxB,YAAY;EACZ,aAAa;EACb,sBAAsB;CACvB;AACD;EACE,0BAA0B;EAC1B,eAAe;EACf,cAAc;EACd,gBAAgB;EAChB,iBAAiB;EACjB,aAAa;EACb,oBAAoB;EACpB,aAAa;CACd;AACD;EACE,sBAAsB;EACtB,iBAAiB;EACjB,mBAAmB;CACpB;AACD;EACE,WAAW;CACZ;AACD;EACE,eAAe;EACf,mBAAmB;CACpB;AACD;EACE,8BAA8B;EAC9B,iBAAiB;EACjB,gBAAgB;EAChB,8BAA8B;EAC9B,UAAU;CACX;AACD;EACE,mCAAmC;EACnC,6BAA6B;EAC7B,sBAAsB;EACtB,aAAa;EACb,kBAAkB;EAClB,uBAAuB;EACvB,YAAY;CACb;AACD;EACE,sBAAsB;EACtB,uBAAuB;CACxB;AACD;EACE,sBAAsB;CACvB;AACD;;;EAGE,eAAe;EACf,mBAAmB;EACnB,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,QAAQ;EACR,SAAS;EACT,YAAY;EACZ,OAAO;EACP,UAAU;EACV,gBAAgB;EAChB,aAAa;EACb,UAAU;CACX;AACD;EACE,WAAW;EACX,qBAAqB;EACrB,wBAAwB;EACxB,aAAa;EACb,eAAe;CAChB;AACD;EACE,WAAW;EACX,mBAAmB;EACnB,oBAAoB;EACpB,aAAa;EACb,qCAAqC;EACrC,+CAA+C;CAChD;AACD;EACE,uBAAuB;EACvB,aAAa;EACb,aAAa;EACb,UAAU;EACV,WAAW;CACZ;AACD;EACE,kBAAkB;CACnB;AACD;EACE,0BAA0B;EAC1B,0BAA0B;EAC1B,gBAAgB;EAChB,wBAAwB;EACxB,qBAAqB;EACrB,sBAAsB;EACtB,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,aAAa;CACd;AACD;EACE,kBAAkB;CACnB;AACD;EACE,mBAAmB;CACpB;AACD;EACE,iBAAiB;CAClB","file":"mlb.vue","sourcesContent":["/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container {\n  overflow: hidden;\n  outline: 0;\n  position: relative;\n  box-sizing: content-box;\n}\n.slickgrid-container .slick-viewport,\n.slickgrid-container .slick-top-panel-scroller,\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  position: relative;\n  width: 100%;\n  border: 1px solid #a0a0a0;\n  border-right-color: transparent;\n  border-bottom-color: transparent;\n  border-right-width: 0;\n  border-bottom-width: 0;\n  margin: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-viewport {\n  overflow: auto;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n.slickgrid-container .slick-viewport.slickgrid-container .slick-viewport::-webkit-scrollbar-thumb {\n  border-radius: 4px;\n  border: 2px solid white;\n  /* should match background, can't be transparent */\n  background-color: rgba(0, 0, 0, 0.5);\n}\n.slickgrid-container .slick-header,\n.slickgrid-container .slick-headerrow,\n.slickgrid-container .slick-footerrow {\n  overflow: hidden;\n}\n.slickgrid-container .slick-headerrow {\n  border-top-color: transparent;\n  border-top-width: 0;\n}\n.slickgrid-container .slick-top-panel,\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-headerrow-columns,\n.slickgrid-container .slick-footerrow-columns {\n  position: relative;\n  white-space: nowrap;\n  cursor: default;\n  overflow: hidden;\n  margin: 0;\n  padding: 0;\n  border: 0;\n  outline: 0;\n}\n.slickgrid-container .slick-cell,\n.slickgrid-container .slick-header-column,\n.slickgrid-container .slick-headerrow-column,\n.slickgrid-container .slick-footerrow-column {\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  border: 1px solid #a0a0a0;\n  border-top-color: transparent;\n  border-left-color: transparent;\n  border-top-width: 0;\n  border-left-width: 0;\n  margin: 0;\n  padding: 0;\n  overflow-x: scroll;\n  overflow-y: hidden;\n  vertical-align: middle;\n  white-space: nowrap;\n  cursor: default;\n}\n.slickgrid-container .slick-cell.slick-header-is-leaf,\n.slickgrid-container .slick-header-column.slick-header-is-leaf,\n.slickgrid-container .slick-headerrow-column.slick-header-is-leaf,\n.slickgrid-container .slick-footerrow-column.slick-header-is-leaf {\n  border-bottom-color: transparent;\n  border-bottom-width: 0;\n}\n.slickgrid-container .slick-header-column.ui-state-default {\n  position: relative;\n  display: inline-block;\n  box-sizing: content-box !important;\n  overflow: hidden;\n  height: 1em;\n  line-height: 1em;\n  margin: 0;\n  padding: 4px;\n  border-right: 1px solid #a0a0a0;\n  border-left: 0px !important;\n  border-top: 0px !important;\n  border-bottom: 0px !important;\n  float: left;\n}\n.slickgrid-container .slick-cell {\n  box-sizing: border-box;\n  border-style: solid;\n  padding: 1px 2px 1px 2px;\n}\n.slickgrid-container .slick-header-column {\n  padding: 4px 4px 4px 4px;\n}\n.slickgrid-container .grid-canvas {\n  position: relative;\n  outline: 0;\n}\n.slickgrid-container .slick-row {\n  position: absolute;\n  border: 0;\n  width: 100%;\n}\n.slickgrid-container .slick-header-column-sorted {\n  font-style: italic;\n}\n.slickgrid-container .slick-sort-indicator {\n  display: inline-block;\n  width: 10px;\n  height: 5px;\n  margins: 0;\n  position: absolute;\n  left: 2px;\n  bottom: 3px;\n}\n.slickgrid-container .slick-header-column-order {\n  display: inline-block;\n  position: absolute;\n  width: 10px;\n  height: 16px;\n  margins: 0;\n  left: 4px;\n  bottom: 6px;\n  padding: 0;\n  font-size: 0.75em;\n}\n.slickgrid-container .slick-sort-indicator-desc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-top: 5px solid black;\n}\n.slickgrid-container .slick-sort-indicator-asc {\n  border-left: 5px solid transparent;\n  border-right: 5px solid transparent;\n  border-bottom: 5px solid black;\n}\n.slickgrid-container .slick-header-sortable .slick-column-name {\n  margin-left: 10px;\n}\n.slickgrid-container .slick-header.ui-state-default {\n  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n}\n.slickgrid-container .slick-column-name {\n  position: absolute;\n}\n.slickgrid-container .slick-resizable-handle {\n  position: absolute;\n  font-size: 0.1px;\n  display: block;\n  cursor: col-resize;\n  width: 5px;\n  right: 0;\n  top: 0;\n  height: 100%;\n}\n.slickgrid-container .slick-resizable-handle-hover {\n  background-color: #ccc;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver;\n}\n.slickgrid-container .slick-group-toggle {\n  display: inline-block;\n}\n.slickgrid-container .slick-cell.highlighted {\n  background: lightskyblue;\n  background: rgba(0, 0, 255, 0.2);\n  transition: all 0.5s;\n}\n.slickgrid-container .slick-cell.flashing {\n  border: 1px solid red !important;\n}\n.slickgrid-container .slick-cell.editable {\n  overflow: visible;\n  background: white;\n  border-color: black;\n  border-style: solid;\n}\n.slickgrid-container .slick-cell:focus {\n  outline: none;\n}\n.slickgrid-container .slick-reorder-proxy {\n  display: inline-block;\n  background: blue;\n  opacity: 0.15;\n  cursor: move;\n}\n.slickgrid-container .slick-reorder-guide {\n  display: inline-block;\n  height: 2px;\n  background: blue;\n  opacity: 0.7;\n}\n.slickgrid-container .slick-selection {\n  position: absolute;\n  border: 2px dashed black;\n}\n.slickgrid-container .slick-pane {\n  position: absolute;\n  outline: 0;\n  overflow: hidden;\n  width: 100%;\n}\n.interact-placeholder {\n  background: red !important;\n  display: inline-block;\n  float: left;\n  transform: translate(0px, -100%);\n}\n.interact-drop-active {\n  box-shadow: inset 0 0 8px rgba(7, 67, 128, 0.5);\n}\n.interact-can-drop {\n  opacity: 0.9;\n}\n.scrollbar-fix::-webkit-scrollbar {\n  -webkit-appearance: none;\n}\n/*\n * IMPORTANT:\n * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.\n * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS\n * classes should alter those!\n */\n.slickgrid-container .slick-header-columns,\n.slickgrid-container .slick-header-column {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-header-columns {\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column {\n  border-right: 1px solid #a0a0a0;\n  border-bottom: 1px solid #a0a0a0;\n}\n.slickgrid-container .slick-header-column:hover {\n  background: #d3d3d3;\n}\n.slickgrid-container .slick-header-column-active {\n  background: #cbcbcb !important;\n}\n.slickgrid-container .slick-headerrow {\n  background: #d8d8d8;\n}\n.slickgrid-container .slick-headerrow-column {\n  background: #fafafa;\n  border-bottom: 0;\n}\n.slickgrid-container .grid-canvas {\n  background: white;\n}\n.slickgrid-container .slick-row {\n  background: white;\n  border: 0;\n  line-height: 20px;\n}\n.slickgrid-container .slick-row .slick-cell {\n  background: white;\n  padding-top: 4px;\n  padding-bottom: 4px;\n  padding-left: 4px;\n  padding-right: 4px;\n  box-sizing: border-box;\n}\n.slickgrid-container .slick-row .slick-cell.invalid {\n  border-color: red;\n  -moz-animation-duration: 0.2s;\n  -webkit-animation-duration: 0.2s;\n  -moz-animation-name: slickgrid-invalid-hilite;\n  -webkit-animation-name: slickgrid-invalid-hilite;\n}\n.slickgrid-container .slick-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row .slick-cell.active {\n  border-color: rgba(0, 0, 0, 0.3);\n  border-style: solid;\n  border-width: 1px;\n  padding-top: 2px;\n  padding-left: 3px;\n}\n.slickgrid-container .slick-row .slick-cell.active input.editor-text {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  border: 0;\n  margin: 0;\n  background: transparent;\n  padding: 2px 3px 2px 3px;\n  transform: translate(-3px, -2px);\n}\n.slickgrid-container .slick-row.odd .slick-cell {\n  background: #fafaff;\n}\n.slickgrid-container .slick-row.odd .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row .slick-cell.selected {\n  background-color: #e8e8ff;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell {\n  background-color: #e2fffd;\n}\n.slickgrid-container .slick-row.active-row.odd .slick-cell.selected {\n  background-color: green;\n}\n.slickgrid-container .slick-row.loading {\n  opacity: 0.5;\n}\n.slickgrid-container .slick-group {\n  border-bottom: 2px solid silver;\n}\n.slickgrid-container .slick-group-toggle {\n  width: 9px;\n  height: 9px;\n  margin-right: 5px;\n}\n.slickgrid-container .slick-group-totals {\n  color: gray;\n  background: white;\n}\n.slickgrid-container .slick-sortable-placeholder {\n  background: silver !important;\n}\n@-moz-keyframes slickgrid-invalid-hilite {\n  from {\n    box-shadow: 0 0 6px red;\n  }\n  to {\n    box-shadow: none;\n  }\n}\n@-webkit-keyframes slickgrid-invalid-hilite {\n  from {\n    box-shadow: 0 0 6px red;\n  }\n  to {\n    box-shadow: none;\n  }\n}\n.slickgrid-container .slick-header-menubutton {\n  background-position: center center;\n  background-repeat: no-repeat;\n  border-left: thin ridge silver;\n  cursor: pointer;\n  display: inline-block;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu {\n  background: none repeat scroll 0 0 white;\n  border: 1px solid #BFBDBD;\n  min-width: 175px;\n  padding: 4px;\n  z-index: 9;\n  cursor: default;\n  display: inline-block;\n  margin: 0;\n  position: absolute;\n}\n.slickgrid-container .slick-header-menu button {\n  border: 1px solid #BFBDBD;\n  background-color: white;\n  width: 45px;\n  padding: 4px;\n  margin: 4px 4px 4px 0;\n}\n.slickgrid-container .slick-header-menu .filter {\n  border: 1px solid #BFBDBD;\n  font-size: 8pt;\n  height: 400px;\n  margin-top: 6px;\n  overflow: scroll;\n  padding: 4px;\n  white-space: nowrap;\n  width: 200px;\n}\n.slickgrid-container .slick-header-menu .textfilter > label {\n  display: inline-block;\n  margin-left: 5px;\n  margin-right: 10px;\n}\n.slickgrid-container .slick-header-menu .textfilter > input[type=text] {\n  width: 70%;\n}\n.slickgrid-container label {\n  display: block;\n  margin-bottom: 5px;\n}\n.slickgrid-container .slick-header-menuitem {\n  border: 1px solid transparent;\n  padding: 2px 4px;\n  cursor: pointer;\n  list-style: none outside none;\n  margin: 0;\n}\n.slickgrid-container .slick-header-menuicon {\n  background-position: center center;\n  background-repeat: no-repeat;\n  display: inline-block;\n  height: 16px;\n  margin-right: 4px;\n  vertical-align: middle;\n  width: 16px;\n}\n.slickgrid-container .slick-header-menucontent {\n  display: inline-block;\n  vertical-align: middle;\n}\n.slickgrid-container .slick-header-menuitem:hover {\n  border-color: #BFBDBD;\n}\n.slickgrid-container .header-overlay,\n.slickgrid-container .cell-overlay,\n.slickgrid-container .selection-cell-overlay {\n  display: block;\n  position: absolute;\n  z-index: 4;\n}\n.slickgrid-container .slick-cell > .editor-select {\n  position: absolute;\n  left: 0;\n  right: 0;\n  width: auto;\n  top: 0;\n  bottom: 0;\n  max-width: 100%;\n  min-width: 0;\n  margin: 0;\n}\n.slickgrid-container .slick-range-decorator {\n  z-index: 5;\n  pointer-events: none;\n  background: transparent;\n  border: none;\n  outline: black;\n}\ndiv.slick-large-editor-text {\n  z-index: 5;\n  position: absolute;\n  background: #f0f0f0;\n  padding: 5px;\n  border: 1px solid rgba(0, 0, 0, 0.5);\n  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.3);\n}\ndiv.slick-large-editor-text textarea {\n  backround: transparent;\n  width: 250px;\n  height: 80px;\n  border: 0;\n  outline: 0;\n}\ndiv.slick-large-editor-text div {\n  text-align: right;\n}\ndiv.slick-large-editor-text div button {\n  background-color: #d7d7d7;\n  border: 1px solid #a0a0a0;\n  cursor: pointer;\n  justify-content: center;\n  padding-left: 0.75em;\n  padding-right: 0.75em;\n  text-align: center;\n  white-space: nowrap;\n}\n.wylib-mlb {\n  height: 100%;\n}\n.wylib-mlb .align-right {\n  text-align: right;\n}\n.wylib-mlb .align-center {\n  text-align: center;\n}\n.wylib-mlb .align-left {\n  text-align: left;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3051,7 +3116,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 2;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n.wylib-modal .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-modal .buttons button {\n  margin: 0 2px 0 2px;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/modal.vue"],"names":[],"mappings":";AAAA;EACE,mBAAmB;EACnB,wBAAwB;EACxB,oBAAoB;EACpB,gBAAgB;EAChB,iBAAiB;EACjB,QAAQ;EACR,OAAO;EACP,qCAAqC;EACrC,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,eAAe;EACf,eAAe;EACf,eAAe;EACf,aAAa;EACb,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,aAAa;EACb,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,oBAAoB;CACrB","file":"modal.vue","sourcesContent":[".wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 2;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n.wylib-modal .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-modal .buttons button {\n  margin: 0 2px 0 2px;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 2;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n.wylib-modal .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-modal .buttons button {\n  margin: 0 2px 0 2px;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/modal.vue"],"names":[],"mappings":";AAAA;EACE,mBAAmB;EACnB,wBAAwB;EACxB,oBAAoB;EACpB,gBAAgB;EAChB,iBAAiB;EACjB,QAAQ;EACR,OAAO;EACP,qCAAqC;EACrC,WAAW;CACZ;AACD;EACE,mBAAmB;EACnB,eAAe;EACf,eAAe;EACf,eAAe;EACf,aAAa;EACb,mBAAmB;EACnB,oBAAoB;CACrB;AACD;EACE,aAAa;EACb,YAAY;EACZ,kBAAkB;CACnB;AACD;EACE,oBAAoB;CACrB","file":"modal.vue","sourcesContent":[".wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 2;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n.wylib-modal .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-modal .buttons button {\n  margin: 0 2px 0 2px;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3070,7 +3135,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-win {\n  touch-action: none;\n  position: absolute;\n  z-index: 10;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 80px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  overflow-x: hidden;\n  overflow-y: scrolled;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/win.vue"],"names":[],"mappings":";AAAA;EACE,mBAAmB;EACnB,mBAAmB;EACnB,YAAY;EACZ,oBAAoB;CACrB;AACD;EACE,WAAW;EACX,iBAAiB;EACjB,iBAAiB;CAClB;AACD;EACE,sBAAsB;EACtB,cAAc;EACd,sBAAsB;CACvB;AACD;;EAEE,eAAe;CAChB;AACD;EACE,eAAe;EACf,iBAAiB;EACjB,cAAc;CACf;AACD;EACE,qBAAqB;EACrB,mBAAmB;EACnB,sBAAsB;EACtB,qBAAqB;EACrB,oBAAoB;CACrB;AACD;EACE,cAAc;CACf;AACD;EACE,cAAc;EACd,sBAAsB;CACvB;AACD;EACE,mBAAmB;EACnB,qBAAqB;EACrB,WAAW;CACZ;AACD;EACE,WAAW;CACZ","file":"win.vue","sourcesContent":[".wylib-win {\n  touch-action: none;\n  position: absolute;\n  z-index: 10;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 80px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  overflow-x: hidden;\n  overflow-y: scrolled;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-win {\n  touch-action: none;\n  position: absolute;\n  z-index: 10;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 80px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  overflow-x: hidden;\n  overflow-y: scrolled;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/win.vue"],"names":[],"mappings":";AAAA;EACE,mBAAmB;EACnB,mBAAmB;EACnB,YAAY;EACZ,oBAAoB;CACrB;AACD;EACE,WAAW;EACX,iBAAiB;EACjB,iBAAiB;CAClB;AACD;EACE,sBAAsB;EACtB,cAAc;EACd,sBAAsB;CACvB;AACD;;EAEE,eAAe;CAChB;AACD;EACE,eAAe;EACf,iBAAiB;EACjB,cAAc;CACf;AACD;EACE,qBAAqB;EACrB,mBAAmB;EACnB,sBAAsB;EACtB,qBAAqB;EACrB,oBAAoB;CACrB;AACD;EACE,cAAc;CACf;AACD;EACE,cAAc;EACd,sBAAsB;CACvB;AACD;EACE,mBAAmB;EACnB,qBAAqB;EACrB,WAAW;CACZ;AACD;EACE,WAAW;CACZ","file":"win.vue","sourcesContent":[".wylib-win {\n  touch-action: none;\n  position: absolute;\n  z-index: 10;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 80px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  overflow-x: hidden;\n  overflow-y: scrolled;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3089,7 +3154,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-mdew table {\n    border-collapse: collapse;\n    width: 100%;\n//    border: 1px solid blue;\n}\n.wylib-mdew table .label {\n    text-align: right;\n}\n.wylib-mdew table .titles {\n    width: 10%;\n}\n.wylib-mdew table tr:nth-child(even) .label {\n    background: #f0f0f0\n}\n.wylib-mdew td {\n    border: 1px solid #e8e8e8;\n    white-space: nowrap;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/src/mdew.vue"],"names":[],"mappings":";AAoFA;IACA,0BAAA;IACA,YAAA;AACA,6BAAA;CACA;AACA;IACA,kBAAA;CACA;AACA;IACA,WAAA;CACA;AACA;IACA,mBAAA;CACA;AACA;IACA,0BAAA;IACA,oBAAA;CACA","file":"mdew.vue","sourcesContent":["//Multiple data field editing widget\n//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package\n// -----------------------------------------------------------------------------\n//TODO:\n//X- Can layout multiple dews in a grid\n//X- Start with a single column of value\n//- Can get rid of ref= now?\n//- \n//- Later:\n//- Can do 2D array with: \n//-   Columnspans\n//-   Piggybacks\n//-   Derived values\n//- \n\n<template>\n  <div class=\"wylib wylib-mdew\">\n    <table class=\"wylib-mdew-nodrag\">\n      <colgroup><col class=\"titles\"/></colgroup>\n      <tr v-for=\"f in state.fields\" :key=\"f.field\" :title=\"f.lang ? f.lang.help : null\">\n        <td class=\"label\">\n          {{ f.lang ? f.lang.title : null }}:\n        </td>\n        <td>\n          <wylib-dew :top=\"top\" :ref=\"'dew~'+f.field\" :field=\"f.field\" :state=\"f.styles\" :value=\"data[f.field]\" :values=\"f.values\" :lang=\"f.lang\" @input=\"input\" :bus=\"dewBus\"/>\n        </td>\n      </tr>\n    </table>\n  </div>\n</template>\n\n<script>\nimport Com from './common.js'\nimport Dew from './dew.vue'\nimport InDate from './indate.vue'\n\nexport default {\n  name: 'wylib-mdew',\n  components: {'wylib-dew': Dew, 'wylib-indate': InDate},\n  props: {\n    state:\t{type: Object, default: () => ({})},\n    data:\t{type: Object, default: () => ({})},\n    top:\tnull,\n    bus:\tnull,\n    height:\t{type: Number, default: 300},\t\t//Fixme: used?\n    },\n\n  data() { return {\n    valid:\tnull,\n    dirtys:\t{},\n    userData:\t{},\n    dewBus:\tnew Com.messageBus(this),\n  }},\n\n  computed: {\n    id: function() {return 'mdew_' + this._uid + '_'},\n    dirty: function() {\n      return Object.values(this.dirtys).every(v=>(v))\n    },\n  },\n  \n  methods: {\n    input(value, field, dirty, valid) {\t\t\t//An input has been changed\n      this.$set(this.dirtys, field, dirty)\n      this.valid = valid\n      this.userData[field] = value\n//console.log(\"Mdew input:\", field, value, dirty, valid, this.dirty)\n      this.$emit('input', value, field, this.dirty, valid)\n    },\n  },\n\n  beforeMount: function() {\n    Com.react(this, {fields: []})\n    if (this.bus) this.bus.register(this.id, (msg, data) => {\n      return this.dewBus.notify(msg, data)\t\t//Pass down to children\n    })\n  },\n//  mounted: function() {\n//    this.focus()\n//  }\n}\n</script>\n\n<style>\n  .wylib-mdew table {\n    border-collapse: collapse;\n    width: 100%;\n//    border: 1px solid blue;\n  }\n  .wylib-mdew table .label {\n    text-align: right;\n  }\n  .wylib-mdew table .titles {\n    width: 10%;\n  }\n  .wylib-mdew table tr:nth-child(even) .label {\n    background: #f0f0f0\n  }\n  .wylib-mdew td {\n    border: 1px solid #e8e8e8;\n    white-space: nowrap;\n  }\n</style>\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-mdew table {\n    border-collapse: collapse;\n    width: 100%;\n//    border: 1px solid blue;\n}\n.wylib-mdew table .label {\n    text-align: right;\n}\n.wylib-mdew table .titles {\n    width: 10%;\n}\n.wylib-mdew table tr:nth-child(even) .label {\n    background: #f0f0f0\n}\n.wylib-mdew td {\n    border: 1px solid #e8e8e8;\n    white-space: nowrap;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/src/mdew.vue"],"names":[],"mappings":";AAoFA;IACA,0BAAA;IACA,YAAA;AACA,6BAAA;CACA;AACA;IACA,kBAAA;CACA;AACA;IACA,WAAA;CACA;AACA;IACA,mBAAA;CACA;AACA;IACA,0BAAA;IACA,oBAAA;CACA","file":"mdew.vue","sourcesContent":["//Multiple data field editing widget\n//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package\n// -----------------------------------------------------------------------------\n//TODO:\n//X- Can layout multiple dews in a grid\n//X- Start with a single column of value\n//- Can get rid of ref= now?\n//- \n//- Later:\n//- Can do 2D array with: \n//-   Columnspans\n//-   Piggybacks\n//-   Derived values\n//- \n\n<template>\n  <div class=\"wylib wylib-mdew\">\n    <table class=\"wylib-mdew-nodrag\">\n      <colgroup><col class=\"titles\"/></colgroup>\n      <tr v-for=\"f in state.fields\" :key=\"f.field\" :title=\"f.lang ? f.lang.help : null\">\n        <td class=\"label\">\n          {{ f.lang ? f.lang.title : null }}:\n        </td>\n        <td>\n          <wylib-dew :top=\"top\" :ref=\"'dew~'+f.field\" :field=\"f.field\" :state=\"f.styles\" :value=\"data[f.field]\" :values=\"f.values\" :lang=\"f.lang\" @input=\"input\" :bus=\"dewBus\"/>\n        </td>\n      </tr>\n    </table>\n  </div>\n</template>\n\n<script>\nimport Com from './common.js'\nimport Dew from './dew.vue'\nimport InDate from './indate.vue'\n\nexport default {\n  name: 'wylib-mdew',\n  components: {'wylib-dew': Dew, 'wylib-indate': InDate},\n  props: {\n    state:\t{type: Object, default: () => ({})},\n    data:\t{type: Object, default: () => ({})},\n    top:\tnull,\n    bus:\tnull,\n    height:\t{type: Number, default: 300},\t\t//Fixme: used?\n    },\n\n  data() { return {\n    valid:\tnull,\n    dirtys:\t{},\n    userData:\t{},\n    dewBus:\tnew Com.messageBus(this),\n  }},\n\n  computed: {\n    id: function() {return 'mdew_' + this._uid + '_'},\n    dirty: function() {\n      return Object.values(this.dirtys).every(v=>(v))\n    },\n  },\n  \n  methods: {\n    input(value, field, dirty, valid) {\t\t\t//An input has been changed\n      this.$set(this.dirtys, field, dirty)\n      this.valid = valid\n      this.userData[field] = value\n//console.log(\"Mdew input:\", field, value, dirty, valid, this.dirty)\n      this.$emit('input', value, field, this.dirty, valid)\n    },\n  },\n\n  beforeMount: function() {\n    Com.react(this, {fields: []})\n    if (this.bus) this.bus.register(this.id, (msg, data) => {\n      return this.dewBus.notify(msg, data)\t\t//Pass down to children\n    })\n  },\n//  mounted: function() {\n//    this.focus()\n//  }\n}\n</script>\n\n<style>\n  .wylib-mdew table {\n    border-collapse: collapse;\n    width: 100%;\n//    border: 1px solid blue;\n  }\n  .wylib-mdew table .label {\n    text-align: right;\n  }\n  .wylib-mdew table .titles {\n    width: 10%;\n  }\n  .wylib-mdew table tr:nth-child(even) .label {\n    background: #f0f0f0\n  }\n  .wylib-mdew td {\n    border: 1px solid #e8e8e8;\n    white-space: nowrap;\n  }\n</style>\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -3108,7 +3173,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-menudock {\n  border: 1px solid black;\n  border-bottom: 0;\n  padding: 0;\n}\n.wylib-menudock .buttons {\n  display: flex;\n}\n.wylib-menudock wylib-button {\n  flex: 0 0 auto;\n}\n.wylib-menudock > .wylib-win {\n  position: relative;\n  top: 1em;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/js/wylib/src/src/menudock.vue"],"names":[],"mappings":";AAkDA;EACA,wBAAA;EACA,iBAAA;EACA,WAAA;CACA;AACA;EACA,cAAA;CACA;AACA;EACA,eAAA;CACA;AACA;EACA,mBAAA;EACA,SAAA;CACA","file":"menudock.vue","sourcesContent":["//Display a menu button, and optionally shortcut buttons from the menu itself\n//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package\n// -----------------------------------------------------------------------------\n//TODO:\n//X- Integrate button changes\n//X- Show spaces between buttons\n//- \n<template>\n  <div class=\"wylib wylib-menudock\">\n    <div class=\"buttons\">\n      <wylib-button class=\"menubutton\" icon=\"menu\" :size=\"height\" :toggled=\"state.menu.posted\" @mousedown=\"state.menu.posted = !state.menu.posted\" :title=\"lang.title\"/>\n      <wylib-button class=\"shortcut\" v-for=\"conf in config\" v-if=\"conf.shortcut\" :size=\"height\" \n      \t:key=\"conf.idx\" :icon=\"conf.icon\" :toggled=\"conf.toggled\" @click=\"conf.call\" \n      \t:disabled=\"('disabled' in conf) ? conf.disabled : false\"\n      \t:title=\"(conf.lang?conf.lang.title:null) + ':\\n' + (conf.lang?conf.lang.help:null)\"/>\n    </div>\n    <div class=\"subwindows\">\n      <wylib-win :state=\"state.menu\" pinnable=true @close=\"state.menu.posted=false\" :lang=\"lang\">\n        <wylib-menu :config=\"config\" :isPinned=\"state.menu.pinned\" @close=\"state.menu.posted=false\"/>\n      </wylib-win>\n    </div>\n  </div>\n</template>\n\n<script>\nimport Com from './common.js'\nimport Win from './win.vue'\nimport Menu from './menu.vue'\nimport Button from './button.vue'\n\nexport default {\n  name: 'wylib-menudock',\n  components: {'wylib-win': Win, 'wylib-menu': Menu, 'wylib-button': Button},\n  props: {\n    state:\t{type: Object, default: () => ({})},\n    lang:\t{type: Object, default: Com.langTemplate},\n    config:\tArray,\n    height:\t{type: Number, default: 18}\n  },\n\n  beforeMount: function() {\n//console.log(\"MenuDock:\", JSON.stringify(this.config))\n    Com.react(this, {menu: {},})\n  },\n  mounted: function() {\n  }\n}\n</script>\n\n<style>\n  .wylib-menudock {\n    border: 1px solid black;\n    border-bottom: 0;\n    padding: 0;\n  }\n  .wylib-menudock .buttons {\n    display: flex;\n  }\n  .wylib-menudock wylib-button {\n    flex: 0 0 auto;\n  }\n  .wylib-menudock > .wylib-win {\n    position: relative;\n    top: 1em;\n  }\n</style>\n"],"sourceRoot":""}]);
+exports.push([module.i, "\n.wylib-menudock {\n  border: 1px solid black;\n  border-bottom: 0;\n  padding: 0;\n}\n.wylib-menudock .buttons {\n  display: flex;\n}\n.wylib-menudock wylib-button {\n  flex: 0 0 auto;\n}\n.wylib-menudock > .wylib-win {\n  position: relative;\n  top: 1em;\n}\n", "", {"version":3,"sources":["/home/kyle/share/devel/wylib/src/src/menudock.vue"],"names":[],"mappings":";AAkDA;EACA,wBAAA;EACA,iBAAA;EACA,WAAA;CACA;AACA;EACA,cAAA;CACA;AACA;EACA,eAAA;CACA;AACA;EACA,mBAAA;EACA,SAAA;CACA","file":"menudock.vue","sourcesContent":["//Display a menu button, and optionally shortcut buttons from the menu itself\n//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package\n// -----------------------------------------------------------------------------\n//TODO:\n//X- Integrate button changes\n//X- Show spaces between buttons\n//- \n<template>\n  <div class=\"wylib wylib-menudock\">\n    <div class=\"buttons\">\n      <wylib-button class=\"menubutton\" icon=\"menu\" :size=\"height\" :toggled=\"state.menu.posted\" @mousedown=\"state.menu.posted = !state.menu.posted\" :title=\"lang.title\"/>\n      <wylib-button class=\"shortcut\" v-for=\"conf in config\" v-if=\"conf.shortcut\" :size=\"height\" \n      \t:key=\"conf.idx\" :icon=\"conf.icon\" :toggled=\"conf.toggled\" @click=\"conf.call\" \n      \t:disabled=\"('disabled' in conf) ? conf.disabled : false\"\n      \t:title=\"(conf.lang?conf.lang.title:null) + ':\\n' + (conf.lang?conf.lang.help:null)\"/>\n    </div>\n    <div class=\"subwindows\">\n      <wylib-win :state=\"state.menu\" pinnable=true @close=\"state.menu.posted=false\" :lang=\"lang\">\n        <wylib-menu :state=\"state.menu.client\" :config=\"config\" @close=\"state.menu.posted=false\"/>\n      </wylib-win>\n    </div>\n  </div>\n</template>\n\n<script>\nimport Com from './common.js'\nimport Win from './win.vue'\nimport Menu from './menu.vue'\nimport Button from './button.vue'\n\nexport default {\n  name: 'wylib-menudock',\n  components: {'wylib-win': Win, 'wylib-menu': Menu, 'wylib-button': Button},\n  props: {\n    state:\t{type: Object, default: () => ({})},\n    lang:\t{type: Object, default: Com.langTemplate},\n    config:\tArray,\n    height:\t{type: Number, default: 18}\n  },\n\n  beforeMount: function() {\n//console.log(\"MenuDock:\", JSON.stringify(this.config))\n    Com.react(this, {menu: {client: {}}})\n  },\n  mounted: function() {\n  }\n}\n</script>\n\n<style>\n  .wylib-menudock {\n    border: 1px solid black;\n    border-bottom: 0;\n    padding: 0;\n  }\n  .wylib-menudock .buttons {\n    display: flex;\n  }\n  .wylib-menudock wylib-button {\n    flex: 0 0 auto;\n  }\n  .wylib-menudock > .wylib-win {\n    position: relative;\n    top: 1em;\n  }\n</style>\n"],"sourceRoot":""}]);
 
 // exports
 
@@ -4192,7 +4257,7 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "wylib wylib-menu" }, [
-    _c("div", { staticClass: "menu" }, [
+    _c("div", { staticClass: "menu", attrs: { title: "" } }, [
       _c(
         "table",
         _vm._l(_vm.config, function(item) {
@@ -4206,33 +4271,41 @@ var render = function() {
                   _vm.execute(item.call)
                 },
                 mouseenter: function($event) {
-                  _vm.enterItem(item.idx, !!item.menu)
+                  _vm.enterItem(item.idx, item.menu)
                 }
               }
             },
-            [
-              _c("td", [
-                _c("svg", {
-                  staticClass: "icon",
-                  staticStyle: { height: "1em", width: "1em" },
-                  domProps: { innerHTML: _vm._s(_vm.iconSvg(item.icon)) }
-                })
-              ]),
-              _vm._v(" "),
-              _c("td", [_vm._v(_vm._s(item.lang ? item.lang.title : null))]),
-              _vm._v(" "),
-              _c("td", [
-                item.input
-                  ? _c("input", { attrs: { type: item.input } })
-                  : item.menu
-                    ? _c("svg", {
-                        staticClass: "icon",
-                        staticStyle: { height: "1em", width: "1em" },
-                        domProps: { innerHTML: _vm._s(_vm.iconSvg("play3")) }
-                      })
-                    : _vm._e()
+            _vm._l(_vm.layout, function(fld) {
+              return _c("td", { key: fld }, [
+                fld == "icon"
+                  ? _c("svg", {
+                      staticClass: "icon",
+                      staticStyle: { height: "1em", width: "1em" },
+                      domProps: { innerHTML: _vm._s(_vm.iconSvg(item.icon)) }
+                    })
+                  : fld == "lang"
+                    ? _c("div", [
+                        _vm._v(
+                          _vm._s(
+                            (item.lang ? item.lang.title : null) || item.idx
+                          )
+                        )
+                      ])
+                    : fld == "input" && item.input
+                      ? _c("input", { attrs: { type: item.input } })
+                      : fld == "input" && item.menu
+                        ? _c("svg", {
+                            staticClass: "icon",
+                            staticStyle: { height: "1em", width: "1em" },
+                            domProps: {
+                              innerHTML: _vm._s(_vm.iconSvg("play3"))
+                            }
+                          })
+                        : fld == item.idx
+                          ? _c("div", [_vm._v(_vm._s(item[fld]))])
+                          : _vm._e()
               ])
-            ]
+            })
           )
         })
       )
@@ -4248,17 +4321,24 @@ var render = function() {
               {
                 key: item.idx,
                 attrs: {
-                  posted: _vm.subMenuPosted[item.idx],
+                  state: _vm.state.subs[item.idx],
                   pinnable: "true",
                   lang: item.lang
                 },
                 on: {
                   close: function($event) {
-                    _vm.subMenuPosted[item.idx] = false
+                    _vm.state.subs[item.idx].posted = false
                   }
                 }
               },
-              [_c("wylib-menu", { attrs: { config: item.menu } })],
+              [
+                _c("wylib-menu", {
+                  attrs: {
+                    state: _vm.state.subs[item.idx].client,
+                    config: item.menu
+                  }
+                })
+              ],
               1
             )
           : _vm._e()
@@ -4568,7 +4648,10 @@ var render = function() {
             },
             [
               _c("wylib-menu", {
-                attrs: { config: _vm.colMenuConfig },
+                attrs: {
+                  state: _vm.state.colMenu.client,
+                  config: _vm.colMenuConfig
+                },
                 on: {
                   close: function($event) {
                     _vm.state.colMenu.posted = false
@@ -4733,14 +4816,14 @@ var render = function() {
       _c(
         "div",
         {
-          staticClass: "header wylib-win-nosize",
+          staticClass: "header",
           style: _vm.headerStyle,
           attrs: { title: _vm.lang.help }
         },
         [
           _c(
             "div",
-            { staticClass: "headerbar wylib-win-nosize" },
+            { staticClass: "headerbar" },
             [
               _vm.topLevel
                 ? _c("wylib-button", {
@@ -4795,7 +4878,7 @@ var render = function() {
           _vm._v(" "),
           _c(
             "div",
-            { staticClass: "headerbar operations wylib-win-nosize" },
+            { staticClass: "headerbar operations" },
             [
               _c("div", { ref: "childStatus", staticClass: "childstatus" }),
               _vm._v(" "),
@@ -4840,8 +4923,8 @@ var render = function() {
                 [
                   _c("wylib-menu", {
                     attrs: {
-                      config: _vm.winMenuConfig,
-                      isPinned: _vm.state.menu.pinned
+                      state: _vm.state.menu.client,
+                      config: _vm.winMenuConfig
                     },
                     on: {
                       close: function($event) {
@@ -4872,9 +4955,9 @@ var render = function() {
                 [
                   _c("wylib-menu", {
                     attrs: {
+                      state: _vm.state.save.client,
                       layout: _vm.winSaveLayout,
-                      config: _vm.winSaveConfig,
-                      isPinned: _vm.state.save.pinned
+                      config: _vm.winSaveConfig
                     },
                     on: {
                       close: function($event) {
@@ -4985,7 +5068,7 @@ var render = function() {
           },
           [
             _c("wylib-menu", {
-              attrs: { config: _vm.config, isPinned: _vm.state.menu.pinned },
+              attrs: { state: _vm.state.menu.client, config: _vm.config },
               on: {
                 close: function($event) {
                   _vm.state.menu.posted = false
@@ -6133,14 +6216,21 @@ if (false) {}
 "use strict";
 
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-//Common support functions
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; //Common support functions
 //Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
 // -----------------------------------------------------------------------------
 //Components are responsible to tap into this object and bind to any
 //appropriate properties.
 //- 
+
+
+var _wyseman = __webpack_require__(/*! ./wyseman.js */ "./src/wyseman.js");
+
+var _wyseman2 = _interopRequireDefault(_wyseman);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var docIndex = 0;
 
 module.exports = {
   langTemplate: function langTemplate() {
@@ -6228,6 +6318,15 @@ module.exports = {
     }
     return output;
   }
+
+  //  docView: function(view) {
+  //    docIndex++
+  //console.log("Ddocument preview:", view)
+  //    Wyseman.request('doc_'+docIndex, 'preview', {view}, (data) => {
+  //console.log("Open document preview:", data)
+  ////      window.open
+  //    })
+  //  }
 };
 
 /***/ }),
@@ -7259,25 +7358,25 @@ var Wyseman = {
   address: '', //To remember node:port when we are currently connected
   sendQue: [], //Backlog of commands to send (in cases where channel is not yet available)
   handlers: {}, //Callbacks listening for responses from the backend
-  langCache: {},
-  metaCache: {},
-  cache: null, //Store local copies of meta/language data
+  langCache: {}, //Store all language queries we have done
+  metaCache: {}, //Store all table meta-data we have done
+  cache: null, //Pointer to local copies of meta/language data
   pending: { meta: {}, lang: {} }, //Remember details of pending requests
-  callbacks: {},
+  callbacks: {}, //Callbacks listening for meta/language changes
 
   close: function close() {
-    //Close connection from this end
+    //Close server connection from this end
     this.socket.close();
     this.notify(this.addr = '');
   },
   connect: function connect(address) {
     var _this = this;
 
-    //Attempt to connect to backend
+    //Attempt to connect to backend server
     //console.log("Connect: " + address)
     if (!address) address = localStorage.siteSocket; //If no address given, default to the last used one
     if (!address) return; //If still nothing to connect to, give up
-    this.url = 'ws:/' + address; //Build the URL
+    this.url = 'ws:/' + address; //Build websocket URL
     this.socket = new WebSocket(this.url); //Try to connect
 
     this.socket.addEventListener('error', function (event) {
@@ -7293,9 +7392,9 @@ var Wyseman = {
     });
 
     this.socket.addEventListener('open', function (event) {
-      //When it is open and ready
+      //When socket is open and ready
       _this.notify(_this.address = address); //Tell everyone we're connected
-      localStorage.setItem('siteSocket', address); //Remember our current connection
+      localStorage.setItem('siteSocket', address); //Remember where we were connected
       //console.log("Connected to backend: " + address)
 
       _this.socket.addEventListener('message', function (ev) {
@@ -7308,24 +7407,27 @@ var Wyseman = {
             error = pkt.error;
         //console.log('Message from server: ', id, action, error)
 
-        if (!id || !view || !action) return;
+        if (!id || !view || !action) return; //Invalid packet
 
         if (action == 'meta' || action == 'lang') {
-          _this.procColumns(data);
-          var index = action + '~' + view;
+          //Special handling for meta and language data
+          _this.procColumns(data); //Reorganize columns array as object
+          var index = action + '~' + view; //Where we will save in localStorage
           if (action == 'lang') {
-            //console.log(" opt.language:", id, this.handlers[id].lang.language)
-            var language = _this.handlers[id].lang.language;
-            index = 'lang_' + language + '~' + view;
-            _this.procMessages(data);
-            _this.langCache[language][view] = data;
+            //console.log(" opt.language:", id, this.handlers[id], this.handlers[id].lang.language)
+            var language = _this.handlers[id].lang.language || 'en';
+            index = 'lang_' + language + '~' + view; //Save each language separately
+            _this.procMessages(data); //Reorganize messages array as object
+            _this.langCache[language][view] = data; //Cache language data for this view
           } else {
-            _this.metaCache[view] = data;
+            _this.metaCache[view] = data; //Cache meta data
+            _this.linkLang(view); //Can access language information from the view meta data
+            if (pkt.ui) data.ui = pkt.ui; //Add in any user interface specification, if we got one
+            //Fixme: also request language for any subordinate views
           }
-          if (action == 'meta') _this.linkLang(view);
           //console.log(" localStorage:", index)
-          localStorage[index] = JSON.stringify(data); //Save this also to browser cache
-          _this.pending[action][view] = false;
+          localStorage[index] = JSON.stringify(data); //Save also to browser cache
+          _this.pending[action][view] = false; //Mark pending as now complete
           setTimeout(function () {
             _this.procQueue();
           }, 50); //See if any other meta commands are queued up
@@ -7335,6 +7437,7 @@ var Wyseman = {
           //If we have a registered handler,
           //console.log("Calling:")
           if (error && error.code && error.code.match(/^!\w*/)) {
+            //If there is an error that needs translation
             var _error$code$slice$spl = error.code.slice(1).split('.'),
                 _error$code$slice$spl2 = _slicedToArray(_error$code$slice$spl, 3),
                 sch = _error$code$slice$spl2[0],
@@ -7346,17 +7449,19 @@ var Wyseman = {
 
 
             if (!cache) {
+              //If we don't already have it
               _this.request('_wm_E_' + id, 'lang', { language: _prefs2.default.language, view: errView }, function (d, e) {
-                var cache = _this.cache.lang[errView];
+                var cache = _this.cache.lang[errView]; //Get it and cache it
                 //console.log("Now have:", error, errView, code, cache)
-                if (cache.msg[code]) error.lang = cache.msg[code]; //No guaranty this language query worked, not checking secondary errors
-                _this.handlers[id][action].cb(data, error); //call back
+                if (cache.msg[code]) error.lang = cache.msg[code]; //No guaranty this language query worked (do we need to check for secondary errors?)
+                _this.handlers[id][action].cb(data, error); //Execute call back
               });return;
             } else if (cache.msg[code]) {
-              error.lang = cache.msg[code];
+              //We have it cached
+              error.lang = cache.msg[code]; //So just provide translation
             }
           }
-          _this.handlers[id][action].cb(data, error); //call back with what language info we may or may not have
+          _this.handlers[id][action].cb(data, error); //call back with what language info we may or may not have, will call back again (above) when we have language data
         }
       }); //message
 
@@ -7420,37 +7525,36 @@ var Wyseman = {
       //If connection not yet open
       this.sendQue.push([id, action, opt, cb]); //Queue the request for later
 
-      var idx = action + '~' + view;
+      var idx = action + '~' + view; //Where saved in localStorage
       if (localStorage[idx]) {
         //Use any historic value from browser for now
         var data = JSON.parse(localStorage[idx]);
         //console.log("From localStorage:", data)
-        if (cb) cb(data);
+        if (cb) cb(data); //Call back with cached (possibly obsolete) data
       }
       return;
     }
-    //console.log("  processing: ", action, " View:", view)
 
-    //    if (!this.cache.lang[view]) this.cache.lang[view] = {}
+    //console.log("  processing: ", action, " View:", view)
     if (action == 'meta') {
-      if (!this.cache.lang[view]) //Request language first before our meta data requested
+      if (!this.cache.lang[view]) //Force language request before our meta data requested
         this.request('_wm_L_' + id, 'lang', { language: _prefs2.default.language, view: view });
     }
 
     if (action == 'meta' || action == 'lang') {
       if (this.cache[action][view]) {
-        //Can pull data from cache, if we have it
+        //If we already have this data in the cache
         //console.log("  got data from cache:", action, view, this.cache[action][view])
         if (cb) cb(this.cache[action][view]); //Use it
         return;
       } else if (this.pending[action][view]) {
-        //If there is a pending meta request for this view
-        this.sendQue.push([id, action, opt, cb]); //Queue the request for later
+        //If there is already a pending meta request for this view
+        this.sendQue.push([id, action, opt, cb]); //Queue the request for later, see if the first request succeeds
         //console.log("  queuing data request:", action, view)
         return;
       }
       //console.log("  will send request: ", action, view)
-      this.pending[action][view] = true; //Note a pending meta request for this queue
+      this.pending[action][view] = true; //Note a pending meta request for this view
       setTimeout(function () {
         _this2.pending[action][view] = false;
       }, 5000); //Can retry after 5 seconds and on next queue check
@@ -7463,7 +7567,7 @@ var Wyseman = {
 
     if (action == 'connect') {
       //Don't actually send a packet for connection status requests
-      if (cb) cb(this.address); //Just update with our address, if any
+      if (cb) cb(this.address); //Just update with our address, if any listeners
       return;
     }
     var msg = Object.assign({ id: id, action: action }, opt); //Construct message packet
@@ -7484,8 +7588,8 @@ var Wyseman = {
     });
   },
   register: function register(id, view, cb) {
-    //Register to receive a call when view metadata updates
-    if (!cb) {
+    //Register to receive a call whenever view metadata updates
+    if (!cb && this.callbacks[view][id]) {
       delete this.callbacks[view][id];
       return;
     }
@@ -7495,23 +7599,21 @@ var Wyseman = {
   }
 };
 
-// Main
-// ----------------------------------------------------------------------------
-//console.log("Wyseman bootstrap")
 _prefs2.default.register('_wyseman', function (language) {
   //Register callback for when language changes
-  //console.log("Wyseman new language:", language)
+  console.log("Wyseman new language:", language);
   if (!Wyseman.langCache[language]) Wyseman.langCache[language] = {};
-  Wyseman.cache.lang = Wyseman.langCache[language]; //Point to new language
+  Wyseman.cache.lang = Wyseman.langCache[language]; //Point to stored data in the new language
 
   var view = 'wylib.data';Wyseman.request('_wyseman_' + view, 'lang', { language: language, view: view });
 
   Object.keys(Wyseman.cache.meta).forEach(function (view) {
+    //Fetch all necessary text in new language
     Wyseman.request('_wyseman_' + view, 'lang', { language: language, view: view }, function (data) {
       Wyseman.linkLang(view);
-      //console.log("  got new language for:", data, view)
-      Object.keys(Wyseman.callbacks[view], function (id) {
-        //console.log("    id:", id)
+      //console.log("  got new language for:", view, data)
+      Object.keys(Wyseman.callbacks[view]).forEach(function (id) {
+        //console.log("    CB:", view, id, Wyseman.metaCache[view])
         Wyseman.callbacks[view][id](Wyseman.metaCache[view]);
       });
     });

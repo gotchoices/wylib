@@ -1,6 +1,7 @@
 // webpack.config.js
 // Build bundles for the pages in the test folder
-var path = require('path');
+var path = require('path')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
                 
 module.exports = {
   mode: 'development',
@@ -10,7 +11,7 @@ module.exports = {
     mlb:  './test/mlb.js',
     win:  './test/win.js',
     calc: './test/calc.js',
-    wysegi: './test/wysegi.js'
+    wysegi: './wysegi/wysegi.js'
   },
   output: {
     path: path.join(__dirname, '..', 'dist'),
@@ -21,6 +22,9 @@ module.exports = {
       vue: 'vue/dist/vue.js'
     }
   },
+  plugins: [
+    new VueLoaderPlugin()
+  ],
   module: {
     rules: [
       {
