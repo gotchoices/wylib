@@ -16,9 +16,13 @@ Vue.config.productionTip = false
 import WylibApp from '../src/app.vue'
 import WylibWin from '../src/win.vue'
 import WylibDbp from '../src/dbp.vue'
+import TabEdit from './tabedit.vue'
+import EntEdit from './entity.vue'
 import ErdView from './erd.vue'
 
 Vue.component('erdViewer', ErdView)
+Vue.component('tabEditor', TabEdit)
+Vue.component('entEditor', EntEdit)
 
 const TabTemplate = `
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
@@ -56,10 +60,6 @@ console.log("Add Window", row, pkey, keyVals)
       this.$forceUpdate()
     },
   },
-})
-
-Vue.component('entEditor', {
-  template: '<div>Entity Editor</div>',
 })
 
 const AppTemplate = `
