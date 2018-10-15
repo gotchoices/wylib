@@ -14,19 +14,25 @@
 //- 
 <template>
     <svg :viewBox="viewCoords">
-      <wylib-sprite v-for="spr,idx in state.sprites" :key="idx" :state="spr"/>
+      <defs>
+        <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,8 L12,4 z"/>
+        </marker>
+      </defs>
+      <path :d="border" stroke="grey" stroke-width="1" fill="none"/>
+      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr"/>
     </svg>
 </template>
 
 <script>
 import Com from './common.js'
-import Sprite from './sprite.vue'
+import svgNode from './svgnode.vue'
 
 export default {
-  name: 'wylib-vector',
-  components: {'wylib-sprite': Sprite},
+  name: 'wylib-svg',
+  components: {'wylib-svgnode': svgNode},
   props: {
-    state:	{type: Object, default: () => ({sprites: [{}, {}]})},
+    state:	{type: Object, default: () => ({nodes: [{}, {}]})},
     width:	{default: 200},
     height:	{default: 200},
   },
@@ -36,16 +42,16 @@ export default {
   }},
   computed: {
     viewCoords: function() {
-      return [0, 0, this.width, this.height].join(' ')
+      return [0, 0, this.state.width, this.state.height].join(' ')
     },
     border: function() {
-      return `M 0 0 H ${this.width} V ${this.height} H 0 V 0`
+      return `M 0 0 H ${this.state.width} V ${this.state.height} H 0 V 0`
     }
   },
   beforeMount: function() {
-console.log("Vector state:", JSON.stringify(this.state))
+console.log("SVG state:", JSON.stringify(this.state))
     Com.react(this, {
-      x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, code: '<g/>'
+      width: 400, height: 400
     })
   },
 }
