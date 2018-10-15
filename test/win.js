@@ -6,7 +6,7 @@ Vue.config.productionTip = false
 import WylibDoc from '../src/doc.vue'
 import WylibWin from '../src/win.vue'
 import WylibDbp from '../src/dbp.vue'
-import WylibVector from '../src/vector.vue'
+import WylibSVG from '../src/svg.vue'
 import Wyseman from '../src/wyseman.js'
 var wmAddress = 'lux2.batemans.org:54320'
 import '../src/wylib.css'
@@ -25,7 +25,7 @@ const Template = `
     <button @click="printState">State</button>
     <button @click="language">Language</button>
     <button @click="state.doc.posted=!state.doc.posted">Document</button>
-    <button @click="state.vect.posted=!state.vect.posted">Vector</button>
+    <button @click="state.svg.posted=!state.xvg.posted">SVG Figure</button>
     <button @click="updateAll(null)">Update</button>
     <div>
       <wylib-win v-for="win,idx in state.windows" topLevel=true :key="idx" :state="win" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}">
@@ -34,19 +34,19 @@ const Template = `
       <wylib-win v-if="state.doc.posted" topLevel=true :state="state.doc" :lang="{title: 'Doc Preview', help: 'Ho'}" @close="state.doc.posted=false">
         <wylib-doc/>
       </wylib-win>
-      <wylib-win v-if="state.vect.posted" topLevel=true :state="state.vect" :lang="{title: 'Vector Figure', help: 'A vector'}" @close="state.vect.posted=false">
-        <wylib-vector/>
+      <wylib-win v-if="state.svg.posted" topLevel=true :state="state.svg" :lang="{title: 'SVG Figure', help: 'A vector based figure'}" @close="state.svg.posted=false">
+        <wylib-svg/>
       </wylib-win>
     </div>
   </div>`
 
 const Config = {
-  components: {'wylib-doc': WylibDoc, 'wylib-win': WylibWin, 'wylib-dbp': WylibDbp, 'wylib-vector': WylibVector},
+  components: {'wylib-doc': WylibDoc, 'wylib-win': WylibWin, 'wylib-dbp': WylibDbp, 'wylib-svg': WylibSVG},
   data() { return {
     pr:		require('../src/prefs.js'),
     backend:	wmAddress,
     currSite:	null,
-    state:	{windows: [{posted: true, client: {dbView: 'mychips.users_v'}}], doc: {posted: false}, vect: {posted: true}},
+    state:	{windows: [{posted: true, client: {dbView: 'mychips.users_v'}}], doc: {posted: false}, svg: {posted: true}},
   }},
   computed: {
   },

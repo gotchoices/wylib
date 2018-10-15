@@ -4,7 +4,7 @@
 import Vue from 'vue'
 Vue.config.productionTip = false
 import WylibWin from '../src/win.vue'
-import WylibVector from '../src/vector.vue'
+import WylibSVG from '../src/svg.vue'
 
 const Template = `
   <div>
@@ -16,7 +16,7 @@ const Template = `
   </div>`
 
 const Config = {
-  components: {'wylib-vector': WylibVector},
+  components: {'wylib-svg': WylibSVG},
   data() { return {
     abc:	null,
   }},
@@ -27,8 +27,8 @@ console.log("Open preview:")
     modifyDoc() {
 console.log("Modify data:")
     },
-    openVector() {
-console.log("Open vector:")
+    openSVG() {
+console.log("Open svg:")
     },
   },
   created: function() {
