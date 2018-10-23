@@ -1,18 +1,13 @@
-Widget libraries
+To access wylib test functionality:
 
-Element:	http://element.eleme.io/#/en-US
-  Pretty good,  Nice look, probably too sparce for me
+- Launch a development server:
+  npm run dev-hot
 
-Vue Material	https://vuematerial.io/components/tabs
-  Lots of general page layout themes
-  Maybe not so many specific widgets
+- Connect browser to:
+  http://linux-box:3300
 
-iview:		https://www.iviewui.com/components/tabs-en
+- You will need a data server running for functions that access a database.
+  For example, to access the WyseGI admin tool, navigate to mychips sample 
+  code and run:
 
-bootstrap-vue	https://bootstrap-vue.js.org/docs/components/table
-  Uses CSS library
-
-VueStrap	https://yuche.github.io/vue-strap
-
-quasar		http://quasar-framework.org/quasar-play/android/index.html#/showcase/scrolling/scroll-area
-
+  npm run dev-server
