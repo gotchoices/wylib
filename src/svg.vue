@@ -33,8 +33,6 @@ export default {
   components: {'wylib-svgnode': svgNode},
   props: {
     state:	{type: Object, default: () => ({nodes: [{}, {}]})},
-    width:	{default: 200},
-    height:	{default: 200},
   },
   data() { return {
     wxy:	{},
@@ -42,6 +40,7 @@ export default {
   }},
   computed: {
     viewCoords: function() {
+console.log('Re-render')
       return [0, 0, this.state.width, this.state.height].join(' ')
     },
     border: function() {

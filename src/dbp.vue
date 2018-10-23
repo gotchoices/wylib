@@ -114,7 +114,7 @@ console.log("Dbp dbView changed!")
       this.gridData = []
       this.viewMeta = null
       let zid = this.id+'cv'				//Must be the same as in created:
-      if (oldVal) Wyseman.register(zid, oldVal)
+      if (oldVal) Wyseman.register(zid, oldVal)		//Un-register
       if (newVal) Wyseman.register(zid, newVal, (data) => {this.viewMeta = data})
     },
     viewMeta: function(newVal, oldVal) {
