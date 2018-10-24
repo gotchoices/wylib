@@ -27,7 +27,7 @@ export default {
 //    svgObject:	{default: '<circle r="40" stroke="black" stroke-width="1" fill="pink"/>'},
   },
   data() { return {
-    center:	{x: 0, y: 0},			//Center of mass of possible connection points
+    cent:	{x: 0, y: 0},			//Center of mass of possible connection points
   }},
 //  watch: {
 //    'state.links': function(v) {
@@ -38,6 +38,9 @@ export default {
   computed: {
     transform: function() {				//Moves the object around
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
+    },
+    center: function() {
+      return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}
     },
     objStyle: function () {return {			//Change the cursor over movable item
       cursor:		this.state.drag ? 'move' : 'arrow',
@@ -56,7 +59,7 @@ export default {
     connection(xYou, yYou) {				//Return my closest connection point
 //console.log("Position: (", xYou, yYou,")", this.state.tag, "@", this.state.x, this.state.y)
       let cp = this.closest(this.state, this.state.ends, {x:xYou, y:yYou})
-      let xs = cp.x*2-this.center.x + this.state.x, ys = cp.y*2-this.center.y + this.state.y
+      let xs = cp.x*2-this.cent.x + this.state.x, ys = cp.y*2-this.cent.y + this.state.y
       let x = this.state.x + cp.x, y = this.state.y + cp.y	//Compute absolute point
       return({x, y, xs, ys})
     },
@@ -67,11 +70,11 @@ export default {
     },
     connector(link) {
       let linkVM = vmsByTag[link]					//Who I'm pointing to
-      let con = linkVM ? linkVM.connection(this.state.x+this.center.x, this.state.y+this.center.y) : {x:0, y:0}	//Ask his position
+      let con = linkVM ? linkVM.connection(this.state.x+this.cent.x, this.state.y+this.cent.y) : {x:0, y:0}	//Ask his position
 //console.log("Found his connection:", con.x, con.y, con.xs, con.ys)
       let cp = this.closest(this.state, this.state.ends, con)		//Closest point on me
-//console.log("Found my connection:", cp.x, cp.y, this.center.x, this.center.y)
-      let xMyC = cp.x*2 - this.center.x, yMyC = cp.y*2 - this.center.y	//Curve control point on my end
+//console.log("Found my connection:", cp.x, cp.y, this.cent.x, this.cent.y)
+      let xMyC = cp.x*2 - this.cent.x, yMyC = cp.y*2 - this.cent.y	//Curve control point on my end
       let xEnd = con.x  - this.state.x, yEnd = con.y  - this.state.y	//Convert his closest point to relative x,y
       let xEnC = con.xs - this.state.x, yEnC = con.ys - this.state.y	//Curve conrol point on his end
       let d = `M${cp.x},${cp.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
@@ -81,7 +84,8 @@ export default {
     },
   },
   created: function() {
-    this.$on('position', () => {return {x: this.state.x, y: this.state.y}})
+//    this.$on('position', () => {return {x: this.state.x, y: this.state.y}})
+//    this.$on('center', () => {return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}})
     vmsByTag[this.state.tag] = this				//Keep a table of my peers
   },
 
@@ -93,8 +97,8 @@ console.log("Node state:", JSON.stringify(this.state))
     if (this.state.ends.length) {
       let xSum = 0, ySum = 0, count = 0
       this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
-      this.center = {x: xSum / count, y: ySum / count}		//Calculate center of possible connection points
-//console.log("Center: ", this.center)
+      this.cent = {x: xSum / count, y: ySum / count}		//Calculate center of possible connection points
+//console.log("Center: ", this.cent)
     }
     this.state.links.forEach(link => {
 console.log("Node:", this.state.tag, "is linked to:", link)
