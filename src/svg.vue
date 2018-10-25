@@ -25,7 +25,7 @@
         </marker>
       </defs>
       <path :d="border" stroke="grey" stroke-width="1" fill="none"/>
-      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node"/>
+      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node" @nodevm="nodeByTag"/>
     </svg>
 </template>
 
@@ -39,23 +39,32 @@ export default {
   components: {'wylib-svgnode': svgNode},
   props: {
     state:	{type: Object, default: () => ({nodes: [{}, {}]})},
-    interval:	{default: 2000},
-    repel:	{default: 100000}
+    bumpTimer:	{default: 2000},
+    repelForce:	{default: 100000}
   },
   data() { return {
-    wxy:	{},
-    timer:	null
+    timerID:	null
   }},
+  
   computed: {
-    viewCoords: function() {
-console.log('Re-render')
+    viewCoords: function() {		//Viewport of SVG space
+//console.log('Re-render')
       return [0, 0, this.state.width, this.state.height].join(' ')
     },
-    border: function() {
+    border: function() {		//Outline the normal drawing area
       return `M 0 0 H ${this.state.width} V ${this.state.height} H 0 V 0`
     }
   },
+  
   methods: {
+    nodeByTag(searchTag) {	//Return a child node VM from its tag
+console.log("Looking up vm having tag:", searchTag)
+      this.$refs.node.forEach((vm,ix) => {
+console.log("  checking:", vm.state.tag, searchTag)
+      if (vm.state.tag == searchTag) return vm})
+console.log("  Not found")
+      return null
+    },
     bump() {			//Nudge each object according to the computed forces on it
       let forces = []
       this.$refs.node.forEach((vm, ix) => {forces[ix] = {r:0, a:0}})
@@ -63,31 +72,33 @@ console.log('Re-render')
         this.$refs.node.forEach((vm2, ix2) => {
           if (ix1 != ix2) {			//Find all combinations of any two nodes
             let c1 = vm1.center, c2 = vm2.center
-              , rect12 = vector.sub(vm2.center, vm1.center)
+              , rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , force = this.repel / Math.pow(polar12.r,2)
+              , force = this.repelForce / Math.pow(polar12.r,2)
 //console.log("bump:", ix1, ix2, rect12, polar12, force)
             forces[ix1] = vector.add(forces[ix1], {r:-force, a:polar12.a})
             forces[ix2] = vector.add(forces[ix2], {r: force, a:polar12.a})
           }
         })
+console.log("tug:", ix1, vm1.state.links)
+        // insert force from reference links here
       })
-      this.$refs.node.forEach((vm, ix) => {
-console.log("Bump:", ix, forces[ix])
+      this.$refs.node.forEach((vm, ix) => {	//Now do the nudging
+//console.log("Bump:", ix, forces[ix])
         vm.state.x += forces[ix].x
         vm.state.y += forces[ix].y
       })
     },
   },
+
   beforeMount: function() {
-console.log("SVG state:", JSON.stringify(this.state))
-    Com.react(this, {
-      width: 400, height: 400
-    })
+//console.log("SVG state:", JSON.stringify(this.state))
+    Com.react(this, {width: 400, height: 400})
   },
+
   mounted: function() {
-//    this.timer = setInterval(this.bump, this.interval)
-    this.timer = setTimeout(this.bump, this.interval)
+//    this.timerID = setInterval(this.bump, this.bumpTimer)	//Continuous
+//    this.timerID = setTimeout(this.bump, this.bumpTimer)	//Once only
   },
 }
 </script>

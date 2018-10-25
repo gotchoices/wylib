@@ -2,8 +2,8 @@
 //Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Read actual tables from database
-//- Graph displays tables
+//X- Read actual tables from database
+//X- Graph displays tables
 //- Graph displays FK links
 //- Algorithm for spreading/optimizing layout
 //- 
@@ -79,23 +79,27 @@ console.log("Circle sizing")
   beforeMount: function() {
     let spec = {
       view: 'wm.table_meta',
-      fields: ['obj', 'columns'],
+      fields: ['obj', 'columns', 'fkeys'],
       where: {tab_kind: 'r', system: 'false'}
     }
     
     Wyseman.request('erd'+this._uid, 'select', spec, (data,err) => {
       let x = 10, y = 10, maxHeight = 1;
       data.forEach(dat => {
-console.log("Dat:", dat)
-        let { code, ends, width, height } = this.table(dat.obj, ['Column 1', 'Column 2', 'Column 3'])
-          , obj = {tag:dat.obj, x, y, code, ends}
-        this.state.nodes.push(obj)
+//console.log("Dat:", dat)
+        let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
+//          , links = dat.fkeys ? dat.fkeys.map(m => m.table) : []	//Produces multiple links
+          , links = []
+        if (dat.fkeys) dat.fkeys.forEach(fkey=>{
+          if (!links.includes(fkey.table)) links.push(fkey.table)
+        })
+        this.state.nodes.push({tag:dat.obj, x, y, code, ends, links})
 
         if (height > maxHeight) maxHeight = height
         x += (width + this.tabGap)
-        if (x > (this.state.width - width)) {x = 10; y += (maxHeight + this.tabGap)}
+        if (x > (this.state.width - width)) {x = 10; y += (maxHeight + this.tabGap); maxHeight = 1}
       })
-console.log("Height:", this.state.height, y + maxHeight)
+//console.log("Height:", this.state.height, y + maxHeight)
       if (this.state.height < (y + maxHeight)) this.state.height = y + maxHeight
     })
   },
