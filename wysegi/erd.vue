@@ -10,8 +10,8 @@
 
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
-    <button @click="sort">Sort</button>
-    <wylib-svg :state="state"/>
+    <button @click="space">Space</button>
+    <wylib-svg :state="state" ref="svg"/>
   </div>
 </template>
 
@@ -22,16 +22,16 @@ import Wyseman from '../src/wyseman.js'
 export default {
   components: {'wylib-svg': WylibSVG},
   data() { return {
-    state:	{width: 1200, height: 800, nodes: []},
+    state:	{width: 1200, height: 800, nodes: {}},
     tabGap:	40,
     fontSize:	16,
     debits:	9,
     credits:	3,
   }},
   methods: {
-    sort() {
-      this.state.height = 2400
-console.log("Sorting")
+    space() {
+console.log("Adjusting spacing")
+      this.$refs.svg.bump()
     },
     bubbles() {
 console.log("Circle sizing")
@@ -66,34 +66,24 @@ console.log("Circle sizing")
       return {code, ends, width, height}
     },
   },
-// Test with two fake tables:
-//  beforeMount: function() {
-//    let { code, ends } = this.table('Fred Table', ['Column 1', 'Column 2', 'Column 3'])
-//      , obj = {tag:'fred', x: 10, y: 30, code, ends}
-//    this.state.nodes.push(obj)
-//
-//    ;({ code, ends } = this.table('Joe Table', ['Column A', 'Column B', 'Column C', 'Column D', 'Column E']));
-//    obj = {tag:'joe', x: 250, y: 100, code, ends, links:['fred']}
-//    this.state.nodes.push(obj);
-//  },
   beforeMount: function() {
     let spec = {
       view: 'wm.table_meta',
       fields: ['obj', 'columns', 'fkeys'],
-      where: {tab_kind: 'r', system: 'false'}
+      where: [['tab_kind', '=', 'r'], ['system', '=', 'false'], ['sch', '!=', 'wm']]
     }
     
     Wyseman.request('erd'+this._uid, 'select', spec, (data,err) => {
       let x = 10, y = 10, maxHeight = 1;
-      data.forEach(dat => {
+      if (data) data.forEach(dat => {
 //console.log("Dat:", dat)
         let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
 //          , links = dat.fkeys ? dat.fkeys.map(m => m.table) : []	//Produces multiple links
           , links = []
         if (dat.fkeys) dat.fkeys.forEach(fkey=>{
-          if (!links.includes(fkey.table)) links.push(fkey.table)
+          if (!links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
         })
-        this.state.nodes.push({tag:dat.obj, x, y, code, ends, links})
+        this.$set(this.state.nodes,dat.obj,{tag:dat.obj, x, y, width, height, code, ends, links})	//So it will react to changes of state
 
         if (height > maxHeight) maxHeight = height
         x += (width + this.tabGap)

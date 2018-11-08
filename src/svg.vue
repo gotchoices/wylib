@@ -5,27 +5,27 @@
 //X- Display a blank SVG background
 //X- Can scale SVG to fit its container
 //X- Can create native SVG objects
-//- Re-adjust viewport after bumping objects
-//- Draw link arrows for all objects
-//- Incorporate attractive force from links
-//- Immunize objects that have no links (max proximity to any object?)
-//- Can I still drag/drop objects?
-//- Optional button to turn bump sort on/off
-//- Stop bumping if all moves are tiny
+//- Re-adjust viewport after bumping objects (eliminate extra space on edges)
+//X- Draw link arrows for all objects
+//X- Incorporate attractive force from links
+//X- Can I still drag/drop objects?
+//X- Optional button to turn bump sort on/off
 //- 
 //- Later:
+//- Immunize objects that have no links? (max proximity to any object?)
+//- Retain placement as a saved state
 //- Can change scale on the fly with the scroll wheel?
 //- Can pan view window around to display a desired view of the SVG
 //- 
 <template>
     <svg :viewBox="viewCoords">
       <defs>
-        <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth">
+        <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth" stroke=inherit fill=inherit>
           <path d="M0,0 L0,8 L12,4 z"/>
         </marker>
       </defs>
       <path :d="border" stroke="grey" stroke-width="1" fill="none"/>
-      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node" @nodevm="nodeByTag"/>
+      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node"/>
     </svg>
 </template>
 
@@ -38,62 +38,69 @@ export default {
   name: 'wylib-svg',
   components: {'wylib-svgnode': svgNode},
   props: {
-    state:	{type: Object, default: () => ({nodes: [{}, {}]})},
-    bumpTimer:	{default: 2000},
-    repelForce:	{default: 100000}
+    state:	{type: Object, default: null},
+    bumpTimer:	{default: 400},
+    pushForce:	{default: 1},
+    pullForce:	{default: 5}
   },
   data() { return {
-    timerID:	null
+    timerID:	null,
+    xMin:	0,
+    yMin:	0,
+    xMax:	this.state.width,
+    yMax:	this.state.height
   }},
   
   computed: {
     viewCoords: function() {		//Viewport of SVG space
 //console.log('Re-render')
-      return [0, 0, this.state.width, this.state.height].join(' ')
+      return [this.xMin, this.yMin, this.xMax-this.xMin, this.yMax-this.yMin].join(' ')
     },
     border: function() {		//Outline the normal drawing area
-      return `M 0 0 H ${this.state.width} V ${this.state.height} H 0 V 0`
+      return `M this.xMin this.xMax H ${this.xMax} V ${this.yMax} H this.xMin V this.yMin`
     }
   },
   
   methods: {
-    nodeByTag(searchTag) {	//Return a child node VM from its tag
-console.log("Looking up vm having tag:", searchTag)
-      this.$refs.node.forEach((vm,ix) => {
-console.log("  checking:", vm.state.tag, searchTag)
-      if (vm.state.tag == searchTag) return vm})
-console.log("  Not found")
-      return null
+    nodeState(n) {			//Return the state object for the named node
+      return this.state.nodes[n]
     },
     bump() {			//Nudge each object according to the computed forces on it
       let forces = []
       this.$refs.node.forEach((vm, ix) => {forces[ix] = {r:0, a:0}})
       this.$refs.node.forEach((vm1, ix1) => {
         this.$refs.node.forEach((vm2, ix2) => {
-          if (ix1 != ix2) {			//Find all combinations of any two nodes
-            let c1 = vm1.center, c2 = vm2.center
-              , rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
+          if (ix1 != ix2) {
+            let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , force = this.repelForce / Math.pow(polar12.r,2)
-//console.log("bump:", ix1, ix2, rect12, polar12, force)
-            forces[ix1] = vector.add(forces[ix1], {r:-force, a:polar12.a})
-            forces[ix2] = vector.add(forces[ix2], {r: force, a:polar12.a})
+              , push = this.pushForce * 100000 / Math.pow(polar12.r,2)
+              , pull = 0
+//console.log("bump:", ix1, ix2, rect12, polar12, push)
+
+            if (vm1.state.links.includes(vm2.state.tag)) {
+              pull = this.pullForce * Math.pow(polar12.r,2) / 100000
+//console.log("tug:", vm1.state.tag, vm2.state.tag, pull)
+            }
+            forces[ix1] = vector.add(forces[ix1], {r:-push + pull, a:polar12.a})
+            forces[ix2] = vector.add(forces[ix2], {r: push - pull, a:polar12.a})
           }
         })
-console.log("tug:", ix1, vm1.state.links)
-        // insert force from reference links here
       })
       this.$refs.node.forEach((vm, ix) => {	//Now do the nudging
 //console.log("Bump:", ix, forces[ix])
         vm.state.x += forces[ix].x
         vm.state.y += forces[ix].y
+        if (vm.state.x + vm.state.width > this.xMax) this.xMax = vm.state.x + vm.state.width
+        if (vm.state.y + vm.state.height > this.yMax) this.yMax = vm.state.y + vm.state.height
+        if (vm.state.x < this.xMin) this.xMin = vm.state.x
+        if (vm.state.y < this.yMin) this.yMin = vm.state.y
       })
     },
   },
 
   beforeMount: function() {
 //console.log("SVG state:", JSON.stringify(this.state))
-    Com.react(this, {width: 400, height: 400})
+    Com.react(this, {width: 400, height: 400, nodes: {}})
   },
 
   mounted: function() {

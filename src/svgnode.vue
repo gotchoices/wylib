@@ -2,25 +2,20 @@
 //Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Can't lookup relational nodes that haven't been created yet
-//- Need a way to register a callback when the final end of a connection is rendered, fill in the SVG connection path then
-//- Create a queue
-//- If I can look up my peer and draw the line now, do it
-//- Otherwise, log it in the queue to be completed when the peer node is rendered
-//- 
+//- Consolidate first two parameters of closest()?
+//- Should parameter of connection() be a point, rather than two parms?
 //- 
 <template>
     <g :transform="transform">
-      <path v-for="link,idx in state.links" :d="connector(link)" marker-end="url(#marker-arrow)" stroke="black" stroke-width="1" fill="none"/>
       <g v-html="state.code" :style="objStyle"/>
+      <path v-for="link in state.links" :d="connectors[link]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="2" fill="none"/>
     </g>
 </template>
 
 <script>
 import Com from './common.js'
 import Interact from 'interactjs'
-var pointToMe = {}			//Cache info about nodes that are pointing to a given node
-//var vmsByTag = {}		//Moved to svg parent
+var nodeBus = new Com.eventBus()	//Discover vms with a given tag
 
 export default {
   name: 'wylib-svgnode',
@@ -28,13 +23,8 @@ export default {
     state:	{type: Object, default: () => ({})},
   },
   data() { return {
-    cent:	{x: 0, y: 0},		//Centroid of possible connection points (relative to node's local origin)
+    cent:	{x:0, y:0},	//Centroid of possible connection points (relative to node's local origin)
   }},
-//  watch: {
-//    'state.links': function(v) {
-//console.log("Links changed", this.state.links)	//Fixme: insert or delete from pointsToMe as needed
-//    },
-//  },
 
   computed: {
     transform: function() {				//Moves the object around when we change x or y
@@ -46,7 +36,32 @@ export default {
     objStyle: function () {return {			//Change the cursor to show our object as movable
       cursor:		this.state.drag ? 'move' : 'arrow',
     }},
+    connectors: function () {				//Generate SVG code for connector lines to other objects
+      var paths = {}
+      this.state.links.forEach(link => {		//For each node I point to
+        let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
+//console.log("Connecting:", this.state.tag, 'at', this.state.x, this.state.y, 'to', link)
+        if (refVM) {					//If it already exists
+          refState = refVM.state			//Generate connection
+          refPoint = refVM.connection(this.state.x+this.cent.x, this.state.y+this.cent.y)	//Ask for coordinates of the other node's connection point
+//console.log("  found his connection:", refPoint.x, refPoint.y)
+        } else {					//Create placeholder, for now
+          refState = this.$parent.nodeState(link)
+          refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
+        }
+//console.log(" at:", refState.x, refState.y)
+        let myPoint = this.closest(this.state, this.state.ends, refPoint)		//Now find closest point on me, to other node's point
+//console.log("  found my connection:", myPoint.x, myPoint.y)
+        let xMyC = myPoint.x*2 - this.cent.x, yMyC = myPoint.y*2 - this.cent.y	//Curve control point on my end
+        let xEnd = refPoint.x  - this.state.x, yEnd = refPoint.y  - this.state.y	//Convert his closest point to relative x,y
+        let xEnC = refPoint.xs - this.state.x, yEnC = refPoint.ys - this.state.y	//Curve control point on his end, as relative coordinates
+        d = `M${myPoint.x},${myPoint.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
+        paths[link] = d
+      })
+      return paths
+    },
   },
+
   methods: {
     closest(base, points, point) {			//Find closest vertex from a list of points, to a specified point
       let x = 0, y = 0, lenMin = Number.MAX_SAFE_INTEGER	//Base(state) and point contain absolute coordinates
@@ -67,60 +82,38 @@ export default {
       return({x, y, xs, ys})
     },
     moveHandler(event) {				//Called when dragging objects
-//console.log("Moving: ", this.state.tag)
+//console.log("Moving: ", this.state.tag, event.dx, event.dy)
       this.state.x += event.dx
       this.state.y += event.dy
     },
-    connector(link) {			//Generate SVG code for connector line to object with tag = link
-//      let linkVM = vmsByTag[link]	//Moved to svg parent
-      let linkVM = this.$emit('nodevm',link)				//Ask parent for the vm of the node I'm pointing to
-console.log("Link:", link, linkVM.state.tag)
-      let con = linkVM ? linkVM.connection(this.state.x+this.cent.x, this.state.y+this.cent.y) : {x:0, y:0}	//Ask for coordinates of the other node's connection point
-console.log("Found his connection:", con.x, con.y, con.xs, con.ys)
-      let cp = this.closest(this.state, this.state.ends, con)		//Now find closest point on me, to him
-console.log("Found my connection:", cp.x, cp.y, this.cent.x, this.cent.y)
-      let xMyC = cp.x*2 - this.cent.x, yMyC = cp.y*2 - this.cent.y	//Curve control point on my end
-      let xEnd = con.x  - this.state.x, yEnd = con.y  - this.state.y	//Convert his closest point to relative x,y
-console.log("xyz:", con.x, this.state.x, con.y, this.state.y)
-console.log("Connecting:", this.state.tag, 'at', cp.x, cp.y, 'to', link, 'at', xEnd, yEnd)
-      let xEnC = con.xs - this.state.x, yEnC = con.ys - this.state.y	//Curve control point on his end, as relative coordinates
-      let d = `M${cp.x},${cp.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
-//      let d = `M${cp.x},${cp.y} L${xMyC},${yMyC} L${xEnC},${yEnC} L${xEnd},${yEnd}`		//Debug: Show control points
-      return d
-    },
   },
+
   created: function() {
-//    this.$on('position', () => {return {x: this.state.x, y: this.state.y}})
-//    this.$on('center', () => {return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}})
-//    vmsByTag[this.state.tag] = this				//Keep a table of my peers
-//console.log("Storing:", this.state.tag)
+    nodeBus.register(this.state.tag, this.state.tag, dat => {	//Listen for anyone asking for me by tag
+      return this
+    })
   },
 
   beforeMount: function() {
-//console.log("Node state:", JSON.stringify(this.state))
+//console.log("Node beforeMount:", this.state.tag)
     Com.react(this, {		//Create any state properties that don't yet exist
       x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: []
     })
-    if (this.state.ends.length) {
+    if (this.state.ends.length) {			//If I have connection points
       let xSum = 0, ySum = 0, count = 0
       this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
-      this.cent = {x: xSum / count, y: ySum / count}		//Calculate center of possible connection points
+      this.cent = {x: xSum / count, y: ySum / count}	//Calculate center of mass for my connections
 //console.log("Center: ", this.cent)
     }
-    this.state.links.forEach(link => {
-console.log("Node:", this.state.tag, "is linked to:", link)
-      if (!(link in pointToMe)) pointToMe[link] = []
-      let pToMe = pointToMe[link]
-      if (!(pToMe.includes(this.state.tag))) pToMe.push(this.state.tag)
-    })
   },
 
   mounted: function() {
+//console.log("Node Mount:", this.state.tag)
     Interact(this.$el).draggable({
       inertia: true,
       onmove: this.moveHandler
     })
-  },
+  }
 }
 </script>
 
