@@ -81,11 +81,12 @@ export default {
         , y = this.state.y + cp.y
       return({x, y, xs, ys})
     },
-    moveHandler(event) {				//Called when dragging objects
+//    moveHandler(event) {				//Called when dragging objects
 //console.log("Moving: ", this.state.tag, event.dx, event.dy)
-      this.state.x += event.dx
-      this.state.y += event.dy
-    },
+//      this.$emit('drag', event, this.state)
+//      this.state.x += event.dx
+//      this.state.y += event.dy
+//    },
   },
 
   created: function() {
@@ -111,7 +112,7 @@ export default {
 //console.log("Node Mount:", this.state.tag)
     Interact(this.$el).draggable({
       inertia: true,
-      onmove: this.moveHandler
+      onmove: event => {this.$emit('drag', event, this.state)}
     })
   }
 }

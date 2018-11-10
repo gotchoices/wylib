@@ -10,7 +10,6 @@
 
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
-    <button @click="space">Space</button>
     <wylib-svg :state="state" ref="svg"/>
   </div>
 </template>
@@ -29,10 +28,6 @@ export default {
     credits:	3,
   }},
   methods: {
-    space() {
-console.log("Adjusting spacing")
-      this.$refs.svg.bump()
-    },
     bubbles() {
 console.log("Circle sizing")
       this.debits += 1; if (this.debits > 10) this.debits = 2;
@@ -60,7 +55,7 @@ console.log("Circle sizing")
           <path d="M0,${this.fontSize+4} L${width},${this.fontSize+4}" stroke="black"/>
           ${text}
         </g>`
-        , ends = [{x:width/2, y:0}, {x:width, y:height/2}, {x:width/2, y:height}, {x:0, y:height/2}]
+        , ends = [{x:width/2, y:0}, {x:width, y:height*0.25}, {x:width, y:height*0.5}, {x:width, y:height*0.75}, {x:width/2, y:height}, {x:0, y:height*0.75}, {x:0, y:height*0.5}, {x:0, y:height*0.25}]
 //        , ends = [{x:0, y:this.fontSize * 1.5}, {x:width, y:this.fontSize * 1.5}]
 //console.log("Ends:", ends)
       return {code, ends, width, height}

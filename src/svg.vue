@@ -5,11 +5,14 @@
 //X- Display a blank SVG background
 //X- Can scale SVG to fit its container
 //X- Can create native SVG objects
-//- Re-adjust viewport after bumping objects (eliminate extra space on edges)
 //X- Draw link arrows for all objects
 //X- Incorporate attractive force from links
 //X- Can I still drag/drop objects?
 //X- Optional button to turn bump sort on/off
+//- Re-adjust viewport after bumping objects (eliminate extra space on edges)
+//- Make tools disappear, then appear on mouse hover
+//- Turn sliders vertical, show multiplier value
+//- Label sliders
 //- 
 //- Later:
 //- Immunize objects that have no links? (max proximity to any object?)
@@ -18,6 +21,7 @@
 //- Can pan view window around to display a desired view of the SVG
 //- 
 <template>
+  <div class="wylib wylib-svg">
     <svg :viewBox="viewCoords">
       <defs>
         <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth" stroke=inherit fill=inherit>
@@ -25,12 +29,21 @@
         </marker>
       </defs>
       <path :d="border" stroke="grey" stroke-width="1" fill="none"/>
-      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node"/>
+      <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node" @drag="moveHandler"/>
     </svg>
+    <div class="tools" ref="tools" :style="toolStyle">
+      <button class="nodrag" @mousedown="buttonDown" @mouseup="buttonUp" @mouseleave="buttonUp" title="Attempt to arrange objects on the chart">Arrange</button>
+      <div class="sliders">
+        <input type="range" min="1" max="10" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
+        <input type="range" min="1" max="10" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import Com from './common.js'
+import Interact from 'interactjs'
 import svgNode from './svgnode.vue'
 import vector from './vector.js'
 
@@ -38,32 +51,67 @@ export default {
   name: 'wylib-svg',
   components: {'wylib-svgnode': svgNode},
   props: {
-    state:	{type: Object, default: null},
-    bumpTimer:	{default: 400},
-    pushForce:	{default: 1},
-    pullForce:	{default: 5}
+    state:		{type: Object, default: null},
+    bumpTimer:		{default: 400},
+    startTime:		{default: 500},
+    repeatTime:		{default: 200}
   },
   data() { return {
-    timerID:	null,
-    xMin:	0,
-    yMin:	0,
-    xMax:	this.state.width,
-    yMax:	this.state.height
+    minX:		0,
+    minY:		0,
+    maxX:		this.state.width,
+    maxY:		this.state.height,
+    pushForce:		2,
+    pullForce:		5,
+    startTimer:		null,
+    repeatTimer:	null,
+    toolX:		0,
+    toolY:		0
   }},
   
   computed: {
     viewCoords: function() {		//Viewport of SVG space
 //console.log('Re-render')
-      return [this.xMin, this.yMin, this.xMax-this.xMin, this.yMax-this.yMin].join(' ')
+      return [this.minX, this.minY, this.maxX-this.minX, this.maxY-this.minY].join(' ')
     },
     border: function() {		//Outline the normal drawing area
-      return `M this.xMin this.xMax H ${this.xMax} V ${this.yMax} H this.xMin V this.yMin`
-    }
+      return `M ${this.minX} ${this.maxX} H ${this.maxX} V ${this.maxY} H ${this.minX} V ${this.minY}`
+    },
+    toolStyle: function () {return {
+      transform:	'translate(' + this.toolX + 'px, ' + this.toolY + 'px)',
+    }},
   },
   
   methods: {
     nodeState(n) {			//Return the state object for the named node
       return this.state.nodes[n]
+    },
+    buttonDown() {			//Make arrange button repeat if it is held down
+//console.log("Button down")
+      if (this.startTimer) clearTimeout(this.startTimer)
+      if (this.repeatTimer) clearInterval(this.repeatTimer)
+      this.startTimer = setTimeout(() => {	//After initial timeout
+        this.startTimer = null
+        this.repeatTimer = setInterval(this.bump, this.repeatTime)	//Start repeating more rapidly
+      }, this.startTime)
+    },
+    buttonUp() {
+//console.log("Button up")
+      if (this.startTimer) {		//If waiting for button to repeat	
+        clearTimeout(this.startTimer)	//Cancel that
+        this.startTimer = null
+        this.bump()			//And do a single bump
+      }
+      if (this.repeatTimer) {		//If we have already been repeating
+        clearInterval(this.repeatTimer)	//Just quit
+        this.repeatTimer = null
+      }
+    },
+    moveHandler(event, state) {		//Called when dragging nodes
+//console.log("Move handler", this.minX, this.maxX, this.$el.getBoundingClientRect().width, ratio)
+      let ratio = (this.maxX - this.minX) / this.$el.getBoundingClientRect().width	//Scale moves by the current scale of the svg
+      state.x += (event.dx * ratio)
+      state.y += (event.dy * ratio)
     },
     bump() {			//Nudge each object according to the computed forces on it
       let forces = []
@@ -77,8 +125,9 @@ export default {
               , pull = 0
 //console.log("bump:", ix1, ix2, rect12, polar12, push)
 
+            pull = this.pullForce * Math.pow(polar12.r,2) / 10000000	//All objects have a little attractive gravity
             if (vm1.state.links.includes(vm2.state.tag)) {
-              pull = this.pullForce * Math.pow(polar12.r,2) / 100000
+              pull = pull * 100						//But linked objects have more
 //console.log("tug:", vm1.state.tag, vm2.state.tag, pull)
             }
             forces[ix1] = vector.add(forces[ix1], {r:-push + pull, a:polar12.a})
@@ -86,15 +135,24 @@ export default {
           }
         })
       })
-      this.$refs.node.forEach((vm, ix) => {	//Now do the nudging
+      let minX = Number.MAX_VALUE, minY = minX, maxX = -Number.MAX_VALUE, maxY = maxX
+      this.$refs.node.forEach((vm, ix) => {		//Now do the nudging
 //console.log("Bump:", ix, forces[ix])
         vm.state.x += forces[ix].x
         vm.state.y += forces[ix].y
-        if (vm.state.x + vm.state.width > this.xMax) this.xMax = vm.state.x + vm.state.width
-        if (vm.state.y + vm.state.height > this.yMax) this.yMax = vm.state.y + vm.state.height
-        if (vm.state.x < this.xMin) this.xMin = vm.state.x
-        if (vm.state.y < this.yMin) this.yMin = vm.state.y
+        if (vm.state.x + vm.state.width > maxX) maxX = vm.state.x + vm.state.width
+        if (vm.state.y + vm.state.height> maxY) maxY = vm.state.y + vm.state.height
+        if (vm.state.x < minX) minX = vm.state.x
+        if (vm.state.y < minY) minY = vm.state.y
       })
+//console.log("  mins:", minX, minY)
+      this.$refs.node.forEach((vm, ix) => {		//Move all objects back relative to origin
+        vm.state.x -= (minX - 10)
+        vm.state.y -= (minY - 10)
+      })
+      this.minX = this.minY = 0				//And adjust viewport to show all objects
+      this.maxX = maxX - minX + 20
+      this.maxY = maxY - minY + 20
     },
   },
 
@@ -104,14 +162,37 @@ export default {
   },
 
   mounted: function() {
-//    this.timerID = setInterval(this.bump, this.bumpTimer)	//Continuous
-//    this.timerID = setTimeout(this.bump, this.bumpTimer)	//Once only
+    Interact(this.$refs.tools).draggable({
+      onmove: (event) => {this.toolX += event.dx; this.toolY += event.dy},
+      ignoreFrom: '.nodrag'
+    })
   },
 }
 </script>
 
 <style lang="less">
-//  iframe {
-//    border: 4px solid blue;
-//  }
+  .wylib-svg .tools {
+    opacity: 0.02;
+    border: 1px solid blue;
+    border-radius: 4px;
+    background: white;
+    position: absolute;
+    padding: 4px;
+    transition: all 300ms ease-in-out;
+  }
+
+  .wylib-svg .tools:hover {
+    opacity: 1.0;
+  }
+  .wylib-svg button {
+    width: 100%;
+    padding: 4px;
+    background: lightBlue;
+  }
+  .wylib-svg .sliders input {
+    display: block;
+  }
+  .wylib-svg svg {
+    position: absolute;
+  }
 </style>
