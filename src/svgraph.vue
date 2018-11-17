@@ -9,13 +9,13 @@
 //X- Incorporate attractive force from links
 //X- Can I still drag/drop objects?
 //X- Optional button to turn bump sort on/off
-//- Re-adjust viewport after bumping objects (eliminate extra space on edges)
-//- Make tools disappear, then appear on mouse hover
-//- Turn sliders vertical, show multiplier value
-//- Label sliders
+//X- Re-adjust viewport after bumping objects (eliminate extra space on edges)
+//X- Make tools disappear, then appear on mouse hover
+//X- Label sliders
+//X- Immunize objects that have no links? (max proximity to any object?)
 //- 
 //- Later:
-//- Immunize objects that have no links? (max proximity to any object?)
+//- Tug rubber bands from center of hubs? (could be more expensive in CPU time)
 //- Retain placement as a saved state
 //- Can change scale on the fly with the scroll wheel?
 //- Can pan view window around to display a desired view of the SVG
@@ -34,8 +34,8 @@
     <div class="tools" ref="tools" :style="toolStyle">
       <button class="nodrag" @mousedown="buttonDown" @mouseup="buttonUp" @mouseleave="buttonUp" title="Attempt to arrange objects on the chart">Arrange</button>
       <div class="sliders">
-        <input type="range" min="1" max="10" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
-        <input type="range" min="1" max="10" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
+        <input type="range" min="1" max="100" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
+        <input type="range" min="1" max="100" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
       </div>
     </div>
   </div>
@@ -61,8 +61,8 @@ export default {
     minY:		0,
     maxX:		this.state.width,
     maxY:		this.state.height,
-    pushForce:		2,
-    pullForce:		5,
+    pushForce:		50,
+    pullForce:		50,
     startTimer:		null,
     repeatTimer:	null,
     toolX:		0,
@@ -117,17 +117,19 @@ export default {
       let forces = []
       this.$refs.node.forEach((vm, ix) => {forces[ix] = {r:0, a:0}})
       this.$refs.node.forEach((vm1, ix1) => {
+        let links = vm1.state.links.map(lk => {return (typeof lk == 'object') ? lk.link : lk})	//in case links involve a hub object
+//console.log("links:", links)
         this.$refs.node.forEach((vm2, ix2) => {
           if (ix1 != ix2) {
             let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , push = this.pushForce * 100000 / Math.pow(polar12.r,2)
-              , pull = 0
+              , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)
+              , push = this.pushForce * 1000 / Math.pow(mag,2)
+              , pull = this.pullForce * mag / 1000000000	//All objects have a little attractive gravity
 //console.log("bump:", ix1, ix2, rect12, polar12, push)
 
-            pull = this.pullForce * Math.pow(polar12.r,2) / 10000000	//All objects have a little attractive gravity
-            if (vm1.state.links.includes(vm2.state.tag)) {
-              pull = pull * 100						//But linked objects have more
+            if (links.includes(vm2.state.tag)) {
+              pull += this.pullForce * Math.pow(mag,2) / 1000000	//Linked objects have a lot more
 //console.log("tug:", vm1.state.tag, vm2.state.tag, pull)
             }
             forces[ix1] = vector.add(forces[ix1], {r:-push + pull, a:polar12.a})
@@ -137,13 +139,19 @@ export default {
       })
       let minX = Number.MAX_VALUE, minY = minX, maxX = -Number.MAX_VALUE, maxY = maxX
       this.$refs.node.forEach((vm, ix) => {		//Now do the nudging
+        let hubs = vm.$el.getElementsByClassName("hubs")
+          , bBox = hubs.length >= 1 ? hubs[0].getBBox() : {x:0, y:0, width:this.state.width, height:this.state.height}
+          , range = {minX:vm.state.x+Math.min(bBox.x, 0), minY:vm.state.y+Math.min(bBox.y, 0), maxX:vm.state.x+Math.max(bBox.width+bBox.x,vm.state.width), maxY:vm.state.y+Math.max(bBox.height+bBox.y,vm.state.height)}
+        
 //console.log("Bump:", ix, forces[ix])
-        vm.state.x += forces[ix].x
+        vm.state.x += forces[ix].x			//Nudge
         vm.state.y += forces[ix].y
-        if (vm.state.x + vm.state.width > maxX) maxX = vm.state.x + vm.state.width
-        if (vm.state.y + vm.state.height> maxY) maxY = vm.state.y + vm.state.height
-        if (vm.state.x < minX) minX = vm.state.x
-        if (vm.state.y < minY) minY = vm.state.y
+
+//console.log(" size:", vm.state.width, vm.state.height, range)
+        if (range.maxX > maxX) maxX = range.maxX	//Determine proper range of canvas
+        if (range.maxY > maxY) maxY = range.maxY
+        if (range.minX < minX) minX = range.minX
+        if (range.minY < minY) minY = range.minY
       })
 //console.log("  mins:", minX, minY)
       this.$refs.node.forEach((vm, ix) => {		//Move all objects back relative to origin

@@ -23,6 +23,7 @@ module.exports = {
   DataEdit:	require('./dbe.vue').default,
   MultiView:	require('./mlb.vue').default,
   MultiEdit:	require('./mdew.vue').default,
+  SvGraph:	require('./svgraph.vue').default,
   Window:	require('./win.vue').default,
   Wyseman:	require('./wyseman.js')
 }

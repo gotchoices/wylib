@@ -6,7 +6,7 @@ Vue.config.productionTip = false
 import WylibDoc from '../src/doc.vue'
 import WylibWin from '../src/win.vue'
 import WylibDbp from '../src/dbp.vue'
-import WylibSVG from '../src/svg.vue'
+import WylibSVGraph from '../src/svgraph.vue'
 import Wyseman from '../src/wyseman.js'
 var wmAddress = 'lux2.batemans.org:54320'
 import '../src/wylib.css'
@@ -35,13 +35,13 @@ const Template = `
         <wylib-doc/>
       </wylib-win>
       <wylib-win v-if="state.svg.posted" topLevel=true :state="state.svg" :lang="{title: 'SVG Figure', help: 'A vector based figure'}" @close="state.svg.posted=false">
-        <wylib-svg/>
+        <wylib-svgraph/>
       </wylib-win>
     </div>
   </div>`
 
 const Config = {
-  components: {'wylib-doc': WylibDoc, 'wylib-win': WylibWin, 'wylib-dbp': WylibDbp, 'wylib-svg': WylibSVG},
+  components: {'wylib-doc': WylibDoc, 'wylib-win': WylibWin, 'wylib-dbp': WylibDbp, 'wylib-svgraph': WylibSVGraph},
   data() { return {
     pr:		require('../src/prefs.js'),
     backend:	wmAddress,

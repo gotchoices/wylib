@@ -10,16 +10,16 @@
 
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
-    <wylib-svg :state="state" ref="svg"/>
+    <wylib-svgraph :state="state" ref="svg"/>
   </div>
 </template>
 
 <script>
-import WylibSVG from '../src/svg.vue'
+import WylibSVGraph from '../src/svgraph.vue'
 import Wyseman from '../src/wyseman.js'
 
 export default {
-  components: {'wylib-svg': WylibSVG},
+  components: {'wylib-svgraph': WylibSVGraph},
   data() { return {
     state:	{width: 1200, height: 800, nodes: {}},
     tabGap:	40,
@@ -28,18 +28,7 @@ export default {
     credits:	3,
   }},
   methods: {
-    bubbles() {
-console.log("Circle sizing")
-      this.debits += 1; if (this.debits > 10) this.debits = 2;
-      this.credits -= 1; if (this.credits < 2) this.credits = 10;
-      Array.from(this.$el.getElementsByClassName("debits")).forEach(el => {
-        el.style.r = this.debits
-      })
-      Array.from(this.$el.getElementsByClassName("credits")).forEach(el => {
-        el.style.r = this.credits
-      })
-    },
-    table(name, columns) {		//Generate SVG code or a table
+    table(name, columns) {		//Generate SVG code for a table
       let text = `<text x="2" y="${this.fontSize}" style="font:normal ${this.fontSize}px sans-serif;">${name}`
       let max = name.length
       columns.forEach((col,idx) => {
@@ -75,10 +64,11 @@ console.log("Circle sizing")
         let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
 //          , links = dat.fkeys ? dat.fkeys.map(m => m.table) : []	//Produces multiple links
           , links = []
+          , radius = height / 4
         if (dat.fkeys) dat.fkeys.forEach(fkey=>{
           if (!links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
         })
-        this.$set(this.state.nodes,dat.obj,{tag:dat.obj, x, y, width, height, code, ends, links})	//So it will react to changes of state
+        this.$set(this.state.nodes,dat.obj,{tag:dat.obj, x, y, width, height, code, ends, links, radius})	//So it will react to changes of state
 
         if (height > maxHeight) maxHeight = height
         x += (width + this.tabGap)

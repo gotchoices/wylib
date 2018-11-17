@@ -8,7 +8,12 @@
 <template>
     <g :transform="transform">
       <g v-html="state.code" :style="objStyle"/>
-      <path v-for="link in state.links" :d="connectors[link]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="2" fill="none"/>
+      <g class="hubs">
+        <g v-for="link in state.links" v-html="hubs[linkName(link)]"></g>
+      </g>
+      <g class="connectors" v-for="link in state.links">
+        <path :d="connectors[linkName(link)]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="1" fill="none"/>
+      </g>
     </g>
 </template>
 
@@ -38,31 +43,51 @@ export default {
     }},
     connectors: function () {				//Generate SVG code for connector lines to other objects
       var paths = {}
-      this.state.links.forEach(link => {		//For each node I point to
-        let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
+      this.state.links.forEach(lk => {			//For each node I point to
+        let link = lk, draw = true, ends = this.state.ends, center = this.cent, guid, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
+        if (typeof lk == 'object') {({ guid, link, draw, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
+        
+        if (draw) {					//Draw a link line, in addition to any optional hub
+          let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
 //console.log("Connecting:", this.state.tag, 'at', this.state.x, this.state.y, 'to', link)
-        if (refVM) {					//If it already exists
-          refState = refVM.state			//Generate connection
-          refPoint = refVM.connection(this.state.x+this.cent.x, this.state.y+this.cent.y)	//Ask for coordinates of the other node's connection point
+          if (refVM) {					//If it already exists
+            refState = refVM.state			//Generate connection
+            refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, guid)	//Ask for coordinates of the other node's connection point
 //console.log("  found his connection:", refPoint.x, refPoint.y)
-        } else {					//Create placeholder, for now
-          refState = this.$parent.nodeState(link)
-          refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
-        }
+          } else {					//Create placeholder, for now
+            refState = this.$parent.nodeState(link)
+            refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
+          }
 //console.log(" at:", refState.x, refState.y)
-        let myPoint = this.closest(this.state, this.state.ends, refPoint)		//Now find closest point on me, to other node's point
+          let myPoint = this.closest(this.state, ends, refPoint)		//Now find closest point on me, to other node's point
 //console.log("  found my connection:", myPoint.x, myPoint.y)
-        let xMyC = myPoint.x*2 - this.cent.x, yMyC = myPoint.y*2 - this.cent.y	//Curve control point on my end
-        let xEnd = refPoint.x  - this.state.x, yEnd = refPoint.y  - this.state.y	//Convert his closest point to relative x,y
-        let xEnC = refPoint.xs - this.state.x, yEnC = refPoint.ys - this.state.y	//Curve control point on his end, as relative coordinates
-        d = `M${myPoint.x},${myPoint.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
-        paths[link] = d
+          let xMyC = myPoint.x*2 - center.x, yMyC = myPoint.y*2 - center.y	//Curve control point on my end
+          let xEnd = refPoint.x  - this.state.x, yEnd = refPoint.y  - this.state.y	//Convert his closest point to relative x,y
+          let xEnC = refPoint.xs - this.state.x, yEnC = refPoint.ys - this.state.y	//Curve control point on his end, as relative coordinates
+          d = `M${myPoint.x},${myPoint.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
+//          d = `M${myPoint.x},${myPoint.y} L${xMyC},${yMyC}, L${xEnC},${yEnC}, L${xEnd},${yEnd}`
+          paths[link] = d
+        }
       })
       return paths
+    },
+    hubs: function () {				//Generate SVG code for appendages where connecting arrows should terminate
+      var code = {}
+      this.state.links.forEach(lk => {		//For each node I point to
+        if (typeof lk == 'object') {
+          let link = lk.link
+          code[link] = lk.hub(link)
+//        code[link] = `<ellipse x=${x} rx="40" ry="10" stroke="black" stroke-width="1" fill="red"/>`
+        }
+      })
+      return code
     },
   },
 
   methods: {
+    linkName(link) {					//Link might be a node name, or an object with more data including the node name
+      if (typeof link == 'object') {return link.link} else {return link}
+    },
     closest(base, points, point) {			//Find closest vertex from a list of points, to a specified point
       let x = 0, y = 0, lenMin = Number.MAX_SAFE_INTEGER	//Base(state) and point contain absolute coordinates
 //console.log("Closest:", base, points, point)			//points are relative to object
@@ -72,21 +97,19 @@ export default {
       })
       return {x, y}					//Return closest point, relative to base
     },
-    connection(xYou, yYou) {				//Return my closest connection point to 'you'
-//console.log("Position: (", xYou, yYou,")", this.state.tag, "@", this.state.x, this.state.y)
-      let cp = this.closest(this.state, this.state.ends, {x:xYou, y:yYou})			//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
-        , xs = cp.x*2 - this.cent.x + this.state.x	//Compute curve control points
-        , ys = cp.y*2 - this.cent.y + this.state.y
-        , x = this.state.x + cp.x			//Compute absolute connection point
-        , y = this.state.y + cp.y
+    connection(Him, guid) {				//Return my closest connection point to other coordinate 'Him'
+      let center = this.cent, ends = this.state.ends, me = this.state
+      if (guid) this.state.links.forEach(lk => {	//Find the matching hub, if there is one
+        if (lk.guid == guid) {({ center, ends } = lk)}
+      })
+//console.log("Position: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
+      let cp = this.closest(this.state, ends, Him)	//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
+        , xs = cp.x*2 - center.x + me.x			//Compute curve control points
+        , ys = cp.y*2 - center.y + me.y
+        , x = me.x + cp.x				//Compute absolute connection point
+        , y = me.y + cp.y
       return({x, y, xs, ys})
     },
-//    moveHandler(event) {				//Called when dragging objects
-//console.log("Moving: ", this.state.tag, event.dx, event.dy)
-//      this.$emit('drag', event, this.state)
-//      this.state.x += event.dx
-//      this.state.y += event.dy
-//    },
   },
 
   created: function() {
@@ -98,7 +121,7 @@ export default {
   beforeMount: function() {
 //console.log("Node beforeMount:", this.state.tag)
     Com.react(this, {		//Create any state properties that don't yet exist
-      x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: []
+      x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0
     })
     if (this.state.ends.length) {			//If I have connection points
       let xSum = 0, ySum = 0, count = 0

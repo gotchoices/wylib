@@ -4,7 +4,7 @@
 import Vue from 'vue'
 Vue.config.productionTip = false
 import WylibWin from '../src/win.vue'
-import WylibSVG from '../src/svg.vue'
+import WylibSVGraph from '../src/svgraph.vue'
 
 const Template = `
   <div>
@@ -16,7 +16,7 @@ const Template = `
   </div>`
 
 const Config = {
-  components: {'wylib-svg': WylibSVG},
+  components: {'wylib-svgraph': WylibSVGraph},
   data() { return {
     abc:	null,
   }},
