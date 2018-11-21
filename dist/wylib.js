@@ -2647,7 +2647,7 @@ exports.default = {
   },
   data: function data() {
     return {
-      cent: { x: 0, y: 0 } //Centroid of possible connection points (relative to node's local origin)
+      xyz: null
     };
   },
 
@@ -2656,6 +2656,17 @@ exports.default = {
     transform: function transform() {
       //Moves the object around when we change x or y
       return 'translate(' + this.state.x + ', ' + this.state.y + ') rotate(' + this.state.rotate + ') scale(' + this.state.xScale + ', ' + this.state.yScale + ')';
+    },
+    cent: function cent() {
+      //My center in relative terms
+      var xSum = 0,
+          ySum = 0,
+          count = 0;
+      this.state.ends.forEach(function (el) {
+        xSum += el.x;ySum += el.y;count++;
+      });
+      return { x: xSum / count, y: ySum / count //Calculate center of mass for my connections
+      };
     },
     center: function center() {
       //Compute my centroid in absolute terms
@@ -2695,7 +2706,7 @@ exports.default = {
               refState = void 0,
               refPoint = void 0,
               refVM = nodeBus.notify(link)[0];
-          //console.log("Connecting:", this.state.tag, 'at', this.state.x, this.state.y, 'to', link)
+          //console.log("Connecting:", this.state.tag, 'at', this.state.x+center.x, this.state.y+center.y, 'to', link)
           if (refVM) {
             //If it already exists
             refState = refVM.state; //Generate connection
@@ -2773,7 +2784,7 @@ exports.default = {
           ends = lk.ends;
         }
       });
-      //console.log("Position: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
+      //console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
       var cp = this.closest(this.state, ends, Him) //cp=closest point, 'ends' describes possible relative locations to terminate connector lines
       ,
           xs = cp.x * 2 - center.x + me.x //Compute curve control points
@@ -2800,18 +2811,6 @@ exports.default = {
     _common2.default.react(this, { //Create any state properties that don't yet exist
       x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0
     });
-    if (this.state.ends.length) {
-      //If I have connection points
-      var xSum = 0,
-          ySum = 0,
-          count = 0;
-      this.state.ends.forEach(function (el) {
-        xSum += el.x;ySum += el.y;count++;
-      });
-      this.cent = { x: xSum / count, y: ySum / count //Calculate center of mass for my connections
-        //console.log("Center: ", this.cent)
-      };
-    }
   },
 
   mounted: function mounted() {
@@ -8805,14 +8804,6 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 // { id:id_string action: action_name, data: {k1: v1, k2: v2, ...}}
 // -----------------------------------------------------------------------------
 // TODO:
-//X- Cache langauge data with meta data handler?
-//X- When meta requested, also ask for current preferred language data
-//X- If meta arrives first: build empty stubs for all language data, and request language
-//X- If language is already present, build real stubs
-//X- When language arrives, index stubs to current language
-//X- If language arrives first, just store it
-//X- Any time prefs.language changes, update all language stubs
-//X- Not updating language when only lang action called
 //- 
 
 
@@ -8827,12 +8818,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 var Wyseman = {
   address: '', //To remember node:port when we are currently connected
   sendQue: [], //Backlog of commands to send (in cases where channel is not yet available)
-  handlers: {}, //Callbacks listening for responses from the backend
+  handlers: {}, //Callbacks waiting for responses from the backend
   langCache: {}, //Store all language queries we have done
   metaCache: {}, //Store all table meta-data we have done
   cache: null, //Pointer to local copies of meta/language data
   pending: { meta: {}, lang: {} }, //Remember details of pending requests
-  callbacks: {}, //Callbacks listening for meta/language changes
+  callbacks: {}, //Callbacks waiting for meta/language changes
+  listens: {}, //Callbacks waiting for asynch messages
 
   close: function close() {
     //Close server connection from this end
@@ -8875,8 +8867,11 @@ var Wyseman = {
             action = pkt.action,
             data = pkt.data,
             error = pkt.error;
-        //console.log('Message from server: ', id, action, error)
+        //console.log('Message from server: ', pkt, id, action, error)
 
+        if (action == 'notify') Object.values(_this.listens).forEach(function (cb) {
+          cb(data);
+        }); //Call any listeners
         if (!id || !view || !action) return; //Invalid packet
 
         if (action == 'meta' || action == 'lang') {
@@ -8932,12 +8927,14 @@ var Wyseman = {
             }
           }
           _this.handlers[id][action].cb(data, error); //call back with what language info we may or may not have, will call back again (above) when we have language data
-        }
+        } //handle message
       }); //message
 
       _this.procQueue(); //Process any queued requests
-    });
+    }); //open
   },
+  //connect
+
   procQueue: function procQueue() {
     //Process requests waiting in the queue
     //console.log('Processing queue:')
@@ -8982,6 +8979,8 @@ var Wyseman = {
       if (lang.col[key]) Object.assign(meta.col[key], lang.col[key]);
     });
   },
+  //procColumns
+
   request: function request(id, action, opt, cb) {
     var _this2 = this;
 
@@ -9037,17 +9036,19 @@ var Wyseman = {
 
     if (action == 'connect') {
       //Don't actually send a packet for connection status requests
-      if (cb) cb(this.address); //Just update with our address, if any listeners
+      if (cb) cb(this.address); //Just update with our address, if anyone registered to get the callback
       return;
     }
     var msg = Object.assign({ id: id, action: action }, opt); //Construct message packet
     //console.log("Write to backend:" + this.url + " Data:" + JSON.stringify(msg))
     this.socket.send(JSON.stringify(msg)); //send it to the back end
   },
+  //request
+
   notify: function notify(addr) {
     var _this3 = this;
 
-    //Tell any listeners about our connection status
+    //Tell any registered parties about our connection status
     //console.log("Notify: " + addr + " Hands: ", this.handlers)
     Object.keys(this.handlers).forEach(function (id) {
       var tc = _this3.handlers[id].connect;
@@ -9066,6 +9067,14 @@ var Wyseman = {
     if (!this.callbacks[view]) this.callbacks[view] = {};
     this.callbacks[view][id] = cb;
     this.request(id + '~' + view, 'meta', view, cb);
+  },
+  listen: function listen(id, cb) {
+    //Register to receive a call whenever asynchronous DB events happen
+    if (!cb && this.listens[id]) {
+      delete this.listens[id];
+    } else {
+      this.listens[id] = cb;
+    }
   }
 };
 

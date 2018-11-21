@@ -15,26 +15,19 @@
 // { id:id_string action: action_name, data: {k1: v1, k2: v2, ...}}
 // -----------------------------------------------------------------------------
 // TODO:
-//X- Cache langauge data with meta data handler?
-//X- When meta requested, also ask for current preferred language data
-//X- If meta arrives first: build empty stubs for all language data, and request language
-//X- If language is already present, build real stubs
-//X- When language arrives, index stubs to current language
-//X- If language arrives first, just store it
-//X- Any time prefs.language changes, update all language stubs
-//X- Not updating language when only lang action called
 //- 
 import Prefs from './prefs.js'
 
 const Wyseman = {
   address:	'',			//To remember node:port when we are currently connected
   sendQue:	[],			//Backlog of commands to send (in cases where channel is not yet available)
-  handlers:	{},			//Callbacks listening for responses from the backend
+  handlers:	{},			//Callbacks waiting for responses from the backend
   langCache:	{},			//Store all language queries we have done
   metaCache:	{},			//Store all table meta-data we have done
   cache:	null,			//Pointer to local copies of meta/language data
   pending:	{meta: {}, lang:{}},	//Remember details of pending requests
-  callbacks:	{},			//Callbacks listening for meta/language changes
+  callbacks:	{},			//Callbacks waiting for meta/language changes
+  listens:	{},			//Callbacks waiting for asynch messages
 
   close() {				//Close server connection from this end
     this.socket.close()
@@ -66,7 +59,8 @@ const Wyseman = {
       this.socket.addEventListener('message', ev => {	//When we get packets from the backend
         let pkt = JSON.parse(ev.data)			//Make it into an object
         let {id, view, action, data, error} = pkt
-//console.log('Message from server: ', id, action, error)
+//console.log('Message from server: ', pkt, id, action, error)
+        if (action == 'notify') Object.values(this.listens).forEach(cb => {cb(data)})		//Call any listeners
         if (!id || !view || !action) return		//Invalid packet
 
         if (action == 'meta' || action == 'lang') {	//Special handling for meta and language data
@@ -109,12 +103,12 @@ const Wyseman = {
             }
           }
           this.handlers[id][action].cb(data, error)	//call back with what language info we may or may not have, will call back again (above) when we have language data
-        }
+        }			//handle message
       })			//message
 
       this.procQueue()		//Process any queued requests
-    })
-  },
+    })				//open
+  },				//connect
 
   procQueue() {					//Process requests waiting in the queue
 //console.log('Processing queue:')
@@ -151,7 +145,7 @@ const Wyseman = {
     Object.keys(meta.col).forEach((key) => {
       if (lang.col[key]) Object.assign(meta.col[key], lang.col[key])
     })
-  },
+  },			//procColumns
 
   request(id, action, opt, cb) {			//Ask to receive specified information back asynchronously
     if (typeof opt === 'string') {opt = {view: opt}}	//Shortcut: just give view for options
@@ -196,15 +190,15 @@ const Wyseman = {
     Object.assign(hand[id][action], opt, {cb})		//Remember the options from this request {view, data, stay}
     
     if (action == 'connect') {				//Don't actually send a packet for connection status requests
-      if (cb) cb(this.address)				//Just update with our address, if any listeners
+      if (cb) cb(this.address)				//Just update with our address, if anyone registered to get the callback
       return
     }
     let msg = Object.assign({id, action}, opt)		//Construct message packet
 //console.log("Write to backend:" + this.url + " Data:" + JSON.stringify(msg))
     this.socket.send(JSON.stringify(msg))		//send it to the back end
-  },
+  },			//request
 
-  notify(addr) {			//Tell any listeners about our connection status
+  notify(addr) {			//Tell any registered parties about our connection status
 //console.log("Notify: " + addr + " Hands: ", this.handlers)
     Object.keys(this.handlers).forEach( id => {
       let tc = this.handlers[id].connect
@@ -223,6 +217,14 @@ const Wyseman = {
     if (!this.callbacks[view]) this.callbacks[view] = {}
     this.callbacks[view][id] = cb
     this.request(id + '~' + view, 'meta', view, cb)
+  },
+
+  listen(id, cb) {		//Register to receive a call whenever asynchronous DB events happen
+    if (!cb && this.listens[id]) {
+      delete this.listens[id]
+    } else {
+      this.listens[id] = cb
+    }
   },
 }
 

@@ -28,12 +28,17 @@ export default {
     state:	{type: Object, default: () => ({})},
   },
   data() { return {
-    cent:	{x:0, y:0},	//Centroid of possible connection points (relative to node's local origin)
+    xyz:	null
   }},
 
   computed: {
     transform: function() {				//Moves the object around when we change x or y
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
+    },
+    cent: function() {					//My center in relative terms
+      let xSum = 0, ySum = 0, count = 0
+      this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
+      return {x: xSum / count, y: ySum / count}		//Calculate center of mass for my connections
     },
     center: function() {				//Compute my centroid in absolute terms
       return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}
@@ -49,7 +54,7 @@ export default {
         
         if (draw) {					//Draw a link line, in addition to any optional hub
           let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
-//console.log("Connecting:", this.state.tag, 'at', this.state.x, this.state.y, 'to', link)
+//console.log("Connecting:", this.state.tag, 'at', this.state.x+center.x, this.state.y+center.y, 'to', link)
           if (refVM) {					//If it already exists
             refState = refVM.state			//Generate connection
             refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, guid)	//Ask for coordinates of the other node's connection point
@@ -102,7 +107,7 @@ export default {
       if (guid) this.state.links.forEach(lk => {	//Find the matching hub, if there is one
         if (lk.guid == guid) {({ center, ends } = lk)}
       })
-//console.log("Position: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
+//console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
       let cp = this.closest(this.state, ends, Him)	//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
         , xs = cp.x*2 - center.x + me.x			//Compute curve control points
         , ys = cp.y*2 - center.y + me.y
@@ -123,12 +128,6 @@ export default {
     Com.react(this, {		//Create any state properties that don't yet exist
       x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0
     })
-    if (this.state.ends.length) {			//If I have connection points
-      let xSum = 0, ySum = 0, count = 0
-      this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
-      this.cent = {x: xSum / count, y: ySum / count}	//Calculate center of mass for my connections
-//console.log("Center: ", this.cent)
-    }
   },
 
   mounted: function() {
