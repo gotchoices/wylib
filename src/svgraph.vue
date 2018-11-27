@@ -123,10 +123,11 @@ export default {
           if (ix1 != ix2) {
             let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)
-              , push = this.pushForce * 1000 / Math.pow(mag,2)
+              , maxMove = (this.maxX - this.minX) / 10					//Don't try to expand faster than this
+              , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 10 (or negative)
+              , push = Math.min(this.pushForce * 1000 / Math.pow(mag,2), maxMove)
               , pull = this.pullForce * mag / 1000000000	//All objects have a little attractive gravity
-//console.log("bump:", ix1, ix2, rect12, polar12, push)
+//console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push)
 
             if (links.includes(vm2.state.tag)) {
               pull += this.pullForce * Math.pow(mag,2) / 1000000	//Linked objects have a lot more
