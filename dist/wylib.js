@@ -203,7 +203,7 @@ exports.default = {
       this.$emit('tab', idx);
     },
     retryConnect: function retryConnect() {
-      //console.log("rtC", this.currentSite)
+      //console.log("retryConnect", this.current)
       if (this.currentSite) {
         this.retryIn = null;return;
       }
@@ -2688,11 +2688,11 @@ exports.default = {
             draw = true,
             ends = _this.state.ends,
             center = _this.cent,
-            guid = void 0,
+            index = void 0,
             hub = void 0,
             radius = _this.state.radius || _this.state.width / 2; //Assume node is a simple box
         if ((typeof lk === 'undefined' ? 'undefined' : _typeof(lk)) == 'object') {
-          guid = lk.guid;
+          index = lk.index;
           link = lk.link;
           draw = lk.draw;
           center = lk.center;
@@ -2710,7 +2710,7 @@ exports.default = {
           if (refVM) {
             //If it already exists
             refState = refVM.state; //Generate connection
-            refPoint = refVM.connection({ x: _this.state.x + center.x, y: _this.state.y + center.y }, guid); //Ask for coordinates of the other node's connection point
+            refPoint = refVM.connection({ x: _this.state.x + center.x, y: _this.state.y + center.y }, index); //Ask for coordinates of the other node's connection point
             //console.log("  found his connection:", refPoint.x, refPoint.y)
           } else {
             //Create placeholder, for now
@@ -2739,9 +2739,7 @@ exports.default = {
       this.state.links.forEach(function (lk) {
         //For each node I point to
         if ((typeof lk === 'undefined' ? 'undefined' : _typeof(lk)) == 'object') {
-          var link = lk.link;
-          code[link] = lk.hub(link);
-          //        code[link] = `<ellipse x=${x} rx="40" ry="10" stroke="black" stroke-width="1" fill="red"/>`
+          code[lk.index] = lk.hub();
         }
       });
       return code;
@@ -2753,6 +2751,14 @@ exports.default = {
       //Link might be a node name, or an object with more data including the node name
       if ((typeof link === 'undefined' ? 'undefined' : _typeof(link)) == 'object') {
         return link.link;
+      } else {
+        return link;
+      }
+    },
+    hubIndex: function hubIndex(link) {
+      //Link might be a node name, or an object with more data including the node name
+      if ((typeof link === 'undefined' ? 'undefined' : _typeof(link)) == 'object') {
+        return link.index;
       } else {
         return link;
       }
@@ -2772,19 +2778,19 @@ exports.default = {
       return { x: x, y: y //Return closest point, relative to base
       };
     },
-    connection: function connection(Him, guid) {
+    connection: function connection(Him, index) {
       //Return my closest connection point to other coordinate 'Him'
       var center = this.cent,
           ends = this.state.ends,
           me = this.state;
-      if (guid) this.state.links.forEach(function (lk) {
+      if (index) this.state.links.forEach(function (lk) {
         //Find the matching hub, if there is one
-        if (lk.guid == guid) {
+        if (lk.index == index) {
           center = lk.center;
           ends = lk.ends;
         }
       });
-      //console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
+      //console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, index)
       var cp = this.closest(this.state, ends, Him) //cp=closest point, 'ends' describes possible relative locations to terminate connector lines
       ,
           xs = cp.x * 2 - center.x + me.x //Compute curve control points
@@ -3003,10 +3009,13 @@ exports.default = {
             var rect12 = _vector2.default.sub(vm2.center, vm1.center) //Distance between 2 nodes
             ,
                 polar12 = _vector2.default.rtop(rect12),
-                mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10),
-                push = _this2.pushForce * 1000 / Math.pow(mag, 2),
+                maxMove = (_this2.maxX - _this2.minX) / 10 //Don't try to expand faster than this
+            ,
+                mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10) //Ignore closer than 10 (or negative)
+            ,
+                push = Math.min(_this2.pushForce * 1000 / Math.pow(mag, 2), maxMove),
                 pull = _this2.pullForce * mag / 1000000000; //All objects have a little attractive gravity
-            //console.log("bump:", ix1, ix2, rect12, polar12, push)
+            //console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push)
 
             if (links.includes(vm2.state.tag)) {
               pull += _this2.pullForce * Math.pow(mag, 2) / 1000000; //Linked objects have a lot more
@@ -4868,36 +4877,34 @@ var render = function() {
     _vm._v(" "),
     _c("hr"),
     _vm._v(" "),
-    _vm.currentSite
-      ? _c("div", { staticClass: "application" }, [
-          _c(
-            "div",
-            { staticClass: "tabset" },
-            [
-              _vm._l(_vm.tabs, function(tab) {
-                return _c(
-                  "div",
-                  {
-                    staticClass: "tab",
-                    class: _vm.tabClass(tab.tag),
-                    on: {
-                      click: function($event) {
-                        _vm.tabSelect(tab.tag)
-                      }
-                    }
-                  },
-                  [_vm._v("\n        " + _vm._s(tab.title) + "\n      ")]
-                )
-              }),
-              _vm._v(" "),
-              _c("div", { staticClass: "tab-filler" })
-            ],
-            2
-          ),
+    _c("div", { staticClass: "application" }, [
+      _c(
+        "div",
+        { staticClass: "tabset" },
+        [
+          _vm._l(_vm.tabs, function(tab) {
+            return _c(
+              "div",
+              {
+                staticClass: "tab",
+                class: _vm.tabClass(tab.tag),
+                on: {
+                  click: function($event) {
+                    _vm.tabSelect(tab.tag)
+                  }
+                }
+              },
+              [_vm._v("\n        " + _vm._s(tab.title) + "\n      ")]
+            )
+          }),
           _vm._v(" "),
-          _c("div", { staticClass: "app-content" }, [_vm._t("default")], 2)
-        ])
-      : _vm._e()
+          _c("div", { staticClass: "tab-filler" })
+        ],
+        2
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "app-content" }, [_vm._t("default")], 2)
+    ])
   ])
 }
 var staticRenderFns = []
@@ -6243,7 +6250,7 @@ var render = function() {
         { staticClass: "hubs" },
         _vm._l(_vm.state.links, function(link) {
           return _c("g", {
-            domProps: { innerHTML: _vm._s(_vm.hubs[_vm.linkName(link)]) }
+            domProps: { innerHTML: _vm._s(_vm.hubs[_vm.hubIndex(link)]) }
           })
         })
       ),
