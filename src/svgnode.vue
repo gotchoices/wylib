@@ -9,7 +9,7 @@
     <g :transform="transform">
       <g v-html="state.code" :style="objStyle"/>
       <g class="hubs">
-        <g v-for="link in state.links" v-html="hubs[linkName(link)]"></g>
+        <g v-for="link in state.links" v-html="hubs[hubIndex(link)]"></g>
       </g>
       <g class="connectors" v-for="link in state.links">
         <path :d="connectors[linkName(link)]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="1" fill="none"/>
@@ -49,15 +49,15 @@ export default {
     connectors: function () {				//Generate SVG code for connector lines to other objects
       var paths = {}
       this.state.links.forEach(lk => {			//For each node I point to
-        let link = lk, draw = true, ends = this.state.ends, center = this.cent, guid, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
-        if (typeof lk == 'object') {({ guid, link, draw, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
+        let link = lk, draw = true, ends = this.state.ends, center = this.cent, index, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
+        if (typeof lk == 'object') {({ index, link, draw, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
         
         if (draw) {					//Draw a link line, in addition to any optional hub
           let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
 //console.log("Connecting:", this.state.tag, 'at', this.state.x+center.x, this.state.y+center.y, 'to', link)
           if (refVM) {					//If it already exists
             refState = refVM.state			//Generate connection
-            refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, guid)	//Ask for coordinates of the other node's connection point
+            refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, index)	//Ask for coordinates of the other node's connection point
 //console.log("  found his connection:", refPoint.x, refPoint.y)
           } else {					//Create placeholder, for now
             refState = this.$parent.nodeState(link)
@@ -79,11 +79,7 @@ export default {
     hubs: function () {				//Generate SVG code for appendages where connecting arrows should terminate
       var code = {}
       this.state.links.forEach(lk => {		//For each node I point to
-        if (typeof lk == 'object') {
-          let link = lk.link
-          code[link] = lk.hub(link)
-//        code[link] = `<ellipse x=${x} rx="40" ry="10" stroke="black" stroke-width="1" fill="red"/>`
-        }
+        if (typeof lk == 'object') {code[lk.index] = lk.hub()}
       })
       return code
     },
@@ -92,6 +88,9 @@ export default {
   methods: {
     linkName(link) {					//Link might be a node name, or an object with more data including the node name
       if (typeof link == 'object') {return link.link} else {return link}
+    },
+    hubIndex(link) {					//Link might be a node name, or an object with more data including the node name
+      if (typeof link == 'object') {return link.index} else {return link}
     },
     closest(base, points, point) {			//Find closest vertex from a list of points, to a specified point
       let x = 0, y = 0, lenMin = Number.MAX_SAFE_INTEGER	//Base(state) and point contain absolute coordinates
@@ -102,12 +101,12 @@ export default {
       })
       return {x, y}					//Return closest point, relative to base
     },
-    connection(Him, guid) {				//Return my closest connection point to other coordinate 'Him'
+    connection(Him, index) {				//Return my closest connection point to other coordinate 'Him'
       let center = this.cent, ends = this.state.ends, me = this.state
-      if (guid) this.state.links.forEach(lk => {	//Find the matching hub, if there is one
-        if (lk.guid == guid) {({ center, ends } = lk)}
+      if (index) this.state.links.forEach(lk => {	//Find the matching hub, if there is one
+        if (lk.index == index) {({ center, ends } = lk)}
       })
-//console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, guid)
+//console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, index)
       let cp = this.closest(this.state, ends, Him)	//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
         , xs = cp.x*2 - center.x + me.x			//Compute curve control points
         , ys = cp.y*2 - center.y + me.y
