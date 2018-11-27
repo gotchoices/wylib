@@ -24,7 +24,7 @@
       </div>
     </div>
     <hr/>
-    <div v-if="currentSite" class="application">
+    <div class="application">
       <div class="tabset">
         <div v-for="tab in tabs" class="tab" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
           {{ tab.title }}
@@ -79,7 +79,7 @@ export default {
       this.$emit('tab', idx)
     },
     retryConnect() {
-//console.log("rtC", this.currentSite)
+//console.log("retryConnect", this.current)
       if (this.currentSite) {this.retryIn = null; return}
       if (this.retryIn == 0) Wyseman.connect()
       if (!this.retryIn) {this.retryIn = this.tryEvery} else {this.retryIn--}
