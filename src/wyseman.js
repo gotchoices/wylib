@@ -198,7 +198,7 @@ const Wyseman = {
     this.socket.send(JSON.stringify(msg))		//send it to the back end
   },			//request
 
-  notify(addr) {			//Tell any registered parties about our connection status
+  notify(addr) {		//Tell any registered parties about our connection status
 //console.log("Notify: " + addr + " Hands: ", this.handlers)
     Object.keys(this.handlers).forEach( id => {
       let tc = this.handlers[id].connect
@@ -209,7 +209,7 @@ const Wyseman = {
     })
   },
 
-  register(id, view, cb) {		//Register to receive a call whenever view metadata updates
+  register(id, view, cb) {	//Register to receive a call whenever view metadata updates
     if (!cb && this.callbacks[view][id]) {
       delete this.callbacks[view][id]
       return
