@@ -29,7 +29,14 @@
         <div v-for="tab in tabs" class="tab" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
           {{ tab.title }}
         </div>
-        <div class="tab-filler"/>
+        <div class="tab-filler">
+          <wylib-button :size="tabHeight" icon="menu" :toggled="appMenu.posted" @click="appMenu.posted = !appMenu.posted" :title="appMenu.title"/>
+        </div>
+      </div>
+      <div class="subwindows">
+        <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false" :lang="lang">
+          <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
+        </wylib-win>
       </div>
       <div class="app-content">
         <slot></slot>
@@ -39,27 +46,43 @@
 </template>
 
 <script>
+import Com from './common.js'
 import Connect from './connect.vue'
 import Wyseman from './wyseman.js'
+import Button from './button.vue'
+import Menu from './menu.vue'
+import Win from './win.vue'
 
 export default {
   name: 'wylib-app',
-  components: {'wylib-connect': Connect},
+  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win},
   props: {
     title:	{type: String},
     help:	{type: String},
     tabs:	{type: Array},
     current:	{type: String},
-    tryEvery:	{default: 5}
+    tryEvery:	{default: 5},
+    lang:	{type: Object, default: Com.langTemplate},
   },
   data() { return {
 //    state:      {},
     conMenuPosted:	true,
+    appMenu:		{posted: false, client: {}, title: 'Application menu'},
     currentSite:	null,
     siteTry:		'',
     retryIn:		null,
+    menuTitle:		'',
+    wm:			{},
   }},
   computed: {
+    tabHeight: function () {
+      return 20
+    },
+    appMenuConfig: function() {let wm = this.wm
+      return [
+      {idx: 'sav', lang: wm.winSave,     icon: 'circle',    call: this.saveState},
+      {idx: 'res', lang: wm.winRestore,  icon: 'circle',    call: this.restState},
+    ]},
   },
   watch: {
     currentSite: function(val, oldVal) {
@@ -84,7 +107,21 @@ export default {
       if (this.retryIn == 0) Wyseman.connect()
       if (!this.retryIn) {this.retryIn = this.tryEvery} else {this.retryIn--}
       setTimeout(this.retryConnect, 1000)
-    }
+    },
+    saveState() {
+console.log("Save State: ", "Not yet implemented")
+    },
+    restState() {
+console.log("Restore State: ", "Not yet implemented")
+    },
+  },
+
+  created: function() {
+    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+  },
+
+  beforeMount: function() {
+//    Com.react(this, {menu: {client: {}}})
   },
   mounted: function () {
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
@@ -137,6 +174,9 @@ export default {
 }
 .wylib-app .tabset .tab-filler {
   flex: 1 1 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-end;
   border-bottom: 1px solid #c0c0c0;
 }
 .wylib-app .tabset .tab.active {
