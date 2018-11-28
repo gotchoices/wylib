@@ -110,6 +110,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _common = __webpack_require__(/*! ./common.js */ "./src/common.js");
+
+var _common2 = _interopRequireDefault(_common);
+
 var _connect = __webpack_require__(/*! ./connect.vue */ "./src/connect.vue");
 
 var _connect2 = _interopRequireDefault(_connect);
@@ -117,6 +121,18 @@ var _connect2 = _interopRequireDefault(_connect);
 var _wyseman = __webpack_require__(/*! ./wyseman.js */ "./src/wyseman.js");
 
 var _wyseman2 = _interopRequireDefault(_wyseman);
+
+var _button = __webpack_require__(/*! ./button.vue */ "./src/button.vue");
+
+var _button2 = _interopRequireDefault(_button);
+
+var _menu = __webpack_require__(/*! ./menu.vue */ "./src/menu.vue");
+
+var _menu2 = _interopRequireDefault(_menu);
+
+var _win = __webpack_require__(/*! ./win.vue */ "./src/win.vue");
+
+var _win2 = _interopRequireDefault(_win);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -160,28 +176,47 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 
 exports.default = {
   name: 'wylib-app',
-  components: { 'wylib-connect': _connect2.default },
+  components: { 'wylib-connect': _connect2.default, 'wylib-button': _button2.default, 'wylib-menu': _menu2.default, 'wylib-win': _win2.default },
   props: {
     title: { type: String },
     help: { type: String },
     tabs: { type: Array },
     current: { type: String },
-    tryEvery: { default: 5 }
+    tryEvery: { default: 5 },
+    lang: { type: Object, default: _common2.default.langTemplate }
   },
   data: function data() {
     return {
       //    state:      {},
       conMenuPosted: true,
+      appMenu: { posted: false, client: {}, title: 'Application menu' },
       currentSite: null,
       siteTry: '',
-      retryIn: null
+      retryIn: null,
+      menuTitle: '',
+      wm: {}
     };
   },
 
-  computed: {},
+  computed: {
+    tabHeight: function tabHeight() {
+      return 20;
+    },
+    appMenuConfig: function appMenuConfig() {
+      var wm = this.wm;
+      return [{ idx: 'sav', lang: wm.winSave, icon: 'circle', call: this.saveState }, { idx: 'res', lang: wm.winRestore, icon: 'circle', call: this.restState }];
+    }
+  },
   watch: {
     currentSite: function currentSite(val, oldVal) {
       if (!val && oldVal) {
@@ -214,13 +249,31 @@ exports.default = {
         this.retryIn--;
       }
       setTimeout(this.retryConnect, 1000);
+    },
+    saveState: function saveState() {
+      console.log("Save State: ", "Not yet implemented");
+    },
+    restState: function restState() {
+      console.log("Restore State: ", "Not yet implemented");
     }
   },
-  mounted: function mounted() {
+
+  created: function created() {
     var _this = this;
 
+    _wyseman2.default.register(this.id + 'wm', 'wylib.data', function (data) {
+      _this.wm = data.msg;
+    });
+  },
+
+  beforeMount: function beforeMount() {
+    //    Com.react(this, {menu: {client: {}}})
+  },
+  mounted: function mounted() {
+    var _this2 = this;
+
     _wyseman2.default.request('_main', 'connect', { stay: true }, function (addr) {
-      if (_this.currentSite = addr) _this.conMenuPosted = false;
+      if (_this2.currentSite = addr) _this2.conMenuPosted = false;
     });
     _wyseman2.default.connect();
   }
@@ -360,18 +413,18 @@ exports.default = {
   methods: {
     connectSite: function connectSite(addr) {
       //Force connection to a specified site
-      console.log("Connecting to: " + addr);
+      //console.log("Connecting to: " + addr)
       _wyseman2.default.connect(addr);
     },
     addSite: function addSite(addr) {
       //Add favorite site to our list
-      console.log("Add: " + addr);
+      //console.log("Add: " + addr)
       if (addr != '' && (this.sites.length == 0 || this.sites.indexOf(addr) < 0)) this.sites.push(addr);
       localStorage.setItem(this.siteKey, JSON.stringify(this.sites));
     },
     removeSite: function removeSite(addr) {
       //Remove site from our favorites list
-      console.log("Remove: " + addr);
+      //console.log("Remove: " + addr)
       this.sites.splice(this.sites.indexOf(addr), 1);
       localStorage.setItem(this.siteKey, JSON.stringify(this.sites));
     }
@@ -1959,19 +2012,8 @@ var _common2 = _interopRequireDefault(_common);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Icons = __webpack_require__(/*! ./icons.js */ "./src/icons.js");
-//import Win from './win.vue'		//Recursive, defined in beforeCreate
+//import Win from './win.vue'		//Recursive, so defined in beforeCreate
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -2022,7 +2064,6 @@ exports.default = {
         return ['icon', 'lang', 'input'];
       } },
     config: Array
-    //    isPinned:	Boolean,
   },
   data: function data() {
     return {
@@ -2034,27 +2075,23 @@ exports.default = {
     iconSvg: function iconSvg(icon) {
       return Icons(icon);
     },
-    closeMenu: function closeMenu() {
-      console.log("Close menu: ");
-      this.$emit('close');
-    },
-    closeCheck: function closeCheck() {
-      //      if (!this.state.pinned) this.$emit('close')	//Fixme: should window decide?
-    },
     enterItem: function enterItem(idx, itemMenu) {
       var _this = this;
 
       console.log("Entering menu item: ", idx, "itemMenu:", itemMenu, this.state.subs);
-      Object.keys(this.state.subs).forEach(function (key) {
-        if (_this.state.subs[key]) _this.state.subs[key].posted = false;
-      });
-      if (itemMenu) this.state.subs[idx].posted = true;
+      if (this.state.subs) {
+        Object.keys(this.state.subs).forEach(function (key) {
+          //Close any subwindows when moving around
+          if (_this.state.subs[key]) _this.state.subs[key].posted = false;
+        });
+        if (itemMenu && this.state.subs[idx]) this.state.subs[idx].posted = true; //But open any submenu associated with this line
+      }
       //console.log("  Posted: ", this.state.subs[idx])
     },
     execute: function execute(cb) {
       //Execute the specified callback
+      this.$emit('done');
       if (cb) cb();
-      this.closeCheck();
     }
   },
   beforeCreate: function beforeCreate() {
@@ -2067,7 +2104,7 @@ exports.default = {
     this.config.forEach(function (item, x) {
       //Set object properties that are not known until now
       if (item.menu) {
-        //console.log("Set default for: ", item.idx)
+        console.log("Set default for: ", item.idx);
         _this2.$set(_this2.state.subs, item.idx, { posted: false, pinned: false, client: {} });
       }
     });
@@ -3013,16 +3050,20 @@ exports.default = {
             ,
                 mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10) //Ignore closer than 10 (or negative)
             ,
-                push = Math.min(_this2.pushForce * 1000 / Math.pow(mag, 2), maxMove),
-                pull = _this2.pullForce * mag / 1000000000; //All objects have a little attractive gravity
+                push = Math.min(_this2.pushForce * 800 / Math.pow(mag, 2), maxMove),
+                pull = _this2.pullForce * mag / 1000000000 //All objects have a little attractive gravity
+            ,
+                randPull = 0;
             //console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push)
 
             if (links.includes(vm2.state.tag)) {
-              pull += _this2.pullForce * Math.pow(mag, 2) / 1000000; //Linked objects have a lot more
-              //console.log("tug:", vm1.state.tag, vm2.state.tag, pull)
+              pull += _this2.pullForce * Math.pow(mag, 2) / 1000000; //Linked objects have a lot more attraction
+              if (Math.random() < 0.02) {
+                randPull = pull * (Math.random() - 0.5) * 50;
+              } //Inject an extra random burst 2% of the time
             }
-            forces[ix1] = _vector2.default.add(forces[ix1], { r: -push + pull, a: polar12.a });
-            forces[ix2] = _vector2.default.add(forces[ix2], { r: push - pull, a: polar12.a });
+            forces[ix1] = _vector2.default.add(forces[ix1], { r: -push + pull + randPull, a: polar12.a });
+            forces[ix2] = _vector2.default.add(forces[ix2], { r: push - pull + randPull, a: polar12.a });
           }
         });
       });
@@ -3208,7 +3249,9 @@ exports.default = {
       var _this = this;
 
       var wm = this.wm;
-      return [{ idx: 'sav', lang: wm.winSave, icon: 'circle', call: this.saveState }, { idx: 'res', lang: wm.winRestore, icon: 'circle', call: this.restState, toggled: this.state.save.posted }, { idx: 'top', lang: wm.winToTop, icon: 'arrowup', call: this.moveToTop }, { idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: this.moveToBottom }, { idx: 'min', lang: wm.winMinimize, icon: 'eyeblock', call: this.minimize }, { idx: 'cls', lang: wm.winClose, icon: 'close', call: function call() {
+      return [{ idx: 'sav', lang: wm.winSave, icon: 'circle', call: this.saveState }, { idx: 'res', lang: wm.winRestore, icon: 'circle', call: function call() {
+          _this.restState(true);
+        } }, { idx: 'def', lang: wm.winDefault, icon: 'circle', call: this.defState }, { idx: 'top', lang: wm.winToTop, icon: 'arrowup', call: this.moveToTop }, { idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: this.moveToBottom }, { idx: 'min', lang: wm.winMinimize, icon: 'eyeblock', call: this.minimize }, { idx: 'cls', lang: wm.winClose, icon: 'close', call: function call() {
           _this.$emit('close');
         } }];
     },
@@ -3244,8 +3287,8 @@ exports.default = {
   },
   methods: {
     close: function close(ev) {
-      //console.log("Close Window: " + ev)
       this.state.pinned = false;
+      console.log("In close", this.id);
       this.$emit('close');
     },
     moveToTop: function moveToTop() {
@@ -3258,14 +3301,25 @@ exports.default = {
       console.log("Minimize: ", "Not yet implemented");
     },
     saveState: function saveState() {
-      console.log("Save State: ", "Not yet implemented");
+      console.log("Saving State: ");
+      localStorage.saveWinState = JSON.stringify(this.state);
     },
-    restState: function restState() {
-      console.log("Restore State: ", "Not yet implemented");
+    restState: function restState(last) {
+      console.log("Restoring State: ");
+      if (last) {
+        if (localStorage.saveWinState) Object.assign(this.state, JSON.parse(localStorage.saveWinState));
+      } else {
+        this.state.save.posted = true;
+      }
+    },
+    defState: function defState() {
+      console.log("Default State: ", "Not yet implemented");
     },
     topClick: function topClick(ev) {
       //Any click in bounds of our toplevel window
-      //console.log("Top window click: " + ev + "\n This: " + this.$el.classList + "\n Target: " + ev.target.classList)
+      if (!this.state.posted) return; //Only posted windows need to check
+      //console.log("Top window click:", ev.target.nodeName, "This:", this.$el.classList.value, "Target: ", ev.target.classList.value)
+      if (ev.target.closest('.wylib-menu')) return; //Click came from another menu
       if (ev.target.closest('.wylib-button')) return; //Click came from the menu button itself
       if (this.$el.contains(ev.target)) return; //Click is within our own window
       //console.log("  pinnable:", this.pinnable, this.state.pinned)
@@ -3306,6 +3360,10 @@ exports.default = {
         _this2.$emit('posted'); //Tell parent
         if (_this2.top) _this2.top.posted(); //Tell anyone else who might be listening
       });
+    },
+    'state.save.posted': function stateSavePosted(st) {
+      //For testing only
+      console.log("posted watch:", st);
     }
   },
 
@@ -3319,9 +3377,10 @@ exports.default = {
   },
 
   beforeMount: function beforeMount() {
+    //Create any state properties that don't yet exist
     //console.log("State:", this.state);
-    _common2.default.react(this, { //Create any state properties that don't yet exist
-      x: 0, y: 0, posted: false, pinned: false, menu: {}, client: {}, save: {}, modal: { posted: false },
+    _common2.default.react(this, {
+      x: 0, y: 0, posted: false, pinned: false, menu: {}, save: {}, client: {}, modal: { posted: false },
       width: this.topLevel ? this.pr.winInitWidth : null,
       height: this.topLevel ? this.pr.winInitHeight : null
     });
@@ -3392,7 +3451,7 @@ exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/li
 
 
 // module
-exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", ""]);
+exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 10000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  display: flex;\n  flex-flow: row nowrap;\n  justify-content: flex-end;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  border-radius: 2px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", ""]);
 
 // exports
 
@@ -4898,9 +4957,58 @@ var render = function() {
             )
           }),
           _vm._v(" "),
-          _c("div", { staticClass: "tab-filler" })
+          _c(
+            "div",
+            { staticClass: "tab-filler" },
+            [
+              _c("wylib-button", {
+                attrs: {
+                  size: _vm.tabHeight,
+                  icon: "menu",
+                  toggled: _vm.appMenu.posted,
+                  title: _vm.appMenu.title
+                },
+                on: {
+                  click: function($event) {
+                    _vm.appMenu.posted = !_vm.appMenu.posted
+                  }
+                }
+              })
+            ],
+            1
+          )
         ],
         2
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "subwindows" },
+        [
+          _c(
+            "wylib-win",
+            {
+              attrs: { state: _vm.appMenu, pinnable: "true", lang: _vm.lang },
+              on: {
+                close: function($event) {
+                  _vm.appMenu.posted = false
+                }
+              }
+            },
+            [
+              _c("wylib-menu", {
+                attrs: { state: _vm.appMenu.client, config: _vm.appMenuConfig },
+                on: {
+                  done: function($event) {
+                    _vm.appMenu.posted = _vm.appMenu.pinned
+                  }
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
       ),
       _vm._v(" "),
       _c("div", { staticClass: "app-content" }, [_vm._t("default")], 2)
@@ -5271,7 +5379,7 @@ var render = function() {
                   config: _vm.colMenuConfig
                 },
                 on: {
-                  close: function($event) {
+                  done: function($event) {
                     _vm.state.colMenu.posted = false
                   }
                 }
@@ -6013,6 +6121,13 @@ var render = function() {
                   attrs: {
                     state: _vm.state.subs[item.idx].client,
                     config: item.menu
+                  },
+                  on: {
+                    done: function($event) {
+                      _vm.state.subs[item.idx].posted =
+                        _vm.state.subs[item.idx].pinned
+                      _vm.$emit("done")
+                    }
                   }
                 })
               ],
@@ -6106,8 +6221,8 @@ var render = function() {
             _c("wylib-menu", {
               attrs: { state: _vm.state.menu.client, config: _vm.config },
               on: {
-                close: function($event) {
-                  _vm.state.menu.posted = false
+                done: function($event) {
+                  _vm.state.menu.posted = _vm.state.menu.pinned
                 }
               }
             })
@@ -6554,8 +6669,8 @@ var render = function() {
                       config: _vm.winMenuConfig
                     },
                     on: {
-                      close: function($event) {
-                        _vm.state.menu.posted = false
+                      done: function($event) {
+                        _vm.state.menu.posted = _vm.state.menu.pinned
                       }
                     }
                   })
@@ -6587,8 +6702,8 @@ var render = function() {
                       config: _vm.winSaveConfig
                     },
                     on: {
-                      close: function($event) {
-                        _vm.state.save.posted = false
+                      done: function($event) {
+                        _vm.state.save.posted = _vm.state.save.pinned
                       }
                     }
                   })

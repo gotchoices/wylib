@@ -99,8 +99,8 @@ of four aspects: State, Data, Preference, and Layout.
 	It is notable that CSS is referenced in both preferences and Layout.
 	It is a bit of a judgement call whether a particular style is one
 	or the other.  But typically, things like colors and border shapes
-	are a matter of style.  Something like the order of buttons in a
-	container is more a matter of layout.
+	are a matter of preference.  Something like the order of buttons in 
+	a container is more a matter of layout.
 
 	Language is not a CSS issue, but will specify how the components
 	explain themselves to the user.
