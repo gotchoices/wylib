@@ -125,16 +125,17 @@ export default {
               , polar12 = vector.rtop(rect12)
               , maxMove = (this.maxX - this.minX) / 10					//Don't try to expand faster than this
               , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 10 (or negative)
-              , push = Math.min(this.pushForce * 1000 / Math.pow(mag,2), maxMove)
+              , push = Math.min(this.pushForce * 800 / Math.pow(mag,2), maxMove)
               , pull = this.pullForce * mag / 1000000000	//All objects have a little attractive gravity
+              , randPull = 0
 //console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push)
 
             if (links.includes(vm2.state.tag)) {
-              pull += this.pullForce * Math.pow(mag,2) / 1000000	//Linked objects have a lot more
-//console.log("tug:", vm1.state.tag, vm2.state.tag, pull)
+              pull += this.pullForce * Math.pow(mag,2) / 1000000			//Linked objects have a lot more attraction
+              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * 50}		//Inject an extra random burst 2% of the time
             }
-            forces[ix1] = vector.add(forces[ix1], {r:-push + pull, a:polar12.a})
-            forces[ix2] = vector.add(forces[ix2], {r: push - pull, a:polar12.a})
+            forces[ix1] = vector.add(forces[ix1], {r:-push + pull + randPull, a:polar12.a})
+            forces[ix2] = vector.add(forces[ix2], {r: push - pull + randPull, a:polar12.a})
           }
         })
       })
