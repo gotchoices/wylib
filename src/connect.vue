@@ -44,17 +44,17 @@ export default {
   },
   methods: {
     connectSite(addr) {		//Force connection to a specified site
-console.log("Connecting to: " + addr)
+//console.log("Connecting to: " + addr)
       Wyseman.connect(addr)
     },
     addSite(addr) {		//Add favorite site to our list
-console.log("Add: " + addr)
+//console.log("Add: " + addr)
       if (addr != '' && (this.sites.length == 0 || this.sites.indexOf(addr) < 0))
         this.sites.push(addr)
       localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
     },
     removeSite(addr) {		//Remove site from our favorites list
-console.log("Remove: " + addr)
+//console.log("Remove: " + addr)
       this.sites.splice(this.sites.indexOf(addr),1)
       localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
     }
