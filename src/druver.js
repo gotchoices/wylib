@@ -34,7 +34,7 @@ export default {
     let sizeConfig = {
       inertia: true,
       border: 2,
-      edges: {top:true, left: true, right: true, bottom: true},		/* Can't do top: true without losing dragability! */
+      edges: {top:true, left: true, right: true, bottom: true},
       restrictSize: {min: {width: 50, height: 50}},
       onmove: this.sizeHandler
     }
@@ -50,16 +50,5 @@ export default {
 //console.log("setup dragConfig: " + JSON.stringify(dragConfig));
 
     interact(element).resizable(sizeConfig).draggable(dragConfig)
-//Fix to allow drag from top of window?
-//      .actionChecker(function (pointer, event, action, interactable, element, interaction) {
-////console.log("checker: " + event.target);
-//        if (interact.matchesSelector(event.target, dragAllow)) {
-//          action.name = 'drag';			// force drag with handle target
-//        } else {				// resize from the top and right edges
-//          action.name  = 'resize';
-//          action.edges = { top: true, left: true, right: true, bottom: true };
-//        }
-//        return action;
-//      })
   }
 }
