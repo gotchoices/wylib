@@ -16,7 +16,7 @@
     </div>
     <div class="subwindows">
       <wylib-win :state="state.menu" pinnable=true @close="state.menu.posted=false" :lang="lang">
-        <wylib-menu :state="state.menu.client" :config="config" @close="state.menu.posted=false"/>
+        <wylib-menu :state="state.menu.client" :config="config" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
     </div>
   </div>

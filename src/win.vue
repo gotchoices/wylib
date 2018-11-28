@@ -41,10 +41,10 @@
     </div>
     <div class="subwindows">
       <wylib-win v-if="topLevel" :state="state.menu" pinnable=true @close="state.menu.posted=false" :lang="wm.winMenu">
-        <wylib-menu :state="state.menu.client" :config="winMenuConfig" @close="state.menu.posted=false"/>
+        <wylib-menu :state="state.menu.client" :config="winMenuConfig" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
       <wylib-win v-if="topLevel" :state="state.save" pinnable=true @close="state.save.posted=false" :lang="wm.winSave">
-        <wylib-menu :state="state.save.client" :layout="winSaveLayout" :config="winSaveConfig" @close="state.save.posted=false"/>
+        <wylib-menu :state="state.save.client" :layout="winSaveLayout" :config="winSaveConfig" @done="state.save.posted=state.save.pinned"/>
       </wylib-win>
       <wylib-modal ref="modal" :state="state.modal"/>
     </div>
@@ -87,7 +87,8 @@ export default {
     winMenuConfig: function() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.winSave,     icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.winRestore,  icon: 'circle',    call: this.restState, toggled: this.state.save.posted},
+      {idx: 'res', lang: wm.winRestore,  icon: 'circle',    call: ()=>{this.restState(true)}},
+      {idx: 'def', lang: wm.winDefault,  icon: 'circle',    call: this.defState},
       {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: this.moveToTop},
       {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: this.moveToBottom},
       {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
@@ -119,8 +120,8 @@ export default {
   },
   methods: {
     close(ev) {
-//console.log("Close Window: " + ev)
       this.state.pinned = false
+console.log("In close", this.id)
       this.$emit('close')
     },
     moveToTop() {
@@ -133,14 +134,25 @@ console.log("MoveToBottom: ", "Not yet implemented")
 console.log("Minimize: ", "Not yet implemented")
     },
     saveState() {
-console.log("Save State: ", "Not yet implemented")
+console.log("Saving State: ")
+      localStorage.saveWinState = JSON.stringify(this.state)
     },
-    restState() {
-console.log("Restore State: ", "Not yet implemented")
+    restState(last) {
+console.log("Restoring State: ")
+      if (last) {
+        if (localStorage.saveWinState) Object.assign(this.state,JSON.parse(localStorage.saveWinState))
+      } else {
+        this.state.save.posted = true
+      }
+    },
+    defState() {
+console.log("Default State: ", "Not yet implemented")
     },
 
     topClick(ev) {		//Any click in bounds of our toplevel window
-//console.log("Top window click: " + ev + "\n This: " + this.$el.classList + "\n Target: " + ev.target.classList)
+      if (!this.state.posted) return			//Only posted windows need to check
+//console.log("Top window click:", ev.target.nodeName, "This:", this.$el.classList.value, "Target: ", ev.target.classList.value)
+      if (ev.target.closest('.wylib-menu')) return	//Click came from another menu
       if (ev.target.closest('.wylib-button')) return	//Click came from the menu button itself
       if (this.$el.contains(ev.target)) return		//Click is within our own window
 //console.log("  pinnable:", this.pinnable, this.state.pinned)
@@ -178,7 +190,10 @@ console.log("Restore State: ", "Not yet implemented")
         this.$emit('posted') 				//Tell parent
         if (this.top) this.top.posted()			//Tell anyone else who might be listening
       })
-    }
+    },
+    'state.save.posted': function(st) {			//For testing only
+console.log("posted watch:", st)
+    },
   },
 
   created: function() {
@@ -186,10 +201,10 @@ console.log("Restore State: ", "Not yet implemented")
     this.$on('swallow', this.swallowMenu)
   },
 
-  beforeMount: function() {
+  beforeMount: function() {		//Create any state properties that don't yet exist
 //console.log("State:", this.state);
-    Com.react(this, {		//Create any state properties that don't yet exist
-      x: 0, y: 0, posted: false, pinned: false, menu: {}, client: {}, save: {}, modal: {posted: false},
+    Com.react(this, {
+      x: 0, y: 0, posted: false, pinned: false, menu: {}, save: {}, client: {}, modal: {posted: false},
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
     })

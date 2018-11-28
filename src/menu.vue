@@ -2,20 +2,9 @@
 //Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Can launch from a button
-//X- Can configure items from a reactive prop
-//X- A click on the master window will unpost the menu
-//X- Common code for movables, stretchables?
-//X- Allow to pin a sub menu while unposting its parent
-//X- Allow shortcuts to invoke menus (like dbe)
-//- Can do sub-menus
-//- Configuration separate from contents
-//- Configuration tells columns
-//- Configuration to tell if execute on single press, or double
-//- Configuration tells if closes after execute (work with window?)
+//- Configuration separate from contents?
 //- Contents gives actual menu items
 //- Can have multiple text fields, icons, cascades
-//- Implement state variable
 //- Move Fixme's in CSS to prefs
 //- Move subMenuPosted[] into state object
 //- Standardize code in "created:" (Con.init?)
@@ -41,7 +30,7 @@
     </div>
     <div class="submenus">
       <wylib-win v-for="item in config" v-if="item.menu" :state="state.subs[item.idx]" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false" :lang="item.lang">
-        <wylib-menu :state="state.subs[item.idx].client" :config="item.menu"/>
+        <wylib-menu :state="state.subs[item.idx].client" :config="item.menu" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
       </wylib-win>
     </div>
   </div>
@@ -50,7 +39,7 @@
 <script>
 import Com from './common.js'
 const Icons = require('./icons.js')
-//import Win from './win.vue'		//Recursive, defined in beforeCreate
+//import Win from './win.vue'		//Recursive, so defined in beforeCreate
 
 export default {
   name: 'wylib-menu',
@@ -59,7 +48,6 @@ export default {
     state:	{type: Object, default: () => ({})},
     layout:	{type: Array, default: () => (['icon','lang','input'])},
     config:	Array,
-//    isPinned:	Boolean,
   },
   data() { return {
     pr:		require('./prefs'),
@@ -68,24 +56,19 @@ export default {
     iconSvg(icon) {
       return Icons(icon)
     },
-    closeMenu() {
-console.log("Close menu: ")
-      this.$emit('close')
-    },
-    closeCheck() {
-//      if (!this.state.pinned) this.$emit('close')	//Fixme: should window decide?
-    },
     enterItem(idx, itemMenu) {
 console.log("Entering menu item: ", idx, "itemMenu:", itemMenu, this.state.subs)
-      Object.keys(this.state.subs).forEach(key => {
-        if (this.state.subs[key]) this.state.subs[key].posted = false
-      })
-      if (itemMenu) this.state.subs[idx].posted = true
+      if (this.state.subs) {
+        Object.keys(this.state.subs).forEach(key => {	//Close any subwindows when moving around
+          if (this.state.subs[key]) this.state.subs[key].posted = false
+        })
+        if (itemMenu && this.state.subs[idx]) this.state.subs[idx].posted = true	//But open any submenu associated with this line
+      }
 //console.log("  Posted: ", this.state.subs[idx])
     },
     execute(cb) {		//Execute the specified callback
+      this.$emit('done')
       if (cb) cb()
-      this.closeCheck()
     },
   },
   beforeCreate: function() {
@@ -95,7 +78,7 @@ console.log("Entering menu item: ", idx, "itemMenu:", itemMenu, this.state.subs)
     Com.react(this, {subs: {}})
     this.config.forEach((item, x) => {		//Set object properties that are not known until now
       if (item.menu) {
-//console.log("Set default for: ", item.idx)
+console.log("Set default for: ", item.idx)
         this.$set(this.state.subs, item.idx, {posted: false, pinned: false, client: {}})
       }
     })

@@ -37,7 +37,7 @@
         <wylib-dbe slot-scope="ws" :top="ws.top" :state="state.edit.client" @modified="modified" :bus="dbeBus"/>
       </wylib-win>
       <wylib-win :state="state.colMenu" @close="state.colMenu.posted=false" :lang="wm.dbeColMenu">
-        <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" @close="state.colMenu.posted=false"/>
+        <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" @done="state.colMenu.posted=false"/>
       </wylib-win>
       <wylib-win :state="state.filter" topLevel=true :lang="wm.dbs" @close="state.filter.posted=false">
         <wylib-dbs :fields="logicFields" :state="state.filter.client" @search="search"/>
