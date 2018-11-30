@@ -16,7 +16,7 @@
   <div class="wylib wylib-modal" :style="screenStyle">
     <div class="dialog" :style="dialogStyle">
       <div v-html="reason + ': ' + state.message"/>
-      <wylib-mdew :state="state.dews" :data="modalData"/>
+      <wylib-mdew :state="state.dews" :data="state.data" @input="change" @submit="submit" :top="top"/>
       <div class="buttons">
         <button v-for="but in buttons" :key="but.tag" @click="press(but.tag)" v-html="but.lang ? but.lang.title : 'OK'" :title="but.lang ? but.lang.help : 'Confirm'"/>
       </div>
@@ -38,7 +38,8 @@ export default {
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
-    modalData:	{},
+    top:	null,
+//    modalData:	{},
   }},
 
   computed: {
@@ -71,15 +72,33 @@ export default {
   },
 
   methods: {
+    submit() {
+//console.log("Modal submit")
+      this.press('modYes')
+    },
     press(tag) {
-console.log("Button:", tag, this.state.affirm)
+//console.log("Button:", tag, this.state.affirm, this.state)
       this.$emit('press')
       this.state.posted = false		//Unpost our menu
       let butRec = this.state.buttons.find(e=>(e.tag==tag))
-      if (butRec && butRec.cb)
+      if (butRec && butRec.cb)		//Call-back specific to our button
         butRec.cb(tag == this.state.affirm, tag)
-      else if (this.state.cb)
+      else if (this.state.cb)		//Callback for the dialog
         this.state.cb(tag == this.state.affirm, tag)
+    },
+    change(value, field, dirty, valid) {	//When data changed
+//console.log("Dbe input:", field, value, dirty, valid, this.state.data[field])
+      this.state.data[field] = value
+    },
+  },
+
+  watch: {			//Let parent and any content clients, we just posted
+    'state.posted': function(isPosted) {
+//console.log("Posted, children:", this.$scopedSlots)
+      if (isPosted) this.$nextTick(() => {
+        this.$emit('posted') 				//Tell parent
+        if (this.top) this.top.posted()			//Tell anyone else who might be listening
+      })
     },
   },
 
@@ -88,8 +107,13 @@ console.log("Button:", tag, this.state.affirm)
   },
 
   beforeMount: function() {
-    Com.react(this, {posted: false, buttons: ['modOK'], affirm: 'modOK'})
+    Com.react(this, {posted: false, buttons: ['modOK'], affirm: 'modOK', dews: {}, data: {}})
   },
+
+  mounted: function() {
+    this.top = new Com.topHandler()
+  },
+
 }
 </script>
 
