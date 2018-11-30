@@ -8,6 +8,7 @@
 //- 
 import Wyseman from './wyseman.js'
 var docIndex = 0
+const storeKey = 'wylibState_'
 
 module.exports = {
 
@@ -66,7 +67,7 @@ module.exports = {
     }
   },
 
-  topHandler(cb) {		//Create a handler for communicating to/from the toplevel window
+  topHandler(cb) {		//Create a handler for communicating to/from the toplevel window and generating modal dialogs there
     this.modalCB = cb
     this.postCB = null
 
@@ -79,6 +80,22 @@ module.exports = {
       }
       return msg
     }
+    
+    this.dewArray = function(arg1, arg2, arg3 = 'ent') {	//Make an array of objects suitable for mdew configuration
+      let retArr = []						//Call as: field,lang,style or [[field,lang,style] [field,lang,style]]
+      if (typeof arg1 == 'string' && typeof arg2 == 'object') arg1 = [[arg1, arg2, arg3]]
+      if (Array.isArray(arg1)) {
+        let focus = true;
+        arg1.forEach((el)=>{
+          let [ field, lang, style ] = el
+          if (!style) style = arg3
+          retArr.push({field, lang, styles:{style, focus}})
+          focus = false
+        })
+      }
+//console.log("retArr:", retArr)
+      return retArr
+    }
 
     this.error = function(msg, cb) {
       this.modalCB({posted: true, reason:'modError', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', cb})
@@ -89,8 +106,8 @@ module.exports = {
     this.confirm = function(msg, cb) {
       this.modalCB({posted: true, reason:'modConfirm', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', cb})
     }
-    this.query = function(msg, dews, cb) {
-      this.modalCB({posted: true, reason:'modQuery', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', cb})
+    this.query = function(msg, fields, data, cb) {
+      this.modalCB({posted: true, reason:'modQuery', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: {fields}, data, cb})
     }
     
     this.onPosted = function(cb) {		//Register to get a callback when toplevel window posts
@@ -106,12 +123,24 @@ module.exports = {
   clone: function(o) {				//Deep object copy
     let output = Array.isArray(o) ? [] : {}, v, key
     for (key in o) {
-      v = o[key];
-      output[key] = (typeof v === "object") ? this.clone(v) : v;
+      v = o[key]
+      output[key] = (typeof v === "object") ? this.clone(v) : v
     }
-    return output;
+    return output
   },
-  
+
+  saveState: function(tag, data) {
+    localStorage.setItem(storeKey + tag, JSON.stringify(data))
+  },
+    
+  getState: function(tag) {
+    return JSON.parse(localStorage.getItem(storeKey + tag))
+  },
+    
+  clearState: function(tag) {
+    localStorage.removeItem(storeKey + tag)
+  },
+    
 //  docView: function(view) {
 //    docIndex++
 //console.log("Ddocument preview:", view)
