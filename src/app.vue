@@ -4,10 +4,11 @@
 // -----------------------------------------------------------------------------
 // TODO:
 //X- Has to be independent of database, wylib until connection made
-//- Add main menu
-//-   Save state
-//-   Restore state
+//X- Add main menu
+//X-   Save state
+//X-   Restore state
 //-   Edit preferences
+//- Are there more preview windows to add besides just wylib.data_v? (prefs done this way?)
 //- Default language to english, but update to current language once connection made
 //- Move CSS styling to preferences (once connection made)
 //- 
@@ -30,12 +31,16 @@
           {{ tab.title }}
         </div>
         <div class="tab-filler">
-          <wylib-button :size="tabHeight" icon="menu" :toggled="appMenu.posted" @click="appMenu.posted = !appMenu.posted" :title="appMenu.title"/>
+          <wylib-button :size="tabHeight" icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
+          <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false" :lang="lang">
+            <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
+          </wylib-win>
         </div>
       </div>
       <div class="subwindows">
-        <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false" :lang="lang">
-          <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
+        <wylib-modal v-if="modal.posted" :state="modal"/>
+        <wylib-win v-for="win,idx in previews" topLevel=true :key="idx" :state="win" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
+          <wylib-dbp slot-scope="ws" :top="ws.top" :state="win.client"/>
         </wylib-win>
       </div>
       <div class="app-content">
@@ -51,37 +56,49 @@ import Connect from './connect.vue'
 import Wyseman from './wyseman.js'
 import Button from './button.vue'
 import Menu from './menu.vue'
+import WylibDbp from '../src/dbp.vue'
+import Modal from './modal.vue'
 import Win from './win.vue'
 
 export default {
   name: 'wylib-app',
-  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win},
+  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-modal': Modal, 'wylib-dbp': WylibDbp},
   props: {
+    state:	{type: Object, default: {}},
     title:	{type: String},
     help:	{type: String},
     tabs:	{type: Array},
+    tag:	{type: String},
     current:	{type: String},
     tryEvery:	{default: 5},
     lang:	{type: Object, default: Com.langTemplate},
   },
   data() { return {
-//    state:      {},
     conMenuPosted:	true,
     appMenu:		{posted: false, client: {}, title: 'Application menu'},
+    modal:		{posted: false, dews:{}, data:{}},
     currentSite:	null,
     siteTry:		'',
     retryIn:		null,
     menuTitle:		'',
     wm:			{},
+    persistent:		true,
+    top:		null,			//portal to communicate with toplevel window
+    restoreMenu:	[],
+    previews:		[{posted: false, client:{dbView: 'wylib.data_v'}}],
   }},
   computed: {
+    id: function() {return 'app_' + this._uid + '_'},
+    tagTitle: function () {return this.tag || this.title},
     tabHeight: function () {
       return 20
     },
     appMenuConfig: function() {let wm = this.wm
       return [
-      {idx: 'sav', lang: wm.winSave,     icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.winRestore,  icon: 'circle',    call: this.restState},
+      {idx: 'sav', lang: wm.appSave,      icon: 'circle',    call: this.saveState},
+      {idx: 'res', lang: wm.appRestore,   menu: this.restoreMenu},
+      {idx: 'def', lang: wm.appDefault,   icon: 'circle',    call: this.defaultState},
+      {idx: 'edi', lang: wm.appEditState, icon: 'circle',    call: ()=>{this.previews[0].posted = true}},
     ]},
   },
   watch: {
@@ -93,6 +110,30 @@ export default {
     }
   },
   methods: {
+    postAppMenu(ev) {
+//console.log("postAppMenu:", ev, this.appMenu.x, this.appMenu.y, this.appMenu)
+      if (!(this.appMenu.posted = !this.appMenu.posted)) return
+      if (this.appMenu.x == null || this.appMenu.y == null) {	//If this is the first time posted
+        this.appMenu.x = 0					//Place the menu to miss the button
+        this.appMenu.y = ev.target.getBoundingClientRect().height + 4
+      }
+      if (this.restoreMenu.length <= 0) this.getSavedStates()	//Force query the first time
+    },
+
+    getSavedStates() {						//Build the menu to select saved states for loading
+      let view = 'wylib.data_v', fields = ['ruid','own_name','name','descr','data'], where = {component: this.tag}, order=[3]
+      Wyseman.request(this.id+'gs', 'select', {view, fields, where, order}, (rows, err) => {
+        if (err) {this.top.error(err); return}
+        let menu = []
+//console.log("Rows:", rows)
+        if (rows && rows.length > 0) rows.forEach(row=>{
+          menu.push({idx:row.ruid, lang:{title:row.name, help:row.descr}, call:()=>{Object.assign(this.state, row.data)}})
+        })
+        if (menu.length <= 0) menu.push({idx:0, lang:'<None>'})
+        this.restoreMenu = menu
+      })
+    },
+
     tabClass(tag) {return {
       tab:	true,
       active:	this.current == tag ? true : false,
@@ -109,10 +150,23 @@ export default {
       setTimeout(this.retryConnect, 1000)
     },
     saveState() {
-console.log("Save State: ", "Not yet implemented")
+      let resp = {t:'Default'}
+        , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
+      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
+//console.log("Response:", yesNo, tag, resp.t, resp.h)
+        let view = 'wylib.set_data(text,text,text,int,jsonb)'
+          , params = [this.tag, resp.t, resp.h, null, JSON.stringify(this.state)]
+        if (yesNo) Wyseman.request(this.id+'ss', 'tuple', {view, params}, (res, err) => {if (err) this.top.error(err)})
+      })
     },
-    restState() {
-console.log("Restore State: ", "Not yet implemented")
+    defaultState() {
+      this.top.confirm(this.wm.appDefault.help, (yesNo, tag) => {
+        if (yesNo) {this.persistent = false; location.reload()}
+      })
+    },
+    beforeUnload() {
+//console.log("About to unload.  Saving state:", JSON.stringify(this.state))
+      if (this.persistent) Com.saveState(this.tagTitle, this.state); else Com.clearState(this.tagTitle)
     },
   },
 
@@ -121,13 +175,29 @@ console.log("Restore State: ", "Not yet implemented")
   },
 
   beforeMount: function() {
-//    Com.react(this, {menu: {client: {}}})
+    let savedState = Com.getState(this.tagTitle)
+//console.log("Restoring state:", JSON.stringify(savedState))
+    if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
+
+    Wyseman.listen(this.id+'as', 'wylib', dat =>{
+//console.log("Got async:", dat, this.restoreMenu)
+      if (dat.target == "data") this.getSavedStates()		//Refresh restore states menu
+    })
+//    Com.react(this, {})
   },
+
   mounted: function () {
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
       if (this.currentSite = addr) this.conMenuPosted = false;
     })
     Wyseman.connect()
+    window.addEventListener('beforeunload', this.beforeUnload)
+    this.top = new Com.topHandler((st) => {Object.assign(this.modal, st)})
+//console.log("mounted:", this.state)
+  },
+
+  beforeDestroy: function() {
+    window.removeEventListener('beforeunload', this.beforeUnload)
   },
 }
 </script>
