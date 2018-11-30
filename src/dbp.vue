@@ -83,15 +83,15 @@ export default {
       return flds
     },
     dockConfig: function() { return [
-      {idx: 'lod', lang: this.wm.dbpLoad   , call: this.load,    icon: 'circle',    shortcut: false},
-      {idx: 'rld', lang: this.wm.dbpReload,  call: this.reload,  icon: 'spinner11', shortcut: true},
-      {idx: 'all', lang: this.wm.dbpLoadAll, call: this.loadAll, icon: 'circle',    shortcut: false},
-      {idx: 'fil', lang: this.wm.dbpFilter,  call: this.loadBy,  icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
-      {idx: 'edi', lang: this.wm.dbe,        call: this.editTog, icon: 'pencil',    toggled: this.state.edit.posted},
-      {idx: 'prv', lang: this.wm.dbpPrev   , call: this.prev,    icon: 'arrowup',   shortcut: true},
-      {idx: 'nxt', lang: this.wm.dbpNext   , call: this.next,    icon: 'arrowdown', shortcut: true},
-      {idx: 'dec', lang: this.wm.dbpDefault, call: this.defColumns, icon: 'circle'},
-      {idx: 'tst', lang: {title: 'T', help: 'H'}, call: this.test, icon:'circle', shortcut: true},
+      {idx: 'lod', lang: this.wm.dbpLoad   ,  call: ev=>this.load(),	icon: 'circle',    shortcut: false},
+      {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(),	icon: 'spinner11', shortcut: true},
+      {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll, icon: 'circle',    shortcut: false},
+      {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,  icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
+      {idx: 'edi', lang: this.wm.dbe,         call: this.editTog, icon: 'pencil',    toggled: this.state.edit.posted},
+      {idx: 'prv', lang: this.wm.dbpPrev   ,  call: this.prev,    icon: 'arrowup',   shortcut: true},
+      {idx: 'nxt', lang: this.wm.dbpNext   ,  call: this.next,    icon: 'arrowdown', shortcut: true},
+      {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns, icon: 'circle'},
+      {idx: 'tst', lang: {title:'Test', help:'XYZ!'}, call: this.test, icon:'circle'},
       {idx: 'cvi', lang: this.wm.dbpVisible, menu: [
         {idx: 'c1', lang: this.wm.dbpVisCheck, input: 'checkbox'},
         {idx: 'c2', lang: this.wm.dbpVisCheck, input: 'checkbox'},
@@ -130,13 +130,6 @@ console.log("viewMeta updated")
   },
 
   methods: {
-    test() {
-console.log("Test!", this.top)
-      this.top.confirm('A test message', (yesno, tag) => {
-console.log("Modal answers:", yesno, tag)
-      })
-    },
-
     mlbLayout() {		//Make the column description format mlb is looking for
       let colArray = []
 //console.log("updateGrid:", this.state.grid.columns, JSON.stringify(this.viewMeta.col))
@@ -160,14 +153,13 @@ console.log("Modal answers:", yesno, tag)
       return colArray
     },
 
-    editTog(e) {				//Toggle the editing window
+    editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
       if (this.state.edit.posted) this.executeRows(this.$refs.mlb.getSelection())
     },
-    next(delta=1) {
-      let sel = this.mlbBus.notify('advance', delta)
-    },
-    prev() {this.next(-1)},
+    advance(delta=1) {this.mlbBus.notify('advance', delta)},
+    next(ev) {this.advance(1)},
+    prev(ev) {this.advance(-1)},
 
     executeRows(selection) {
 //console.log("Execute rows: ", selection, this.viewMeta.pkey)
@@ -185,14 +177,14 @@ console.log("Modal answers:", yesno, tag)
 
     load(spec) {
 //console.log("Dbp load:", spec)
-      Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView}, spec), (data, err) => {
+      Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top.error(err); else this.gridData = data
       })
       this.lastSpec = spec
     },
     reload(spec) {this.load(Object.assign(this.lastSpec, spec))},
-    loadAll() {this.load({where: null})},
+    loadAll(ev) {this.load({where: null})},
     clear() {this.gridData = []},	//Fixme: Should dbe also get cleared or not?
     
     modified(data) {this.reload()},		//On signal from dbe
@@ -222,6 +214,14 @@ console.log("Modal answers:", yesno, tag)
 console.log("Auto size:", this.lastMenu, "Col:", col)
 //    Fixme: call slickgrid autosize function?
     },
+    defColumns(ev) {
+console.log("Not yet implemented")
+    },
+    test() {
+      this.top.confirm('A test message', (yesno, tag) => {
+console.log("Modal answers:", yesno, tag)
+      })
+    },
     hideCol() {
       let col = this.state.grid.columns.find(e => (e.field == this.lastMenu))
 console.log("Hide Column:", this.lastMenu, "Col:", col)
@@ -238,10 +238,9 @@ console.log("Hide Column:", this.lastMenu, "Col:", col)
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
     if (this.state.dbView)
       Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
-console.log("Dbp got new metadata:", data.help)
+//console.log("Dbp got new metadata:", data.help)
 this.viewMeta = data
-//this.viewMeta = 'sludge'
-})
+})	//Fixme: what is this doing?
   },
 
   beforeMount: function() {
