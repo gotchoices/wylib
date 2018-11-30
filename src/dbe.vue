@@ -103,18 +103,10 @@ export default {
 
   methods: {
     loadRec() {
-console.log("Modal")
-      this.top.query('Load by primary key', [
-        {field: 'q', lang:{title: 'Record ID', help: 'Input the primary key values'}, styles: {style: 'ent'}}
-      ], (yes) => {
-console.log("Modal answers:", yes)
+      let resp = {q:null}
+      this.top.query(this.wm.dbeLoadPrompt.help, this.top.dewArray('q', this.wm.dbeRecordID), resp, (yes) => {
+console.log("Load record:", yes, resp.q)
       })
-//      let modalData = {q: null}
-//      this.state.modal.fields = [
-//        {field: 'q', lang:{title: 'Record ID', help: 'Input the primary key values'}, styles: {style: 'ent'}}
-//      ]
-//      this.state.modal.posted = true
-//console.log("Modal:")
     },
     keyWhere(key = this.state.key) {		//Return an object with the where clause to identify this record
       let whereObj = {}
@@ -126,7 +118,7 @@ console.log("Modal answers:", yes)
 //console.log("Key:", this.state.key)
       this.dirty = false
       this.valid = true
-      this.dataRequest('tuple', {where: this.keyWhere(key)}, false, () => {this.state.key = key})
+      this.dataRequest('tuple', {where: this.keyWhere(key), fields: '*'}, false, () => {this.state.key = key})
     },
 
     insert() {
