@@ -36,7 +36,7 @@
     <select ref="input" v-else-if="state.style == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
       <option v-for="val in values" :label="val.title" :value="val.value" :title="val.help"/>
     </select>
-    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" :autofocus="state.focus" :placeholder="this.state.hint" :disabled="disabled" :style="genStyle"/>
+    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="this.state.hint" :disabled="disabled" :style="genStyle"/>
   </div>
 </template>
 
@@ -59,7 +59,7 @@ export default {
   },
   data() { return {
     pr:		require('./prefs'),
-    userValue:	null,					//Value, as modified by user
+    userValue:	this.value,				//Value, as modified by user
     datePicker: null,
   }},
 
@@ -114,6 +114,7 @@ export default {
 
   methods: {
     input(ev) {this.changed(ev.target.value)},
+    submit(ev) {this.$emit('submit')},
     changed(val) {
 //console.log("Dew input:", this.field, val)
       this.userValue = val
