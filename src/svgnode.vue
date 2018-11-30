@@ -127,6 +127,9 @@ export default {
     Com.react(this, {		//Create any state properties that don't yet exist
       x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0
     })
+    this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
+      if (typeof lk == 'object' && !lk.hub) this.$set(lk, 'hub', ()=>{})	
+    })
   },
 
   mounted: function() {
