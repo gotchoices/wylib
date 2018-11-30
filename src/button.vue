@@ -31,11 +31,11 @@ export default {
     isActive:	false,
   }},
   methods: {
-    mouseEnter: function() {if (this.disabled) return; this.isHover = true;	this.$emit('mouseenter')},
-    mouseLeave: function() {if (this.disabled) return; this.isHover = false;	this.$emit('mouseenter')},
-    mouseDown:	function() {if (this.disabled) return; this.isActive = true;	this.$emit('mousedown')},
-    mouseUp:	function() {if (this.disabled) return; this.isActive = false;	this.$emit('mouseup')},
-    click:	function() {if (this.disabled) return; this.$emit('click')},
+    mouseEnter: function(ev) {if (this.disabled) return; this.isHover = true;	this.$emit('mouseenter',ev)},
+    mouseLeave: function(ev) {if (this.disabled) return; this.isHover = false;	this.$emit('mouseenter',ev)},
+    mouseDown:	function(ev) {if (this.disabled) return; this.isActive = true;	this.$emit('mousedown',ev)},
+    mouseUp:	function(ev) {if (this.disabled) return; this.isActive = false;	this.$emit('mouseup',ev)},
+    click:	function(ev) {if (this.disabled) return; this.$emit('click', ev)},
   },
   computed: {
     iconSvg: function () {return Icons(this.icon)},
