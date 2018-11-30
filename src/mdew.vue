@@ -22,7 +22,7 @@
           {{ f.lang ? f.lang.title : null }}:
         </td>
         <td>
-          <wylib-dew :top="top" :ref="'dew~'+f.field" :field="f.field" :state="f.styles" :value="data[f.field]" :values="f.values" :lang="f.lang" @input="input" :bus="dewBus"/>
+          <wylib-dew :top="top" :ref="'dew~'+f.field" :field="f.field" :state="f.styles" :value="data[f.field]" :values="f.values" :lang="f.lang" @input="input" @submit="submit" :bus="dewBus"/>
         </td>
       </tr>
     </table>
@@ -60,6 +60,7 @@ export default {
   },
   
   methods: {
+    submit(ev) {this.$emit('submit')},
     input(value, field, dirty, valid) {			//An input has been changed
       this.$set(this.dirtys, field, dirty)
       this.valid = valid
@@ -74,9 +75,9 @@ export default {
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       return this.dewBus.notify(msg, data)		//Pass down to children
     })
+//console.log("Mdew before:", this.id, this.state, this.data)
   },
 //  mounted: function() {
-//    this.focus()
 //  }
 }
 </script>
