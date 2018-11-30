@@ -46,7 +46,7 @@
       <wylib-win v-if="topLevel" :state="state.save" pinnable=true @close="state.save.posted=false" :lang="wm.winSave">
         <wylib-menu :state="state.save.client" :layout="winSaveLayout" :config="winSaveConfig" @done="state.save.posted=state.save.pinned"/>
       </wylib-win>
-      <wylib-modal ref="modal" :state="state.modal"/>
+      <wylib-modal v-if="modal.posted" :state="modal"/>
     </div>
     <div class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
       <slot :top="top"></slot>
@@ -78,6 +78,8 @@ export default {
     wm:			{},
     myTopElement:	null,
     top:		null,			//portal to communicate with toplevel window
+    modal:		{posted: false},
+    restoreMenu:	[],
   }},
   computed: {
     id: function() {return 'dbp_' + this._uid + '_'},
@@ -185,15 +187,15 @@ console.log("Default State: ", "Not yet implemented")
 
   watch: {		//Let parent and any content clients, we just posted
     'state.posted': function(isPosted) {
-//console.log("Posted, children:", this.$scopedSlots)
+//console.log("Posted, children:", this.$scopedSlots, this.state.x, this.state.y)
       if (isPosted) this.$nextTick(() => {
         this.$emit('posted') 				//Tell parent
         if (this.top) this.top.posted()			//Tell anyone else who might be listening
       })
     },
-    'state.save.posted': function(st) {			//For testing only
-console.log("posted watch:", st)
-    },
+//    'state.save.posted': function(st) {			//For testing only
+//console.log("posted watch:", st)
+//    },
   },
 
   created: function() {
@@ -204,7 +206,7 @@ console.log("posted watch:", st)
   beforeMount: function() {		//Create any state properties that don't yet exist
 //console.log("State:", this.state);
     Com.react(this, {
-      x: 0, y: 0, posted: false, pinned: false, menu: {}, save: {}, client: {}, modal: {posted: false},
+      x: null, y: null, posted: false, pinned: false, menu: {}, save: {}, client: {}, modal: {posted: false},
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
     })
@@ -225,7 +227,7 @@ console.log("posted watch:", st)
     })
 //console.log("Mounted; this: ", this.title + " topLevel: " + this.topLevel)
     if (this.topLevel) {
-      this.top = new Com.topHandler((st) => {this.state.modal = st})
+      this.top = new Com.topHandler((st) => {this.modal = st})
     } else {
       this.myTopElement = this.$el.closest('.wylib-win.toplevel')
     }
