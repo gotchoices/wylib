@@ -181,10 +181,10 @@ console.log(" cols:", JSON.stringify(this.state.columns))
     advance(delta = 1) {
       let sel = this.getSelection()[0], was = (sel == null ? -1 : sel), line = was
       line = line + delta
+//console.log("Advance:", delta, was, sel, line)
       if (line < 0) line = 0
       if (line >= this.data.length) line = this.data.length - 1
       if (line != was) {
-//console.log("Advance:", line, was)
         this.gridInstance.setSelectedRows([line])
         this.$emit('execute', this.getSelection())
         return line
