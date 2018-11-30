@@ -27,7 +27,7 @@ const Wyseman = {
   cache:	null,			//Pointer to local copies of meta/language data
   pending:	{meta: {}, lang:{}},	//Remember details of pending requests
   callbacks:	{},			//Callbacks waiting for meta/language changes
-  listens:	{},			//Callbacks waiting for asynch messages
+  listens:	{},			//Callbacks waiting for async messages
 
   close() {				//Close server connection from this end
     this.socket.close()
@@ -59,8 +59,16 @@ const Wyseman = {
       this.socket.addEventListener('message', ev => {	//When we get packets from the backend
         let pkt = JSON.parse(ev.data)			//Make it into an object
         let {id, view, action, data, error} = pkt
+
 //console.log('Message from server: ', pkt, id, action, error)
-        if (action == 'notify') Object.values(this.listens).forEach(cb => {cb(data)})		//Call any listeners
+        if (action == 'notify' && pkt.channel) {
+          let chan = pkt.channel
+          if (this.listens[chan]) Object.values(this.listens[chan]).forEach(cb => {
+console.log('Notify group: ', chan, data)
+            cb(data)				//Call any listeners
+          })
+        }
+
         if (!id || !view || !action) return		//Invalid packet
 
         if (action == 'meta' || action == 'lang') {	//Special handling for meta and language data
@@ -121,6 +129,7 @@ const Wyseman = {
   },
 
   procColumns(data) {				//Reindex columns array into column object
+    if (!data) return
 //console.log('Store meta/lang:', data)
     if (!data.columns) data.columns = []
     if (!data.col) data.col = {}		//Make node of columns indexed by col
@@ -128,6 +137,7 @@ const Wyseman = {
   },
 
   procMessages(data) {				//Reindex messages array into message object
+    if (!data) return
     if (!data.messages) data.messages = []
     if (!data.msg) data.msg = {}		//Make node of messages indexed by code
     data.messages.forEach((rec, idx) => {data.msg[rec['code']] = data.messages[idx]})
@@ -210,7 +220,7 @@ const Wyseman = {
   },
 
   register(id, view, cb) {	//Register to receive a call whenever view metadata updates
-    if (!cb && this.callbacks[view][id]) {
+    if (!cb && this.callbacks[view] && this.callbacks[view][id]) {
       delete this.callbacks[view][id]
       return
     }
@@ -219,12 +229,14 @@ const Wyseman = {
     this.request(id + '~' + view, 'meta', view, cb)
   },
 
-  listen(id, cb) {		//Register to receive a call whenever asynchronous DB events happen
-    if (!cb && this.listens[id]) {
-      delete this.listens[id]
-    } else {
-      this.listens[id] = cb
+  listen(id, chan, cb) {		//Register to receive a call whenever asynchronous DB events happen
+    if (!cb && this.listens[chan] && this.listens[chan][id]) {
+      delete this.listens[chan][id]
+      return
     }
+    if (!this.listens[chan]) this.listens[chan] = {}
+//console.log("Listening for:", chan)
+    this.listens[chan][id] = cb
   },
 }
 
