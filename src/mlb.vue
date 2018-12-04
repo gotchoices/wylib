@@ -121,7 +121,7 @@ console.log("Context Menu: " + e.target)
         if (/^slick-header-column-field-/.test(ord.classList[i])) {idx = ord.classList[i].replace('slick-header-column-field-','')}
       }
       let mlbBox = this.$el.getBoundingClientRect()
-console.log("Header Menu:", e, "Index:", idx, mlbBox, e.clientX, e.clientY)
+//console.log("Header Menu:", e, "Index:", idx, mlbBox, e.clientX, e.clientY)
       this.$emit('headerMenu', e, idx, e.clientX - parseInt(mlbBox.x), e.clientY - parseInt(mlbBox.y))
     },
     
@@ -135,7 +135,7 @@ console.log("Header Menu:", e, "Index:", idx, mlbBox, e.clientX, e.clientY)
     
     sortHandler(e, args) {
       let { multiColumnSort, sortCols, grid } = args
-console.log("Sort columns: ", multiColumnSort, sortCols)
+//console.log("Sort columns: ", multiColumnSort, sortCols)
       this.state.sortColumns = grid.getSortColumns()
       this.updateSortNumbers()
       this.$emit('sort', this.state.sortColumns)
