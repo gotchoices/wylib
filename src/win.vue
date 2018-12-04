@@ -43,10 +43,7 @@
       <wylib-win v-if="topLevel" :state="state.menu" pinnable=true @close="state.menu.posted=false" :lang="wm.winMenu">
         <wylib-menu :state="state.menu.client" :config="winMenuConfig" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
-      <wylib-win v-if="topLevel" :state="state.save" pinnable=true @close="state.save.posted=false" :lang="wm.winSave">
-        <wylib-menu :state="state.save.client" :layout="winSaveLayout" :config="winSaveConfig" @done="state.save.posted=state.save.pinned"/>
-      </wylib-win>
-      <wylib-modal v-if="modal.posted" :state="modal"/>
+      <wylib-modal v-if="topLevel && modal.posted" :state="modal"/>
     </div>
     <div class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
       <slot :top="top"></slot>
@@ -61,6 +58,7 @@ import Button from './button.vue'
 import Interact from 'interactjs'
 import Wyseman from './wyseman.js'
 import Modal from './modal.vue'
+import State from './state.js'
 //console.log("Interact:", Interact)
 
 export default {
@@ -72,6 +70,7 @@ export default {
     fullHeader: {default: false},		//Full header only
     pinnable:	{default: false},		//Include pinning button/function
     lang:	{type: Object, default: Com.langTemplate},
+    tag:	{type: String, default: 'winn'}
   },
   data() { return {
     pr:			require('./prefs'),
@@ -82,25 +81,19 @@ export default {
     restoreMenu:	[],
   }},
   computed: {
-    id: function() {return 'dbp_' + this._uid + '_'},
+    id: function() {return 'win_' + this._uid + '_'},
     headerHeight: function () {
       return ((this.topLevel || this.fullHeader) ? this.pr.winFullHeader : this.pr.winSmallHeader)
     },
     winMenuConfig: function() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.winSave,     icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.winRestore,  icon: 'circle',    call: ()=>{this.restState(true)}},
-      {idx: 'def', lang: wm.winDefault,  icon: 'circle',    call: this.defState},
+      {idx: 'res', lang: wm.winRestore,  menu: this.restoreMenu, layout: ['lang','owner','access']},
+      {idx: 'def', lang: wm.winDefault,  icon: 'circle',    call: this.defaultState},
       {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: this.moveToTop},
       {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: this.moveToBottom},
       {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
       {idx: 'cls', lang: wm.winClose,    icon: 'close',     call: ()=>{this.$emit('close')}}
-    ]},
-    winSaveLayout: function() {return ['priv','owner','lang']},
-    winSaveConfig: function() {return [
-      {idx: 'q1', priv: 'pub', owner: 'Bob', lang: {title: 'Hi one', help: 'Ho one'}},
-      {idx: 'q2', priv: 'priv', owner: 'Joe', lang: {title: 'Hi two', help: 'Ho two'}},
-      {idx: 'q3', priv: 'priv', owner: 'Joe', lang: {title: 'Hi three', help: 'Ho three'}},
     ]},
     winStyleS: function () {return {
       borderColor:	this.pr.winBorderColor, 
@@ -123,7 +116,7 @@ export default {
   methods: {
     close(ev) {
       this.state.pinned = false
-console.log("In close", this.id)
+//console.log("In close", this.id)
       this.$emit('close')
     },
     moveToTop() {
@@ -136,19 +129,16 @@ console.log("MoveToBottom: ", "Not yet implemented")
 console.log("Minimize: ", "Not yet implemented")
     },
     saveState() {
-console.log("Saving State: ")
-      localStorage.saveWinState = JSON.stringify(this.state)
+      let resp = {t:'Default'}
+        , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
+      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
+        if (yesNo) State.save(this.tag,resp.t,resp.h,this.state,this.top.error)
+      })
     },
-    restState(last) {
-console.log("Restoring State: ")
-      if (last) {
-        if (localStorage.saveWinState) Object.assign(this.state,JSON.parse(localStorage.saveWinState))
-      } else {
-        this.state.save.posted = true
-      }
-    },
-    defState() {
-console.log("Default State: ", "Not yet implemented")
+    defaultState() {
+      this.top.confirm(this.wm.winDefault.help, (yesNo, tag) => {
+        if (yesNo) {this.state = {}; location.reload()}
+      })
     },
 
     topClick(ev) {		//Any click in bounds of our toplevel window
@@ -193,9 +183,6 @@ console.log("Default State: ", "Not yet implemented")
         if (this.top) this.top.posted()			//Tell anyone else who might be listening
       })
     },
-//    'state.save.posted': function(st) {			//For testing only
-//console.log("posted watch:", st)
-//    },
   },
 
   created: function() {
@@ -206,9 +193,18 @@ console.log("Default State: ", "Not yet implemented")
   beforeMount: function() {		//Create any state properties that don't yet exist
 //console.log("State:", this.state);
     Com.react(this, {
-      x: null, y: null, posted: false, pinned: false, menu: {}, save: {}, client: {}, modal: {posted: false},
+      x: null, y: null, posted: false, pinned: false, menu: {client:{}}, client: {}, modal: {posted: false},
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
+    })
+
+    if (this.topLevel) State.listen(this.id+'sl', this.tag, (menuData) => {
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+      let menuItems = menuData.map(el=>{
+        return Object.assign(el, {call:()=>{Object.assign(this.state,el.data)}})
+      })
+      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+//console.log("WMC:", 1, this.winMenuConfig)
     })
   },
 

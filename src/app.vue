@@ -7,7 +7,7 @@
 //X- Add main menu
 //X-   Save state
 //X-   Restore state
-//-   Edit preferences
+//X-   Edit preferences
 //- Are there more preview windows to add besides just wylib.data_v? (prefs done this way?)
 //- Default language to english, but update to current language once connection made
 //- Move CSS styling to preferences (once connection made)
@@ -39,7 +39,7 @@
       </div>
       <div class="subwindows">
         <wylib-modal v-if="modal.posted" :state="modal"/>
-        <wylib-win v-for="win,idx in previews" topLevel=true :key="idx" :state="win" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
+        <wylib-win v-for="win,idx in previews" topLevel=true :key="idx" :state="win" :tag="'dbp:'+win.client.dbView" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
           <wylib-dbp slot-scope="ws" :top="ws.top" :state="win.client"/>
         </wylib-win>
       </div>
@@ -59,6 +59,7 @@ import Menu from './menu.vue'
 import WylibDbp from '../src/dbp.vue'
 import Modal from './modal.vue'
 import Win from './win.vue'
+import State from './state.js'
 
 export default {
   name: 'wylib-app',
@@ -96,7 +97,7 @@ export default {
     appMenuConfig: function() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.appSave,      icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.appRestore,   menu: this.restoreMenu},
+      {idx: 'res', lang: wm.appRestore,   menu: this.restoreMenu, layout: ['lang','owner','access']},
       {idx: 'def', lang: wm.appDefault,   icon: 'circle',    call: this.defaultState},
       {idx: 'edi', lang: wm.appEditState, icon: 'circle',    call: ()=>{this.previews[0].posted = true}},
     ]},
@@ -117,23 +118,7 @@ export default {
         this.appMenu.x = 0					//Place the menu to miss the button
         this.appMenu.y = ev.target.getBoundingClientRect().height + 4
       }
-      if (this.restoreMenu.length <= 0) this.getSavedStates()	//Force query the first time
     },
-
-    getSavedStates() {						//Build the menu to select saved states for loading
-      let view = 'wylib.data_v', fields = ['ruid','own_name','name','descr','data'], where = {component: this.tag}, order=[3]
-      Wyseman.request(this.id+'gs', 'select', {view, fields, where, order}, (rows, err) => {
-        if (err) {this.top.error(err); return}
-        let menu = []
-//console.log("Rows:", rows)
-        if (rows && rows.length > 0) rows.forEach(row=>{
-          menu.push({idx:row.ruid, lang:{title:row.name, help:row.descr}, call:()=>{Object.assign(this.state, row.data)}})
-        })
-        if (menu.length <= 0) menu.push({idx:0, lang:'<None>'})
-        this.restoreMenu = menu
-      })
-    },
-
     tabClass(tag) {return {
       tab:	true,
       active:	this.current == tag ? true : false,
@@ -153,10 +138,7 @@ export default {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
-//console.log("Response:", yesNo, tag, resp.t, resp.h)
-        let view = 'wylib.set_data(text,text,text,int,jsonb)'
-          , params = [this.tag, resp.t, resp.h, null, JSON.stringify(this.state)]
-        if (yesNo) Wyseman.request(this.id+'ss', 'tuple', {view, params}, (res, err) => {if (err) this.top.error(err)})
+        if (yesNo) State.save(this.tag,resp.t,resp.h,this.state,this.top.error)
       })
     },
     defaultState() {
@@ -179,10 +161,14 @@ export default {
 //console.log("Restoring state:", JSON.stringify(savedState))
     if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
 
-    Wyseman.listen(this.id+'as', 'wylib', dat =>{
-//console.log("Got async:", dat, this.restoreMenu)
-      if (dat.target == "data") this.getSavedStates()		//Refresh restore states menu
+    State.listen(this.id+'sl', this.tag, (menuData) => {
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+      let menuItems = menuData.map(el=>{
+        return Object.assign(el, {call:()=>{Object.assign(this.state,el.data)}})
+      })
+      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
     })
+
 //    Com.react(this, {})
   },
 
