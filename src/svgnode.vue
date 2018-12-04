@@ -20,17 +20,15 @@
 <script>
 import Com from './common.js'
 import Interact from 'interactjs'
-var nodeBus = new Com.eventBus()	//Discover vms with a given tag
+var nodeBus = new Com.eventBus()			//Discover vms by a given tag
 
 export default {
   name: 'wylib-svgnode',
   props: {
     state:	{type: Object, default: () => ({})},
   },
-  data() { return {
-    xyz:	null
-  }},
-
+//  data() { return {
+//  }},
   computed: {
     transform: function() {				//Moves the object around when we change x or y
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
@@ -115,7 +113,6 @@ export default {
       return({x, y, xs, ys})
     },
   },
-
   created: function() {
     nodeBus.register(this.state.tag, this.state.tag, dat => {	//Listen for anyone asking for me by tag
       return this

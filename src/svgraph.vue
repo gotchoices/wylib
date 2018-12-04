@@ -22,7 +22,7 @@
 //- 
 <template>
   <div class="wylib wylib-svg">
-    <svg :viewBox="viewCoords">
+    <svg class="graph" :viewBox="viewCoords">
       <defs>
         <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth" stroke=inherit fill=inherit>
           <path d="M0,0 L0,8 L12,4 z"/>
@@ -32,10 +32,17 @@
       <wylib-svgnode v-for="spr,idx in state.nodes" :key="idx" :state="spr" ref="node" @drag="moveHandler"/>
     </svg>
     <div class="tools" ref="tools" :style="toolStyle">
-      <button class="nodrag" @mousedown="buttonDown" @mouseup="buttonUp" @mouseleave="buttonUp" title="Attempt to arrange objects on the chart">Arrange</button>
-      <div class="sliders">
-        <input type="range" min="1" max="100" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
-        <input type="range" min="1" max="100" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
+      <div class="menu">
+        <svg class="icon" style="stroke:black; fill: black" v-html="iconSvg('menu')"></svg>
+      </div>
+      <div class="toolbox">
+        <button class="nodrag" @mousedown="buttonDown" @mouseup="buttonUp" @mouseleave="buttonUp" title="Attempt to distribute objects on the chart (hold to repeat)">Arrange</button>
+        <button class="nodrag" @click="$emit('refresh')" title="Reload chart from its source data">Refresh</button>
+        <button class="nodrag" @click="$emit('reset')" title="Reload chart and reinitialize arrangement">Reset</button>
+        <div class="sliders">
+          <input type="range" min="1" max="100" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
+          <input type="range" min="1" max="100" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
+        </div>
       </div>
     </div>
   </div>
@@ -46,6 +53,7 @@ import Com from './common.js'
 import Interact from 'interactjs'
 import svgNode from './svgnode.vue'
 import vector from './vector.js'
+const Icons = require('./icons.js')
 
 export default {
   name: 'wylib-svg',
@@ -57,10 +65,6 @@ export default {
     repeatTime:		{default: 200}
   },
   data() { return {
-    minX:		0,
-    minY:		0,
-    maxX:		this.state.width,
-    maxY:		this.state.height,
     pushForce:		50,
     pullForce:		50,
     startTimer:		null,
@@ -72,17 +76,21 @@ export default {
   computed: {
     viewCoords: function() {		//Viewport of SVG space
 //console.log('Re-render')
-      return [this.minX, this.minY, this.maxX-this.minX, this.maxY-this.minY].join(' ')
+      return [this.state.minX, this.state.minY, this.state.maxX-this.state.minX, this.state.maxY-this.state.minY].join(' ')
     },
     border: function() {		//Outline the normal drawing area
-      return `M ${this.minX} ${this.maxX} H ${this.maxX} V ${this.maxY} H ${this.minX} V ${this.minY}`
+      return `M ${this.state.minX} ${this.state.maxX} H ${this.state.maxX} V ${this.state.maxY} H ${this.state.minX} V ${this.state.minY}`
     },
+    boundBox: function () {return {
+      x:this.state.minX, y:this.state.minY, width:this.state.maxX-this.state.minX, height:this.state.maxY-this.state.minY
+    }},
     toolStyle: function () {return {
       transform:	'translate(' + this.toolX + 'px, ' + this.toolY + 'px)',
     }},
   },
   
   methods: {
+    iconSvg(icon) {return Icons(icon)},
     nodeState(n) {			//Return the state object for the named node
       return this.state.nodes[n]
     },
@@ -97,19 +105,19 @@ export default {
     },
     buttonUp() {
 //console.log("Button up")
-      if (this.startTimer) {		//If waiting for button to repeat	
-        clearTimeout(this.startTimer)	//Cancel that
+      if (this.startTimer) {			//If waiting for button to repeat	
+        clearTimeout(this.startTimer)		//Cancel that
         this.startTimer = null
-        this.bump()			//And do a single bump
+        this.bump()				//And do a single bump
       }
-      if (this.repeatTimer) {		//If we have already been repeating
-        clearInterval(this.repeatTimer)	//Just quit
+      if (this.repeatTimer) {			//If we have already been repeating
+        clearInterval(this.repeatTimer)		//Just quit
         this.repeatTimer = null
       }
     },
     moveHandler(event, state) {		//Called when dragging nodes
-//console.log("Move handler", this.minX, this.maxX, this.$el.getBoundingClientRect().width, ratio)
-      let ratio = (this.maxX - this.minX) / this.$el.getBoundingClientRect().width	//Scale moves by the current scale of the svg
+//console.log("Move handler", this.state.minX, this.state.maxX, this.$el.getBoundingClientRect().width, ratio)
+      let ratio = (this.state.maxX - this.state.minX) / this.$el.getBoundingClientRect().width	//Scale moves by the current scale of the svg
       state.x += (event.dx * ratio)
       state.y += (event.dy * ratio)
     },
@@ -123,7 +131,7 @@ export default {
           if (ix1 != ix2) {
             let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , maxMove = (this.maxX - this.minX) / 10					//Don't try to expand faster than this
+              , maxMove = (this.state.maxX - this.state.minX) / 10			//Don't try to expand faster than this
               , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 10 (or negative)
               , push = Math.min(this.pushForce * 800 / Math.pow(mag,2), maxMove)
               , pull = this.pullForce * mag / 1000000000	//All objects have a little attractive gravity
@@ -141,14 +149,14 @@ export default {
       })
       let minX = Number.MAX_VALUE, minY = minX, maxX = -Number.MAX_VALUE, maxY = maxX
       this.$refs.node.forEach((vm, ix) => {		//Now do the nudging
-        let hubs = vm.$el.getElementsByClassName("hubs")
-          , bBox = hubs.length >= 1 ? hubs[0].getBBox() : {x:0, y:0, width:this.state.width, height:this.state.height}
-          , range = {minX:vm.state.x+Math.min(bBox.x, 0), minY:vm.state.y+Math.min(bBox.y, 0), maxX:vm.state.x+Math.max(bBox.width+bBox.x,vm.state.width), maxY:vm.state.y+Math.max(bBox.height+bBox.y,vm.state.height)}
-        
 //console.log("Bump:", ix, forces[ix])
         vm.state.x += forces[ix].x			//Nudge
         vm.state.y += forces[ix].y
 
+        let hubs = vm.$el.getElementsByClassName("hubs")
+          , bBox = hubs.length >= 1 ? hubs[0].getBBox() : vm.$el.getBBox()
+          , range = {minX:vm.state.x+Math.min(bBox.x, 0), minY:vm.state.y+Math.min(bBox.y, 0), maxX:vm.state.x+Math.max(bBox.width+bBox.x,vm.state.width), maxY:vm.state.y+Math.max(bBox.height+bBox.y,vm.state.height)}
+        
 //console.log(" size:", vm.state.width, vm.state.height, range)
         if (range.maxX > maxX) maxX = range.maxX	//Determine proper range of canvas
         if (range.maxY > maxY) maxY = range.maxY
@@ -160,15 +168,15 @@ export default {
         vm.state.x -= (minX - 10)
         vm.state.y -= (minY - 10)
       })
-      this.minX = this.minY = 0				//And adjust viewport to show all objects
-      this.maxX = maxX - minX + 20
-      this.maxY = maxY - minY + 20
+      this.state.minX = this.state.minY = 0		//And adjust SVG viewport to show all objects
+      this.state.maxX = maxX - minX + 20
+      this.state.maxY = maxY - minY + 20
     },
   },
 
   beforeMount: function() {
 //console.log("SVG state:", JSON.stringify(this.state))
-    Com.react(this, {width: 400, height: 400, nodes: {}})
+    Com.react(this, {minX:0, minY:0, maxX:400, maxY: 400, nodes: {}})
   },
 
   mounted: function() {
@@ -182,27 +190,47 @@ export default {
 
 <style lang="less">
   .wylib-svg .tools {
-    opacity: 0.02;
-    border: 1px solid blue;
-    border-radius: 4px;
-    background: white;
     position: absolute;
-    padding: 4px;
-    transition: all 300ms ease-in-out;
+    right: 10px;
   }
 
-  .wylib-svg .tools:hover {
-    opacity: 1.0;
-  }
   .wylib-svg button {
     width: 100%;
     padding: 4px;
-    background: lightBlue;
+    background: #bbddff;
   }
   .wylib-svg .sliders input {
     display: block;
   }
-  .wylib-svg svg {
+  .wylib-svg .menu {
+    position:absolute;
+    right: .25em;
+    top: .25em;
+//    z-index: 1;
+  }
+  .wylib-svg .menu .icon {
+    height: 1em;
+    width: 1em;
+  }
+  .wylib-svg .toolbox {
+    opacity: 0.20;
+    display: none;
+    border: 1px solid blue;
+    border-radius: 4px;
+//    background: yellow;
+    padding: 4px;
+    transition: all 500ms ease-in-out;
+  }
+  .menu:hover + .toolbox {
+//    background: red;
+    display: block;
+    opacity: 1.0;
+  }
+  .wylib-svg .toolbox:hover {
+    opacity: 1.0;
+    display: block;
+  }
+  .wylib-svg .graph {
     position: absolute;
   }
 </style>
