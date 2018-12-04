@@ -14,11 +14,12 @@ module.exports = {
 
   langTemplate() {return {title: null, help: null}},
 
-  react(vm, properties, node = vm['state']) {	//Initialize properties at a specified node in a component object
+  react(vm, properties, node = vm.state) {	//Initialize properties at a specified node in a component object
     Object.keys(properties).forEach(key => {
 //console.log("React:", key);
-      if (!(key in node)) vm.$set(node, key, null)
-      if (!node[key]) node[key] = properties[key]
+      if (!(key in node)) vm.$set(node, key, properties[key])
+//      if (!(key in node)) vm.$set(node, key, null)
+//      if (!node[key]) node[key] = properties[key]
     })
   },
   
@@ -51,8 +52,8 @@ module.exports = {
     this.register = function(id, event, cb) {		//I:ID am listening for events:event
       if (!(event in this.events)) this.events[event] = {}
 //console.log("Register id:", id, "event:", event)
-      if (cb) {						//Registering
-        if (!(id in this.events[event])) this.events[event][id] = cb
+      if (cb) {						//Registering or re-registering
+        this.events[event][id] = cb
       } else if (id in this.events[event]) {		//De-registering
         delete this.events[events][id]
       }
@@ -98,13 +99,13 @@ module.exports = {
     }
 
     this.error = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modError', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', cb})
+      this.modalCB({posted: true, reason:'modError', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', dews:{}, data:{}, cb})
     }
     this.notice = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modNotice', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', cb})
+      this.modalCB({posted: true, reason:'modNotice', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', dews:{}, data:{}, cb})
     }
     this.confirm = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modConfirm', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', cb})
+      this.modalCB({posted: true, reason:'modConfirm', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews:{}, data:{}, cb})
     }
     this.query = function(msg, fields, data, cb) {
       this.modalCB({posted: true, reason:'modQuery', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: {fields}, data, cb})
