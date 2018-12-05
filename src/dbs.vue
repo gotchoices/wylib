@@ -48,7 +48,7 @@ export default {
       {tag: '<', title: '<', help: 'The left value compares less than the right value'},
       {tag: '<=', title: '<=', help: 'The left value compares less than or equal to the right value'},
       {tag: '>', title: '>', help: 'The left value compares more than the right value'},
-      {tag: '>=', title: '<=', help: 'The left value compares more than or equal to the right value'},
+      {tag: '>=', title: '>=', help: 'The left value compares more than or equal to the right value'},
       {tag: '!=', title: 'Not =', help: 'The left and right side have different values'},
       {tag: '~', title: '~', help: 'The left side matches the regular expression given on the right'},
       {tag: 'in', title: 'In', help: 'The left value exists in a list or array expressed on the right side'},
@@ -62,9 +62,7 @@ export default {
       return {left: this.fields, oper: this.operators, right: this.fields}
     },
     dockConfig: function() { return [
-      {idx: 'sch', lang: this.wm.dbsSearch, call: this.search, icon: 'circle', shortcut: true},
-      {idx: 'sav', lang: this.wm.dbsSave,   call: this.save,   icon: 'circle', shortcut: false},
-      {idx: 'rec', lang: this.wm.dbsRecall, call: this.recall, icon: 'circle', shortcut: false},
+      {idx: 'sch', lang: this.wm.dbsSearch, call: this.search, icon: 'wand', shortcut: true},
     ]},
     headerHeight: function() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
