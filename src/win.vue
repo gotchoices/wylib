@@ -29,7 +29,7 @@
         <wylib-button v-if="!topLevel && pinnable" :size="headerHeight" icon="pushpin" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
-      <div class="handle">
+      <div class="handle" v-on:dblclick="()=>{top.layer(1)}">
         <div class="label" :style="{'font-size': (headerHeight < 16) ? (headerHeight-2) + 'px' : '1em'}">
           {{ lang.title }}
         </div>
@@ -52,6 +52,8 @@
 </template>
 
 <script>
+const MenuLayer = 1000
+
 import Com from './common.js'
 import Menu from './menu.vue'
 import Button from './button.vue'
@@ -79,6 +81,7 @@ export default {
     top:		null,			//portal to communicate with toplevel window
     modal:		{posted: false},
     restoreMenu:	[],
+    lastLoadIdx:	null,
   }},
   computed: {
     id: function() {return 'win_' + this._uid + '_'},
@@ -87,21 +90,23 @@ export default {
     },
     winMenuConfig: function() {let wm = this.wm
       return [
-      {idx: 'sav', lang: wm.winSave,     icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.winRestore,  menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'def', lang: wm.winDefault,  icon: 'circle',    call: this.defaultState},
-      {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: this.moveToTop},
-      {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: this.moveToBottom},
+      {idx: 'sav', lang: wm.winSave,     icon: 'upload',    call: this.saveState},
+      {idx: 'sas', lang: wm.winSaveAs,   icon: 'upload2',   call: this.saveStateAs},
+      {idx: 'res', lang: wm.winRestore,  icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
+      {idx: 'def', lang: wm.winDefault,  icon: 'home',      call: this.defaultState},
+      {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
+      {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
       {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
       {idx: 'cls', lang: wm.winClose,    icon: 'close',     call: ()=>{this.$emit('close')}}
     ]},
     winStyleS: function () {return {
-      borderColor:	this.pr.winBorderColor, 
+      borderColor:	this.pr.winBorderColor,
       background:	this.pr.dataBackground,
-      borderWidth:	this.pr.winBorderWidth + 'px', 
-      opacity:		this.pr.winOpacity, 
+      borderWidth:	this.pr.winBorderWidth + 'px',
+      opacity:		this.pr.winOpacity,
       borderRadius:	this.pr.winBorderRad + 'px',
       visibility:	this.state.posted ? 'visible' : 'hidden',
+      zIndex:		this.topLevel ? this.state.layer : MenuLayer,
     }},
     winStyleF: function () {return {		//Faster moves with these separate?
       transform:	'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
@@ -119,21 +124,18 @@ export default {
 //console.log("In close", this.id)
       this.$emit('close')
     },
-    moveToTop() {
-console.log("MoveToTop: ", "Not yet implemented")
-    },
-    moveToBottom() {
-console.log("MoveToBottom: ", "Not yet implemented")
-    },
     minimize() {
-console.log("Minimize: ", "Not yet implemented")
+      this.top.notice("Sorry, minimize not yet implemented")
     },
-    saveState() {
+    saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
-        if (yesNo) State.save(this.tag,resp.t,resp.h,this.state,this.top.error)
+        if (yesNo) State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
+    },
+    saveState() {
+      if (this.lastLoadIdx) State.save(this.lastLoadIdx, this.state, this.top.error); else this.saveStateAs()
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (yesNo, tag) => {
@@ -191,20 +193,12 @@ console.log("Minimize: ", "Not yet implemented")
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
-//console.log("State:", this.state);
+//console.log("Win State:", this.state);
     Com.react(this, {
-      x: null, y: null, posted: false, pinned: false, menu: {client:{}}, client: {}, modal: {posted: false},
+      x: null, y: null, posted: false, pinned: false, layer: 10,
+      menu: {client:{}}, client: {}, modal: {posted: false},
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
-    })
-
-    if (this.topLevel) State.listen(this.id+'sl', this.tag, (menuData) => {
-//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-      let menuItems = menuData.map(el=>{
-        return Object.assign(el, {call:()=>{Object.assign(this.state,el.data)}})
-      })
-      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
-//console.log("WMC:", 1, this.winMenuConfig)
     })
   },
 
@@ -222,13 +216,26 @@ console.log("Minimize: ", "Not yet implemented")
       onmove: this.moveHandler
     })
 //console.log("Mounted; this: ", this.title + " topLevel: " + this.topLevel)
+
     if (this.topLevel) {
-      this.top = new Com.topHandler((st) => {this.modal = st})
+      this.top = new Com.topHandler((st) => {this.modal = st}, this)
     } else {
       this.myTopElement = this.$el.closest('.wylib-win.toplevel')
     }
     if (this.myTopElement) this.myTopElement.addEventListener('click', this.topClick)
 //console.log("Win components: " + JSON.stringify(this.$options.components))
+
+    if (this.topLevel) State.listen(this.id+'sl', this.tag, (menuData) => {
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+      let menuItems = menuData.map(el=>{
+        return Object.assign(el, {call:()=>{
+          Object.assign(this.state,el.data)
+          this.lastLoadIdx = el.idx
+        }})
+      })
+      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+//console.log("WMC:", 1, this.winMenuConfig)
+    }, this.top.error)
   },
 
   beforeDestroy: function() {
@@ -241,7 +248,6 @@ console.log("Minimize: ", "Not yet implemented")
   .wylib-win {
     touch-action: none;		//Overcome dragging bug in android chrome
     position: absolute;
-    z-index: 10;
     border-style: solid;
   }
   .wylib-win.toplevel {

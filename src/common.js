@@ -1,13 +1,20 @@
 //Common support functions
 //Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
 // -----------------------------------------------------------------------------
-//Components are responsible to tap into this object and bind to any
-//appropriate properties.
+// Z-Level Descriptions:
+// 0-9: Features within a single window
+// 10, 20, 30 ...: Toplevel windows, dbp, dbs, dbe, etc (10 .. 990)
+// 1000: Popup menus
+// 2000: 
+// -----------------------------------------------------------------------------
 //- TODO:
-//- Why is 'vm' an argument to messageBus
+//- Moving windows to the front will eventually overflow 990
+//- Need to renormalize all registered windows after raise
 //- 
 import Wyseman from './wyseman.js'
 var docIndex = 0
+var topWins = {}
+const zLevelMod = 10
 const storeKey = 'wylibState_'
 
 module.exports = {
@@ -23,56 +30,39 @@ module.exports = {
     })
   },
   
-  messageBus(vm) {		//Bus for messages to be distributed to registered clients
-    this.master = vm
-    this.clients = {}
-    
-    this.register = function(id, cb) {	//Clients register to receive callbacks
-//console.log("Bus register:", id, cb)
-      if (cb) 
-        this.clients[id] = cb
-      else if (id in this.clients && !cb)
-        delete this.clients[id]
-    },
-    
-    this.notify = function(message, data) {	//Every registered client will get every message
-      let replies = []
-//console.log("Bus notify:", this.clients)
-      Object.keys(this.clients).forEach(key => {
-//console.log("Bus:", this.master, "notifying:", key)
-        replies.push(this.clients[key](message, data))
-      })
-//console.log("Bus ans:", this.master, replies)
-      return replies
-    }
-  },
-
-  eventBus() {			//Like messageBus, but clients can listen for specific events
-    this.events = {}
-    this.register = function(id, event, cb) {		//I:ID am listening for events:event
-      if (!(event in this.events)) this.events[event] = {}
-//console.log("Register id:", id, "event:", event)
-      if (cb) {						//Registering or re-registering
-        this.events[event][id] = cb
-      } else if (id in this.events[event]) {		//De-registering
-        delete this.events[events][id]
-      }
-    }
-    this.notify = function(event, data) {			//Invoke all listener callbacks for: event
-      let replies = []
-//console.log("Notify event:", event, this.events[event])
-      if (this.events[event]) Object.keys(this.events[event]).forEach(id => {
-        replies.push(this.events[event][id](data))
-      })
-      return replies
-    }
-  },
-
-  topHandler(cb) {		//Create a handler for communicating to/from the toplevel window and generating modal dialogs there
+  topHandler(cb, context) {		//Create a handler for communicating to/from the toplevel window and generating modal dialogs there
     this.modalCB = cb
     this.postCB = null
+    this.context = context
+    
+    if (context) topWins[context.id] = context	//Keep a list of all participating windows
 
-    this.makeMessage = function(msg) {		//Make a message, possibly from a message object
+    this.layer = function(layer) {
+      if (!layer) return
+      let th = this.context, newLayer
+        , maxLevel = -Number.MAX_VALUE
+        , minLevel =  Number.MAX_VALUE
+//console.log("Layer request:", layer, "from:", th.id, th.$options.name, "cur:", th.state.layer)
+      Object.keys(topWins).forEach(id=>{
+        let st = topWins[id].state
+//console.log("  loop id:", id, st.layer)
+        if (st.layer > maxLevel) maxLevel = st.layer
+        if (st.layer < minLevel) minLevel = st.layer
+      })
+//console.log("      min:", minLevel, "max:", maxLevel)
+      if (layer > 0)
+        newLayer = maxLevel + zLevelMod
+      else
+        newLayer = minLevel - zLevelMod
+console.log("Set:", th.id, "to:", newLayer)
+      th.state.layer = newLayer
+      if (newLayer < 0) Object.values(topWins).forEach(vmthis=>{
+//console.log("  adjusting", vmthis.id, "to:", vmthis.state.layer - newLayer)
+        vmthis.state.layer -= newLayer
+      })
+    }
+
+    this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
       if (typeof msg == 'string') return msg
       if (typeof msg == 'object') {
         if (msg.lang && msg.lang.title && msg.lang.help)
@@ -111,11 +101,11 @@ module.exports = {
       this.modalCB({posted: true, reason:'modQuery', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: {fields}, data, cb})
     }
     
-    this.onPosted = function(cb) {		//Register to get a callback when toplevel window posts
+    this.onPosted = function(cb) {		//Register to get a callback when a dialog window posts
 //console.log("TopHandler got registration", cb)
       this.postCB = cb
     }
-    this.posted = function() {			//Toplevel should call this when it posts
+    this.posted = function() {			//Modal dialog should call this when it posts
 //console.log("TopHandler sees posted", this.postCB)
       if (this.postCB) this.postCB()
     }
