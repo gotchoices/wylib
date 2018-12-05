@@ -235,7 +235,7 @@ console.log('Notify group: ', chan, data)
       return
     }
     if (!this.listens[chan]) this.listens[chan] = {}
-//console.log("Listening for:", chan)
+console.log("Listening for:", chan)
     this.listens[chan][id] = cb
   },
 }
