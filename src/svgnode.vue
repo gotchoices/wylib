@@ -19,8 +19,9 @@
 
 <script>
 import Com from './common.js'
+import Bus from './bus.js'
 import Interact from 'interactjs'
-var nodeBus = new Com.eventBus()			//Discover vms by a given tag
+var nodeBus = new Bus.eventBus()			//Discover vms by a given tag
 
 export default {
   name: 'wylib-svgnode',
