@@ -87,6 +87,7 @@ export default {
     top:		null,			//portal to communicate with toplevel window
     restoreMenu:	[],
     previews:		[{posted: false, client:{dbView: 'wylib.data_v'}}],
+    lastLoadIdx:	null,
   }},
   computed: {
     id: function() {return 'app_' + this._uid + '_'},
@@ -96,10 +97,11 @@ export default {
     },
     appMenuConfig: function() {let wm = this.wm
       return [
-      {idx: 'sav', lang: wm.appSave,      icon: 'circle',    call: this.saveState},
-      {idx: 'res', lang: wm.appRestore,   menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'def', lang: wm.appDefault,   icon: 'circle',    call: this.defaultState},
-      {idx: 'edi', lang: wm.appEditState, icon: 'circle',    call: ()=>{this.previews[0].posted = true}},
+      {idx: 'sav', lang: wm.appSave,      icon: 'upload', call: this.saveState},
+      {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2', call: this.saveStateAs},
+      {idx: 'res', lang: wm.appRestore,   icon: 'download', menu: this.restoreMenu, layout: ['lang','owner','access']},
+      {idx: 'def', lang: wm.appDefault,   icon: 'home',   call: this.defaultState},
+      {idx: 'edi', lang: wm.appEditState, icon: 'pencil', call: ()=>{this.previews[0].posted = true}},
     ]},
   },
   watch: {
@@ -134,12 +136,15 @@ export default {
       if (!this.retryIn) {this.retryIn = this.tryEvery} else {this.retryIn--}
       setTimeout(this.retryConnect, 1000)
     },
-    saveState() {
+    saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
-        if (yesNo) State.save(this.tag,resp.t,resp.h,this.state,this.top.error)
+        if (yesNo) State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
+    },
+    saveState() {
+      if (this.lastLoadIdx) State.save(this.lastLoadIdx, this.state, this.top.error); else this.saveStateAs()
     },
     defaultState() {
       this.top.confirm(this.wm.appDefault.help, (yesNo, tag) => {
@@ -161,14 +166,6 @@ export default {
 //console.log("Restoring state:", JSON.stringify(savedState))
     if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
 
-    State.listen(this.id+'sl', this.tag, (menuData) => {
-//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-      let menuItems = menuData.map(el=>{
-        return Object.assign(el, {call:()=>{Object.assign(this.state,el.data)}})
-      })
-      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
-    })
-
 //    Com.react(this, {})
   },
 
@@ -179,7 +176,17 @@ export default {
     Wyseman.connect()
     window.addEventListener('beforeunload', this.beforeUnload)
     this.top = new Com.topHandler((st) => {Object.assign(this.modal, st)})
-//console.log("mounted:", this.state)
+
+    State.listen(this.id+'sl', this.tag, (menuData) => {
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+      let menuItems = menuData.map(el=>{
+        return Object.assign(el, {call:()=>{
+          Object.assign(this.state, el.data)
+          this.lastLoadIdx = el.idx
+        }})
+      })
+      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+    }, this.top.error)
   },
 
   beforeDestroy: function() {
@@ -211,7 +218,7 @@ export default {
   position: absolute;
   right: 0;
   top: 1.25em;
-  z-index: 10000;
+  z-index: 100000;
 }
 .wylib-app .tabset {
   width: 100%;
