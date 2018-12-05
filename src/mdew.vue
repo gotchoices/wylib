@@ -31,6 +31,7 @@
 
 <script>
 import Com from './common.js'
+import Bus from './bus.js'
 import Dew from './dew.vue'
 import InDate from './indate.vue'
 
@@ -49,7 +50,7 @@ export default {
     valid:	null,
     dirtys:	{},
     userData:	{},
-    dewBus:	new Com.messageBus(this),
+    dewBus:	new Bus.messageBus(this),
   }},
 
   computed: {
