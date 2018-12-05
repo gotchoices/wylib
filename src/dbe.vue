@@ -40,6 +40,7 @@
 
 <script>
 import Com from './common.js'
+import Bus from './bus.js'
 import Wyseman from './wyseman.js'
 import Mdew from './mdew.vue'
 import MenuDock from './menudock.vue'
@@ -60,7 +61,7 @@ export default {
     dbData:	{},		//Data as fetched from the database
     dirty:	false,
     valid:	false,
-    msgBus:	new Com.messageBus(this),
+    msgBus:	new Bus.messageBus(this),
   }},
 
   computed: {
@@ -81,14 +82,14 @@ export default {
     return subs
     },
     dockConfig: function() { return [
-      {idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu},
-      {idx: 'sub', lang: this.wm.dbeSubords, menu: this.subMenu},
-      {idx: 'adr', lang: this.wm.dbeInsert,  call: this.insert,  icon: 'plus',    shortcut: true, disabled: !this.valid},
-      {idx: 'upd', lang: this.wm.dbeUpdate,  call: this.update,  icon: 'arrowup', shortcut: true, disabled: !this.dirty || !this.valid},
-      {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'minus',   disabled: !!this.state.key},
-      {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'circle',  shortcut: true},
-      {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'circle'},
-      {idx: 'pre', lang: this.wm.dbePreview, call: this.docPrev, icon: 'circle',  shortcut: true},
+      {idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu, icon: 'wand'},
+      {idx: 'sub', lang: this.wm.dbeSubords, menu: this.subMenu, icon: 'table'},
+      {idx: 'adr', lang: this.wm.dbeInsert,  call: this.insert,  icon: 'upload', shortcut: true, disabled: !this.valid},
+      {idx: 'upd', lang: this.wm.dbeUpdate,  call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty || !this.valid},
+      {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.state.key},
+      {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
+      {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
+      {idx: 'pre', lang: this.wm.dbePreview, call: this.docPrev, icon: 'filetext', shortcut: true},
     ]},
     headerHeight: function() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
