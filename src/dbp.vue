@@ -49,6 +49,7 @@
 
 <script>
 import Com from './common.js'
+import Bus from './bus.js'
 import Wyseman from './wyseman.js'
 import Menu from './menu.vue'
 import MenuDock from './menudock.vue'
@@ -69,8 +70,8 @@ export default {
     viewMeta:	null,
     gridData:	[],
     lastMenu:	null,
-    mlbBus:	new Com.messageBus(this),
-    dbeBus:	new Com.messageBus(this),
+    mlbBus:	new Bus.messageBus(this),
+    dbeBus:	new Bus.messageBus(this),
     lastSpec:	{},
   }},
 
@@ -83,16 +84,16 @@ export default {
       return flds
     },
     dockConfig: function() { return [
-      {idx: 'lod', lang: this.wm.dbpLoad   ,  call: ev=>this.load(),	icon: 'circle',    shortcut: false},
-      {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(),	icon: 'spinner11', shortcut: true},
-      {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll, icon: 'circle',    shortcut: false},
+      {idx: 'lod', lang: this.wm.dbpLoad   ,  call: ev=>this.load(),	icon: 'download',  shortcut: false},
+      {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(),	icon: 'spinner', shortcut: true},
+      {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll, icon: 'download2',  shortcut: false},
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,  icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog, icon: 'pencil',    toggled: this.state.edit.posted},
       {idx: 'prv', lang: this.wm.dbpPrev   ,  call: this.prev,    icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext   ,  call: this.next,    icon: 'arrowdown', shortcut: true},
-      {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns, icon: 'circle'},
-      {idx: 'tst', lang: {title:'Test', help:'XYZ!'}, call: this.test, icon:'circle'},
-      {idx: 'cvi', lang: this.wm.dbpVisible, menu: [
+      {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns, icon: 'sun'},
+      {idx: 'tst', lang: {title:'Test', help:'XYZ!'}, call: this.test, icon:'cirdot'},
+      {idx: 'cvi', lang: this.wm.dbpVisible, icon:'eye', menu: [
         {idx: 'c1', lang: this.wm.dbpVisCheck, input: 'checkbox'},
         {idx: 'c2', lang: this.wm.dbpVisCheck, input: 'checkbox'},
         {idx: 'c3', lang: this.wm.dbpVisCheck, input: 'checkbox'},
