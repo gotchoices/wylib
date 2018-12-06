@@ -1,9 +1,0 @@
-#!/usr/bin/wish
-#include(Copyright)
-
-option add *Mbar.Menubutton.padX 20 widgetDefault
-option add *Mbar.Menubutton.padY 2 widgetDefault
-
-frame .f -class Mbar
-menubutton .f.b -text Test
-pack .f .f.b
