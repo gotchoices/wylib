@@ -1,7 +1,7 @@
 #A file attached to a document
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- Still inserts the attachment even if the filetype check fails

@@ -1,5 +1,5 @@
 //Toplevel window
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- send 'close' event to parent and let it decide what to do with it.

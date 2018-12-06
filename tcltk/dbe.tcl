@@ -2,7 +2,7 @@
 # This is the main editor widget where fields can be veiwed and edited.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- re-instate lv() to check for actual changes? (or change how x::modified works?)

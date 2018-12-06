@@ -1,5 +1,5 @@
 //Display a menu button, and optionally shortcut buttons from the menu itself
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Integrate button changes

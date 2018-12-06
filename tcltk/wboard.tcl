@@ -1,8 +1,7 @@
-#!/usr/bin/wish
-package provide wylib 0.33
 # Display widgets on a canvas, allow to drag them around and save the configuration
 #------------------------------------------
-#include(Copyright)
+#Copyright WyattERP, all other rights reserved
+package provide wylib 0.35
 
 #TODO:
 #- 

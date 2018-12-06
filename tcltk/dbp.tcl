@@ -3,7 +3,7 @@
 # a listbox and allow the user to select one to be edited in the dbe widget.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- search menu function

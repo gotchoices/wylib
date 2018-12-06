@@ -13,7 +13,7 @@ so, short of JAVA or some kind of binary plugin, there didn't seem any good
 way to replicate it until the advent of HTML 5 and reactive frameworks.
 
 The idea is counter to the notion of "screens" so prevalent in traditional
-HTML programming.  In that system, the user must navigate through a maze of
+HTML programming.  In such systems, the user must navigate through a maze of
 pre-defined, pre-conceived screens in order to find the correct spot to
 interact with the model in the way he wants.  In other words, if the
 programmer didn't anticipate what you want to do, you're not going to be 
@@ -25,31 +25,24 @@ Wylib uses the notion of an exposed model.  The idea is to give the user
 more visibility into the way the database stores the information and its
 relational links.  You open a viewer into the database view you will be
 working in, and then use a series of add, update, delete commands to make
-the changes you want.  The application programmer crafts each module in
-such a way to make it as friendly as possible to get done what you need to
-do.
+the changes you want.  The application programmer crafts each module in such 
+a way to make it as friendly as possible to get done what you need to do.
 
 This typically makes it a little slower to learn how to use a Wylib
 application.  The learning curve is a bit slower.  However, once you get
-the hang of the basic data access components, you can quickly surpass the
+the hang of the basic data access components, you can easily surpass the
 productivity you might find in a traditional screens-based GUI.
 
-Wylib strives to allow you access to multiple, simultaneous screens.  You
-should be able to open any number of views at once, and interact with them as
-you like.  You query the data according to your own needs so you get just the
-view you want for your particular need.
+Wylib strives to allow you access to multiple, simultaneous screens or views.
+You should be able to open any number of views at once, and interact with them 
+as you like.  You query the data according to your own needs so you get just 
+the view you want for your particular need.
 
-Npm Script options:
--------------------------------------------------------------------------------
-  test: Not yet implemented
-  dev-hot: Hot reload server for use in development testing.  Serves up mains 
-    in test directory for demonstrating/testing individual wylib components.
-  dev-build: Build minimized javascript bundles in dist directory, including
-    source maps.
-  build: Build javascript bundles, ready for final distributino
-  
 Component Frontend Model
 -------------------------------------------------------------------------------
+Wylib supports a Model-View-Control design.  However, the divisions between
+these layers are not always perfectly obvious.
+
 The original Wylib was mostly responsible for View and Control functions.  The
 The PostgreSQL backend contained nearly all the model and some additional 
 Control functions.
@@ -59,9 +52,9 @@ responsible solely for View functionality.  The backend middleware is handled
 by Wyseman, which also manages the PostgreSQL schema.  So between the two,
 they handle all Control and Model functionality.
 
-Having said that, Wylib has its own "model," in the sense of storing the
-information it needs to manage how it presents the View.  This model consists
-of four aspects: State, Data, Preference, and Layout.
+Having said that, the Wylib GUI itself has its own "model," in the sense of 
+storing the information it needs to manage how it presents the View.  This 
+model consists of four aspects: State, Data, Preference, and Layout.
 
   State: State data has to do with the way components are configured on the
   	screen, and how they will interact with the data they display.

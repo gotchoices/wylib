@@ -1,7 +1,7 @@
 #Bring up a dialog box to allow the calculation of time worked
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- port to wylib

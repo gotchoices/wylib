@@ -1,5 +1,5 @@
 //A grid implemented entirely in vue.  Sluggish and not very scalable.
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Get rid of red outlining on column drag

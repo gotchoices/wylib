@@ -1,7 +1,7 @@
 # Wyattized menubutton widget
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- if we configure in a -textv, the trace doesn't get set

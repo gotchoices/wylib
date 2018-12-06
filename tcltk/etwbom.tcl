@@ -2,7 +2,7 @@
 # This widget is a Bill of Materials for the specified part number/name
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- 

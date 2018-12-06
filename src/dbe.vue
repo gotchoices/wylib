@@ -1,5 +1,5 @@
 //Database record editing component
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Keep track of clean/dirty status (by tracking changed events from dews)

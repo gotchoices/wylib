@@ -2,7 +2,7 @@
 # The scroll bars will automatically appear and disappear when the amount of data inside the widget would require their existence.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO
 #X- Get test widget working

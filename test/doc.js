@@ -1,5 +1,5 @@
 //Document preview
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 import Vue from 'vue'
 Vue.config.productionTip = false

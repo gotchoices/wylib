@@ -1,7 +1,7 @@
 # Open a toplevel widget to allow searching for text in another window
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- implement replace function and bindings

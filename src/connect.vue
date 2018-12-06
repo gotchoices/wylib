@@ -1,6 +1,6 @@
 //Application framework
 //A connection dialog, and a set of tabs for various tasks
-//Copyright MyCHIPs.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
 //- Has to be independent of database, wylib until connection made

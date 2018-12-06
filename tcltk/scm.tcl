@@ -2,7 +2,7 @@
 # The choice in process shows up in an entry at the bottom
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- handle either forced or free-form selection menu

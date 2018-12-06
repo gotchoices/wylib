@@ -4,7 +4,7 @@
 # If not, the password will be prompted for and the timeout will be restarted.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- adapt to osdep.tcl, port to windows

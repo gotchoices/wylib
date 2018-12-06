@@ -1,7 +1,7 @@
 # Run custom reports in a text window
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- how does print/spell/search get into proper menus

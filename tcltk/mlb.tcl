@@ -1,7 +1,7 @@
 # Multiple pan-able listboxes arranged as columns
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- summary boxes don't calculate themselves on initial invocation

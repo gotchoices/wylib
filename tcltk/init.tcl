@@ -1,7 +1,7 @@
 #Run this before using the wyatt basic library
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- 
@@ -22,7 +22,7 @@ namespace eval lib {
     if {[info exists ::env(WYLIB_APPNAME)]} {
         set cfig(appname)	$::env(WYLIB_APPNAME)
     } else {
-        set cfig(appname)	"[file tail [lindex [split [read_file /proc/self/cmdline] \000] 1]]"
+        set cfig(appname)	[file tail $argv0]
     }
 }
 

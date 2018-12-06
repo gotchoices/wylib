@@ -1,3 +1,4 @@
+//Copyright WyattERP.org: See LICENSE in the root of this package
 //import Application	from './app.vue'
 //import DataView		from './dbp.vue'
 //import DataEdit		from './dbe.vue'

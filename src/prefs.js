@@ -1,5 +1,5 @@
 //A global object to maintain preferences across an application
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //Components are responsible to tap into this object and bind to any
 //style/theme properties they need.

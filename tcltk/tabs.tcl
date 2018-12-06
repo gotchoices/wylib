@@ -1,7 +1,7 @@
 # Wyattized tabset widget, a wrapper around blt::tabset
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 package require BLT
 
 #TODO:

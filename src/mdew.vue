@@ -1,5 +1,5 @@
 //Multiple data field editing widget
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Can layout multiple dews in a grid

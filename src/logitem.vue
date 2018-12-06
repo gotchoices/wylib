@@ -1,5 +1,5 @@
 //Logical expression item: left-hand-side, comparator, right-hand-side
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //- 

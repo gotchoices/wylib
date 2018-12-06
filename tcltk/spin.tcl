@@ -1,7 +1,7 @@
 #Two buttons to increment/decrement a value in an associated entry
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- 

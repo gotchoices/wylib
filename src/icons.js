@@ -1,5 +1,5 @@
 //Toplevel window
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // Serve up SVG fragments to include as button icons
 // See: https://icomoon.io/app/#/select

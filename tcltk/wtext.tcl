@@ -2,7 +2,7 @@
 #This is an original work, but thanks goes to Bryan Oakley (oakley@channelpoint.com) who showed the way with his supertext.tcl
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- Implement custom keymap in customization script

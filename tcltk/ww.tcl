@@ -1,7 +1,7 @@
 # Misc functions common to wyattized TK widgets
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- 

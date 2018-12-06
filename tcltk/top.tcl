@@ -4,7 +4,7 @@
 # main window is closed, it will exit the application.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- close window calls

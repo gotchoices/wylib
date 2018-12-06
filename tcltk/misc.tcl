@@ -2,7 +2,7 @@
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
 #provides: nop cap_first uwin round_dollar norm_dollar comma_dollar labtpt margins wrap uproc dowhile lremove widgclose widginit shq debug mytop mypar plural def
-package provide wylib 0.33
+package provide wylib 0.35
 
 # Do nothing
 #------------------------------------------

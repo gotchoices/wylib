@@ -2,7 +2,7 @@
 # stored in a namespace, but they don't really justify their own namespace
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- remove argproc calls below

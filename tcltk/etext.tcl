@@ -3,7 +3,7 @@
 # This is used for programs like noedit, ledit, bedit
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO
 #X- test spell on widget

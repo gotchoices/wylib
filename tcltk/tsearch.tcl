@@ -1,7 +1,7 @@
 # Set up a search widget for a text window
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 namespace eval tsearch {
     namespace export tsearch

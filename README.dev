@@ -1,0 +1,10 @@
+Developer Notes
+
+Npm Script options:
+-------------------------------------------------------------------------------
+  test: Not yet implemented
+  dev-hot: Hot reload server for use in development testing.  Serves up mains 
+    in test directory for demonstrating/testing individual wylib components.
+  dev-build: Build minimized javascript bundles in dist directory, including
+    source maps.
+  build: Build javascript bundles, ready for final distributino

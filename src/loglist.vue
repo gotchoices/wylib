@@ -1,5 +1,5 @@
 //Logical expression builder
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Connector can't be drawn in a computed value--has to be after render

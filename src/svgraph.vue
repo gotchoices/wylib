@@ -1,5 +1,5 @@
 //Manage a reactive SVG figure which can be updated on the fly
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Display a blank SVG background

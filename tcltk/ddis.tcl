@@ -1,7 +1,7 @@
 # Distribute documents via printer, FAX or email
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- port to wylib (help::init, etc)

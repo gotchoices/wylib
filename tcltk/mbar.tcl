@@ -1,7 +1,7 @@
 # Create a frame (a megabar) containing menus, buttons or other widgets
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- how to have help for each menu item

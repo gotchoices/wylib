@@ -1,5 +1,5 @@
 //Communicate with the wyseman backend, control and model layers
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //This is one of multiple possible simultaneous front-end views
 //Any GUI element can generate a request for data, for example:

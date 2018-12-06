@@ -1,7 +1,7 @@
 # A time-of-day setting and display widget
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- layout shows 1,5,15,30,60 divisions

@@ -2,7 +2,7 @@
 # add, modify, delete entries before allowing the entries to be processed
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- Save data in a list in addition to the listbox

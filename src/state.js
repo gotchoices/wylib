@@ -1,5 +1,5 @@
 //Manage saving states to and restoring them from the database
-//Copyright MyCHIPs.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
 //- Support separately save and save-as for states

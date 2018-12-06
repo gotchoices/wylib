@@ -2,7 +2,7 @@
 #different types and formats
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #- in edit, make a file selector that allows import/export of ro files such 

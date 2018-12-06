@@ -2,7 +2,7 @@
 # This is used for programs like noedit, ledit
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- rewrite suptext

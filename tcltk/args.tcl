@@ -2,7 +2,7 @@
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
 #provides: argproc prargs argform unabbrev argnorm xswitch xswitchs swores swexp
-package provide wylib 0.33
+package provide wylib 0.35
 
 #Process command line arguments
 #------------------------------------------

@@ -2,7 +2,7 @@
 # entry or a variable
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- make window fit natural size but also allow stretching

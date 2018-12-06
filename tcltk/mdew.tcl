@@ -1,7 +1,7 @@
 # Display multiple editable data entry fields in a single widget
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- strip out of dbe the parts we need for the view part

@@ -1,7 +1,7 @@
 #Improved dialog utilities
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- redo all shortcut procs to use new ::dia syntax

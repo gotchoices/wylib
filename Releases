@@ -1,3 +1,15 @@
+Change Log:
+
+1.0.0	2018-Dec	Node.js 1.0.0
+	- Initial working javascript code reasonably functional
+	- Works with Wyseman js control layer
+	- Basic database preview, search, and editing widgets
+	- Flow chart widget replaces TCL ERD module
+	- Developed orthoganal: state, data, and preferences
+	- Support user-defined application control layer
+	- Can save/restore widget states
+	- Changed license from GPL-3 to MIT
+	
 0.35	Apr 2018
 	Merged with Javascript source.  No feature changes to TCL code, except as
 	needed to accommodate changes necessary for Javascript implementation.

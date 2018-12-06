@@ -2,7 +2,7 @@
 # By requiring the Img package, we can transparently support several image formats (jpeg, gif, png, etc)
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 package require Img
 
 #TODO:

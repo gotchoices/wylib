@@ -1,7 +1,7 @@
 #This will display a calendar widget.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- Use stretchable frame for each day

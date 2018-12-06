@@ -1,7 +1,7 @@
 # Allow the user to create/edit a list of logic blocks: (this == that) and !(the != other)
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 
 #TODO:
 #X- enable/disable rhs settable fields (constant only)

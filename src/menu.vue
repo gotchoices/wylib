@@ -1,5 +1,5 @@
 //Menu component
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //- Register single event listener for toplevel window to unpost all menus (rather than having every menu register an event listener)

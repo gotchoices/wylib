@@ -1,5 +1,5 @@
 //Pane resizing divider button
-//Copyright WyattERP.org: GNU GPL Ver 3; see: License in root of this package
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 <template>
   <div class="wylib wylib-sizer" title="Drag to resize" draggable="true" v-on:dragstart="grab" v-on:drag="drag" v-on:dragend="drop">&nbsp

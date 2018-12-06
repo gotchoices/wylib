@@ -3,7 +3,7 @@
 # having to pass handles around.
 #------------------------------------------
 #Copyright WyattERP, all other rights reserved
-package provide wylib 0.33
+package provide wylib 0.35
 package require Pgtcl
 package require wyseman
 
