@@ -88,7 +88,7 @@ export default {
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(),	icon: 'spinner', shortcut: true},
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll, icon: 'download2',  shortcut: false},
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,  icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
-      {idx: 'edi', lang: this.wm.dbe,         call: this.editTog, icon: 'pencil',    toggled: this.state.edit.posted},
+      {idx: 'edi', lang: this.wm.dbe,         call: this.editTog, icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
       {idx: 'prv', lang: this.wm.dbpPrev   ,  call: this.prev,    icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext   ,  call: this.next,    icon: 'arrowdown', shortcut: true},
       {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns, icon: 'sun'},
