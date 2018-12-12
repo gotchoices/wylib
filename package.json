@@ -10,6 +10,7 @@
     "build": "webpack --mode production --config build/webpack.dist.conf.js",
     "wysegi": "webpack --mode production --config build/webpack.wgi.conf.js",
     "tclpkg": "wmmkpkg wylib 0.35 tcltk",
+    "preversion": "npm-run-all build wysegi",
     "lint": "eslint --ext .js src"
   },
   "keywords": [
