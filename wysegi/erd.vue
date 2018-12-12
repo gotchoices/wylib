@@ -10,18 +10,21 @@
 
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
-    <wylib-svgraph :state="state" ref="svg"/>
+    <wylib-svgraph :state="state" ref="svg" @refresh="refresh" @reset="reset"/>
   </div>
 </template>
 
 <script>
 import WylibSVGraph from '../src/svgraph.vue'
 import Wyseman from '../src/wyseman.js'
+import Common from '../src/common.js'
 
 export default {
   components: {'wylib-svgraph': WylibSVGraph},
+  props: {
+    state:	{type: Object, default: ()=>({})}
+  },
   data() { return {
-    state:	{width: 1200, height: 800, nodes: {}},
     tabGap:	40,
     fontSize:	16,
     debits:	9,
@@ -49,34 +52,38 @@ export default {
 //console.log("Ends:", ends)
       return {code, ends, width, height}
     },
+    refresh() {
+      let spec = {
+        view: 'wm.table_meta',
+        fields: ['obj', 'columns', 'fkeys'],
+        where: [['tab_kind', '=', 'r'], ['system', '=', 'false'], ['sch', '!=', 'wm']]
+      }
+      Wyseman.request('erd'+this._uid, 'select', spec, (data,err) => {
+        if (data) data.forEach(dat => {
+//console.log("Dat:", dat)
+          if (!(dat.obj in this.state.nodes)) {
+            let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
+              , x = Math.random() * this.state.width/2, y = Math.random() * this.state.height/2
+              , radius = height / 4
+              , links = []
+            if (dat.fkeys) dat.fkeys.forEach(fkey=>{
+              if (!links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
+            })
+            this.$set(this.state.nodes, dat.obj, {tag:dat.obj, x, y, width, height, code, ends, links, radius})	//So it will react to changes of state
+          }
+        })
+//console.log("Height:", this.state.height, y + maxHeight)
+//        if (this.state.height < (y + maxHeight)) this.state.height = y + maxHeight
+      })
+    },
+    reset() {
+      this.state.nodes = {}
+      this.refresh()
+    },
   },
   beforeMount: function() {
-    let spec = {
-      view: 'wm.table_meta',
-      fields: ['obj', 'columns', 'fkeys'],
-      where: [['tab_kind', '=', 'r'], ['system', '=', 'false'], ['sch', '!=', 'wm']]
-    }
-    
-    Wyseman.request('erd'+this._uid, 'select', spec, (data,err) => {
-      let x = 10, y = 10, maxHeight = 1;
-      if (data) data.forEach(dat => {
-//console.log("Dat:", dat)
-        let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
-//          , links = dat.fkeys ? dat.fkeys.map(m => m.table) : []	//Produces multiple links
-          , links = []
-          , radius = height / 4
-        if (dat.fkeys) dat.fkeys.forEach(fkey=>{
-          if (!links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
-        })
-        this.$set(this.state.nodes,dat.obj,{tag:dat.obj, x, y, width, height, code, ends, links, radius})	//So it will react to changes of state
-
-        if (height > maxHeight) maxHeight = height
-        x += (width + this.tabGap)
-        if (x > (this.state.width - width)) {x = 10; y += (maxHeight + this.tabGap); maxHeight = 1}
-      })
-//console.log("Height:", this.state.height, y + maxHeight)
-      if (this.state.height < (y + maxHeight)) this.state.height = y + maxHeight
-    })
+    Common.react(this, {width:600, height: 600, nodes: {}})
+    this.refresh()
   },
 }
 

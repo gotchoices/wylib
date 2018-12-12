@@ -1,7 +1,7 @@
 // webpack.config.js
 // Build bundles for the pages in the test folder
 var path = require('path')
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const Common = require('./common')
                 
 module.exports = {
   mode: 'development',
@@ -17,40 +17,9 @@ module.exports = {
     path: path.join(__dirname, '..', 'dist'),
     filename: '[name]-bundle.js'
   },
-  resolve: {
-    alias: {
-      vue: 'vue/dist/vue.js'
-    }
-  },
-  plugins: [
-    new VueLoaderPlugin()
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: { loader: 'babel-loader' }
-      },
-      {
-        test: /\.vue$/,
-        exclude: /(node_modules|bower_components)/,
-        use: { loader: 'vue-loader' }
-      },
-      {
-        test: /\.(less|css)$/,
-        use: [ 'style-loader', 'css-loader', 'less-loader' ],
-      },
-      {
-        test: /.*\.(gif|png|jpe?g)$/i,
-        use: [ 'file-loader' ],
-      },
-      {
-        test: /.*\.svg$/i,
-        use: [ 'file-loader?name=[path][name].[ext]&context=./lib' ],
-      }
-    ]
-  },
+  resolve: Common.resolve,
+  plugins: Common.plugins,
+  module: Common.module,
   devServer: {
        port: 3300,
        host: '0.0.0.0',	disableHostCheck: true,	//To browse from different host on lan

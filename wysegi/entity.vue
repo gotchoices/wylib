@@ -6,14 +6,25 @@
 import Vue from 'vue'
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
+    <div class="subwindows">
+      <wylib-win v-for="win,idx in state.windows" topLevel=true :key="idx" :state="win" :lang="lang(win,idx)" @close="close(idx)">
+        <wylib-dbp :state="win.client" slot-scope="ws" :top="ws.top"/>
+      </wylib-win>
+    </div>
   </div>
 </template>
 
 <script>
+import WylibWin from '../src/win.vue'
+import WylibDbp from '../src/dbp.vue'
+
 export default {
-  components: {},
+  components: {'wylib-win': WylibWin, 'wylib-dbp': WylibDbp},
+  props: {
+    state:	{type: Object, default: ()=>({})}
+  },
   data() { return {
-    state:	{windows: [{posted: true, client: {dbView: 'wm.ent_v', loaded: true}}]},
+//    state:	{windows: [{posted: true, client: {dbView: 'wm.ent_v', loaded: true}}]},
   }},
   methods: {
     lang: function(win,idx) { return {

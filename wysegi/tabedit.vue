@@ -3,23 +3,31 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //- 
-import Vue from 'vue'
+
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
+    <wylib-win topLevel=true :key="0" :state="state.windows[0]" :lang="lang(state.windows[0], 0)" @close="">
+      <wylib-dbp :state="state.windows[0].client" :autoEdit="false" @execute="addWin"/>
+    </wylib-win>
     <div class="subwindows">
       <wylib-win v-for="win,idx in state.windows" v-if="idx > 0 && win" topLevel=true :key="idx" :state="win" :lang="lang(win,idx)" @close="close(idx)">
         <wylib-dbp :state="win.client" slot-scope="ws" :top="ws.top"/>
       </wylib-win>
     </div>
-    <wylib-dbp :state="state.windows[0].client" :autoEdit="false" @execute="addWin"/>
   </div>
 </template>
 
 <script>
+import WylibWin from '../src/win.vue'
+import WylibDbp from '../src/dbp.vue'
+
 export default {
-  components: {},
+  components: {'wylib-win': WylibWin, 'wylib-dbp': WylibDbp},
+  props: {
+    state:	{type: Object, default: ()=>({})}
+  },
   data() { return {
-    state:	{windows: [{posted: true, client: {dbView: 'wm.table_pub', loaded: true}}]},
+//    state:	{windows: [{posted: true, client: {dbView: 'wm.table_pub', loaded: true}}]},
   }},
   methods: {
     lang: function(win,idx) { return {
