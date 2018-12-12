@@ -42,6 +42,7 @@
         <div class="sliders">
           <input type="range" min="1" max="100" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
           <input type="range" min="1" max="100" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
+          <input type="range" min="1" max="100" v-model="randForce" class="slider nodrag" title="How much random force to introduce">Random: {{randForce}}</input>
         </div>
       </div>
     </div>
@@ -67,6 +68,7 @@ export default {
   data() { return {
     pushForce:		50,
     pullForce:		50,
+    randForce:		50,
     startTimer:		null,
     repeatTimer:	null,
     toolX:		0,
@@ -140,7 +142,7 @@ export default {
 
             if (links.includes(vm2.state.tag)) {
               pull += this.pullForce * Math.pow(mag,2) / 1000000			//Linked objects have a lot more attraction
-              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * 50}		//Inject an extra random burst 2% of the time
+              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * this.randForce}	//Inject an extra random burst 2% of the time
             }
             forces[ix1] = vector.add(forces[ix1], {r:-push + pull + randPull, a:polar12.a})
             forces[ix2] = vector.add(forces[ix2], {r: push - pull + randPull, a:polar12.a})
