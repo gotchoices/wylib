@@ -33,7 +33,8 @@ import Wyseman from './wyseman.js'
 export default {
   props: {
     siteKey:	{type: String, default: 'wylib_sites'},
-    default:	{type: String, default: ''}
+    default:	{type: String, default: ''},
+    port:	{type: Number, default: 54320}
   },
   data() { return {
     newSite: this.default,
@@ -66,7 +67,7 @@ export default {
       if (localStorage[this.siteKey])	//Get our list of favorites
         this.sites = JSON.parse(localStorage.getItem(this.siteKey))
         
-      let suggested = window.location.hostname + ":54321"
+      let suggested = window.location.hostname + ":" + this.port
       if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
         this.newSite = suggested	//Offer a resonable default to connect to
 //console.log("newSite:", this.newSite)
