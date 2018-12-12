@@ -65,7 +65,7 @@ export default {
   name: 'wylib-app',
   components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-modal': Modal, 'wylib-dbp': WylibDbp},
   props: {
-    state:	{type: Object, default: {}},
+    state:	{type: Object, default: ()=>({})},
     title:	{type: String},
     help:	{type: String},
     tabs:	{type: Array},
