@@ -5,25 +5,26 @@
 //- 
 <template>
   <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}">
-    <wylib-button class="button lower" :size="12" icon="play3" @click="$emit('lower')" title="Move this item to a sub-grouping"/>
-    <select class="left" v-model="state.left">
+    <wylib-button class="button lower" :size="12" icon="play3" @click="$emit('lower')" :title="wMsg('litToSub')"/>
+    <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
-    <select class="operator" v-model="state.oper">
+    <select class="operator" v-model="state.oper" :title="wMsg('litCompare')">
       <option v-for="opt in config.oper" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
-    <select class="right" v-if="config.right" v-model="state.right" :class="{inactive: !state.right || state.right == ''}">
-      <option value="" label="<Manual>" title="Enter a manual value"></option>
+    <select class="right" v-if="config.right" v-model="state.right" :class="{inactive: !state.right || state.right == ''}" :title="wMsg('litRight')">
+      <option value="" :label="'<'+wm.litManual.title+'>'" :title="wMsg('litManual')"></option>
       <option v-for="opt in config.right" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
-    <input v-model="state.entry" title="Specify an explicit right-hand value" :class="{inactive: state.right && state.right != ''}">
+    <input v-model="state.entry" @keyup.enter="submit" :title="wMsg('litRightVal')" :class="{inactive: state.right && state.right != ''}">
     </input>
-    <wylib-button class="button close" :size="12" icon="close" @click="$emit('close')" title="Remove this item from the list"/>
+    <wylib-button class="button close" :size="12" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
   </div>
 </template>
 
 <script>
 import WylibButton from './button.vue'
+import Wyseman from './wyseman.js'
 import Interact from 'interactjs'
 var dragTarget = null		//Communicate with each other about drag/drop through this
 
@@ -38,8 +39,10 @@ export default {
   data() { return {
     dragOver: false,
     pr: require('./prefs.js'),
+    wm:		{},
   }},
   computed: {
+    id: function() {return 'lit_' + this._uid + '_'},
     rhValue: function() {
       return (this.state.right == "_")
     },
@@ -48,9 +51,8 @@ export default {
     }
   },
   methods: {
-    prefs() {
-      return {}
-    },
+    wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
+    submit(ev) {this.$emit('submit')},
     drop(ev) {						//Event for the one being dragged
       if (!dragTarget || dragTarget == this) return	//Aborted drag
 //console.log("This (dragged):" + this.index, " State:" + JSON.stringify(this.state))
@@ -83,6 +85,9 @@ export default {
   },
   updated: function() {
     this.$nextTick(() => {this.$emit('geometry', this)})
+  },
+  created: function() {
+    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
   },
   mounted: function() {
     this.$nextTick(() => {this.$emit('geometry', this)})

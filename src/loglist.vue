@@ -16,9 +16,9 @@
   <div class="wylib wylib-loglist">
     <div class="header">
       <svg ref="connector" class="connector"><path ref="connectPath"/></svg>
-      <button class="button andor" :class="{and: state.and}" @click="state.and = !state.and">{{joinFunction}}</button>
-      <button class="button add" @click="addNew" title="Add another condition">+</button>
-      <button class="button close" @click="$emit('close')" title="Remove this grouping">X</button>
+      <button class="button andor" :class="{and: state.and}" @click="state.and = !state.and" :title="wMsg('lstAndOr')">{{joinFunction}}</button>
+      <button class="button add" @click="addNew" :title="wMsg('lstAddCond')">+</button>
+      <button class="button close" @click="$emit('close')" :title="wMsg('lstRemove')">X</button>
     </div>
     <div class="subdivision" v-for="(item, index) in state.items">
       <wylib-loglist v-if="'and' in item" :key="index" :index="index" :state="item" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import Wyseman from './wyseman.js'
 import LogItem from './logitem.vue'
 import Button from './button.vue'
 import Com from './common.js'
@@ -45,6 +46,7 @@ export default {
   data() { return {
     isAnd: true,
     childYs: [],
+    wm:		{},
   }},
 
   computed: {
@@ -54,6 +56,7 @@ export default {
   },
 
   methods: {
+    wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
     addNew() {
       this.state.items.push({left: null, oper: this.defOper})
       this.$emit('geometry', this, true)
@@ -131,6 +134,9 @@ console.log("Insert:" + idx + " State:" + state)
   updated: function() {
 //console.log("Updated:", this.index)
     this.$emit('geometry', this, true)
+  },
+  created: function() {
+    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
   },
   beforeMount: function() {
     Com.react(this, {and: true, items: []})
