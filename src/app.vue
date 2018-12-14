@@ -39,8 +39,8 @@
       </div>
       <div class="subwindows">
         <wylib-modal v-if="modal.posted" :state="modal"/>
-        <wylib-win v-for="win,idx in previews" topLevel=true :key="idx" :state="win" :tag="'dbp:'+win.client.dbView" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
-          <wylib-dbp slot-scope="ws" :top="ws.top" :state="win.client"/>
+        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" :tag="'dbp:'+win.client.dbView" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
+          <wylib-dbp :state="win.client"/>
         </wylib-win>
       </div>
       <div class="app-content">
@@ -84,10 +84,13 @@ export default {
     menuTitle:		'',
     wm:			{},
     persistent:		true,
-    top:		null,			//portal to communicate with toplevel window
+    top:		new Com.topHandler((st) => {Object.assign(this.modal, st)}),
     restoreMenu:	[],
     previews:		[{posted: false, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
+  }},
+  provide() { return {
+    top: this.top,
   }},
   computed: {
     id: function() {return 'app_' + this._uid + '_'},
@@ -144,7 +147,10 @@ export default {
       })
     },
     saveState() {
-      if (this.lastLoadIdx) State.save(this.lastLoadIdx, this.state, this.top.error); else this.saveStateAs()
+      if (this.lastLoadIdx)
+        State.save(this.lastLoadIdx, this.state, this.top)
+      else
+        this.saveStateAs()
     },
     defaultState() {
       this.top.confirm(this.wm.appDefault.help, (yesNo, tag) => {
@@ -175,7 +181,6 @@ export default {
     })
     Wyseman.connect()
     window.addEventListener('beforeunload', this.beforeUnload)
-    this.top = new Com.topHandler((st) => {Object.assign(this.modal, st)})
 
     State.listen(this.id+'sl', this.tag, (menuData) => {
 //console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);

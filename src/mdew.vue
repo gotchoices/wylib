@@ -22,7 +22,7 @@
           {{ f.lang ? f.lang.title : null }}:
         </td>
         <td>
-          <wylib-dew :top="top" :ref="'dew~'+f.field" :field="f.field" :state="f.styles" :value="data[f.field]" :values="f.values" :lang="f.lang" @input="input" @submit="submit" :bus="dewBus"/>
+          <wylib-dew :ref="'dew~'+f.field" :field="f.field" :state="f.styles" :value="data[f.field]" :values="f.values" :lang="f.lang" @input="input" @submit="submit" :bus="dewBus"/>
         </td>
       </tr>
     </table>
@@ -41,11 +41,9 @@ export default {
   props: {
     state:	{type: Object, default: () => ({})},
     data:	{type: Object, default: () => ({})},
-    top:	null,
     bus:	null,
     height:	{type: Number, default: 300},		//Fixme: used?
     },
-
   data() { return {
     valid:	null,
     dirtys:	{},

@@ -52,11 +52,11 @@ export default {
     state:	{type: Object, default: () => ({})},	//Configuration
     lang:	{type: Object},
     value:	{default: null},			//value to compare dirty to
-    values:	{type: Array, default: () => []},	//valid values for select
+    values:	{type: Array, default: () => ([])},	//valid values for select
     field:	{default: null},			//column or field code
-    top:	null,					//communication with toplevel
     bus:	null,					//message bus from parent
   },
+  inject: ['top'],
   data() { return {
     pr:		require('./prefs'),
     userValue:	this.value,				//Value, as modified by user
@@ -147,7 +147,7 @@ export default {
   mounted: function() {
 //console.log(" refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
     if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
-    if (this.state.focus && this.top) this.top.onPosted(() => {this.focus()})
+    if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
   beforeDestroy: function() {
     if (this.datePicker) this.datePicker.destroy()

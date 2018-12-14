@@ -34,7 +34,7 @@
     </div>
     <div class="subwindows">
       <wylib-win :state="state.edit" topLevel=true :tag="'dbe:'+state.dbView" :lang="editLang" @close="state.edit.posted=false">
-        <wylib-dbe slot-scope="ws" :top="ws.top" :state="state.edit.client" @modified="modified" :bus="dbeBus"/>
+        <wylib-dbe :state="state.edit.client" @modified="modified" :bus="dbeBus"/>
       </wylib-win>
       <wylib-win :state="state.colMenu" @close="state.colMenu.posted=false" :lang="wm.dbeColMenu">
         <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" @done="state.colMenu.posted=false"/>
@@ -43,7 +43,7 @@
         <wylib-dbs :fields="logicFields" :state="state.filter.client" @search="search"/>
       </wylib-win>
     </div>
-    <wylib-mlb ref="mlb" :state="state.grid" :data="gridData" @execute="executeRows" @headerMenu="colMenuHandler" @sort="sort" :bus="mlbBus"/>
+    <wylib-mlb ref="mlb" :state="state.grid" :data="gridData" @execute="executeRows" @headerMenu="colMenuHandler" @sort="sort" @geometry="geometry" :bus="mlbBus"/>
   </div>
 </template>
 
@@ -62,7 +62,6 @@ export default {
   props: {
     state:	{type: Object, default: () => ({})},
     autoEdit:	{type: Boolean, default: true},
-    top:	null,			//From parent window
   },
   data() { return {
     pr:		require('./prefs'),
@@ -74,7 +73,7 @@ export default {
     dbeBus:	new Bus.messageBus(this),
     lastSpec:	{},
   }},
-
+  inject: ['top'],
   computed: {
     id: function() {return 'dbp_' + this._uid + '_'},
     editLang: function() {return {title: (this.wm.dbe?this.wm.dbe.title:null) + ':' + this.state.dbView, help: (this.wm.dbe?this.wm.dbe.help:null) + ': ' + this.state.dbView}},
@@ -133,16 +132,19 @@ console.log("viewMeta updated")
   methods: {
     mlbLayout() {		//Make the column description format mlb is looking for
       let colArray = []
-//console.log("updateGrid:", this.state.grid.columns, JSON.stringify(this.viewMeta.col))
+//console.log("updateGrid:", this.state.grid.columns, this.viewMeta.col)
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
-        let stateElem = this.state.grid.columns.find(e => (e.field == meta.col)),
-            maxLength = meta.length * this.pr.mlbCharWidth
-//console.log("Col:", meta.col, "Disp:", JSON.stringify(meta.styles))
+        let stateElem = this.state.grid.columns.find(e => (e.field == meta.col))
+          , maxWidth
+        if (meta.styles && ('size' in meta.styles) && meta.styles.size) {
+          maxWidth = meta.styles.size.split(' ')[0] * this.pr.mlbCharWidth
+        }
+//console.log("Col:", this.state.dbView, meta.col, maxWidth, "Styles:", meta.styles)
         if (!stateElem) stateElem = {
           field:	meta.col,
           order:	parseInt(meta.styles.display || 9999),
-          visible:	('display' in meta.styles) ? !!(meta.styles.display) : true,
-          width:	(maxLength > this.pr.mlbDefWidth) ? this.pr.mlbDefWidth : maxLength,
+          visible:	('display' in meta.styles) ? !!(meta.styles.display) : false,
+          width:	(maxWidth && maxWidth < this.pr.mlbDefWidth) ? maxWidth : this.pr.mlbDefWidth,
           title:	meta.title || meta.col,
           just:		meta.type.match(/(int|float)[0-9]/) ? 'right' : 'left',
           help:		meta.help
@@ -180,7 +182,7 @@ console.log("viewMeta updated")
 //console.log("Dbp load:", spec)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
-        if (err) this.top.error(err); else this.gridData = data
+        if (err) this.top().error(err); else this.gridData = data
       })
       this.lastSpec = spec
     },
@@ -219,9 +221,13 @@ console.log("Auto size:", this.lastMenu, "Col:", col)
 console.log("Not yet implemented")
     },
     test() {
-      this.top.confirm('A test message', (yesno, tag) => {
+      this.top().confirm('A test message', (yesno, tag) => {
 console.log("Modal answers:", yesno, tag)
       })
+    },
+    geometry(ev) {
+console.log("Geometry changed:", top, ev)
+      this.top().emit('geometry', ev)
     },
     hideCol() {
       let col = this.state.grid.columns.find(e => (e.field == this.lastMenu))

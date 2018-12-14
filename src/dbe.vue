@@ -34,7 +34,7 @@
     </div>
     <div class="subwindows">
     </div>
-    <wylib-mdew ref="mdew" :top="top" :state="state.dews" :data="dbData" @input="change" :bus="msgBus"/>
+    <wylib-mdew ref="mdew" :state="state.dews" :data="dbData" @input="change" :bus="msgBus"/>
   </div>
 </template>
 
@@ -50,10 +50,9 @@ export default {
   components: {'wylib-mdew': Mdew, 'wylib-menudock': MenuDock},
   props: {
     state:	{type: Object, default: () => ({})},
-    top:	null,		//From parent window
     bus:	null,
   },
-
+  inject: ['top'],
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
@@ -105,7 +104,7 @@ export default {
   methods: {
     loadRec() {
       let resp = {q:null}
-      this.top.query(this.wm.dbeLoadPrompt.help, this.top.dewArray('q', this.wm.dbeRecordID), resp, (yes) => {
+      this.top().query(this.wm.dbeLoadPrompt.help, this.top().dewArray('q', this.wm.dbeRecordID), resp, (yes) => {
 console.log("Load record:", yes, resp.q)
       })
     },
@@ -162,7 +161,7 @@ console.log("Delete")
 //console.log("Dbe clear:", field, value, this.dirty, this.valid)
         this.dbData[field] = value
       })
-      this.top.posted()				//Act like we just posted
+      this.top().posted()			//Act like we just posted
     },
 
     change(value, field, dirty, valid) {	//Respond to changes on the data inputs
@@ -175,7 +174,7 @@ console.log("Delete")
 //console.log("Dbe dataRequest:", action, options)
       Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
 //console.log("   data:", err, data)
-        if (err) this.top.error(err)
+        if (err) this.top().error(err)
         else {
           if (data) this.dbData = data			//If a record was returned
           if (modifies) this.$emit('modified', data)	//Tell parent dbp to update
@@ -188,7 +187,7 @@ console.log("Delete")
     mdewLayout() {		//Make the column description format mdew is looking for
       let fieldArray = []
       if (this.viewMeta) this.viewMeta.columns.forEach(meta => {
-//console.log("Col:", meta.col, " Meta:", meta.styles)
+//console.log("Col:", meta.col, " Meta:", meta.styles, meta.values)
         let stateElem = this.state.dews.fields.find(e => (e.field == meta.col))
         if (!stateElem) stateElem = {
           field:	meta.col,

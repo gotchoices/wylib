@@ -36,15 +36,16 @@ const StateManager = {
     let view = 'wylib.set_data(text, text, text, int, jsonb)'
       , params = [comp, name, descr, null, JSON.stringify(state)]
     Wyseman.request(this.id+'ss', 'tuple', {view, params}, (res, err)=>{
-console.log("Insert res:", res)
+//console.log("Insert res:", res)
       if (err) errCB(err); else okCB(res.set_data)
     })
   },
 
-  save: function(ruid, state, errCB) {
+  save: function(ruid, state, top) {
+//console.log("Save:", ruid, top)
     let view = 'wylib.data_v', fields = {data:JSON.stringify(state)}, where = {ruid}
     Wyseman.request(this.id+'ss', 'update', {view, fields, where}, (res, err)=>{
-      if (err) errCB(err)
+      if (err && top) top.error(err)
     })
   },
 
