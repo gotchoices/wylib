@@ -16,7 +16,7 @@
   <div class="wylib wylib-modal" :style="screenStyle">
     <div class="dialog" :style="dialogStyle">
       <div v-html="reason + ': ' + state.message"/>
-      <wylib-mdew :state="state.dews" :data="state.data" @input="change" @submit="submit" :top="top"/>
+      <wylib-mdew :state="state.dews" :data="state.data" @input="change" @submit="submit"/>
       <div class="buttons">
         <button v-for="but in buttons" :key="but.tag" @click="press(but.tag)" v-html="but.lang ? but.lang.title : 'OK'" :title="but.lang ? but.lang.help : 'Confirm'"/>
       </div>
@@ -127,7 +127,7 @@ export default {
     left:	0;
     top:	0;
     background: rgba(230,230,230,0.5);
-    z-index:	2;
+    z-index:	1000;
 //border: 1px solid red;
   }
   .wylib-modal .dialog {
