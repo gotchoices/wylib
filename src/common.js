@@ -36,6 +36,11 @@ module.exports = {
     this.context = context
     
     if (context) topWins[context.id] = context	//Keep a list of all participating windows
+//console.log("Registering ID", context ? context.id : null)
+
+    this.emit = function(code, ev) {
+      this.context.$emit(code, ev)
+    },
 
     this.layer = function(layer) {
       if (!layer) return
@@ -43,7 +48,7 @@ module.exports = {
         , maxLevel = -Number.MAX_VALUE
         , minLevel =  Number.MAX_VALUE
 //console.log("Layer request:", layer, "from:", th.id, th.$options.name, "cur:", th.state.layer)
-      Object.keys(topWins).forEach(id=>{
+      Object.keys(topWins).forEach((id) => {
         let st = topWins[id].state
 //console.log("  loop id:", id, st.layer)
         if (st.layer > maxLevel) maxLevel = st.layer
@@ -54,7 +59,7 @@ module.exports = {
         newLayer = maxLevel + zLevelMod
       else
         newLayer = minLevel - zLevelMod
-console.log("Set:", th.id, "to:", newLayer)
+//console.log("Set:", th.id, "to:", newLayer)
       th.state.layer = newLayer
       if (newLayer < 0) Object.values(topWins).forEach(vmthis=>{
 //console.log("  adjusting", vmthis.id, "to:", vmthis.state.layer - newLayer)
@@ -125,7 +130,9 @@ console.log("Set:", th.id, "to:", newLayer)
   },
     
   getState: function(tag) {
-    return JSON.parse(localStorage.getItem(storeKey + tag))
+    let st = localStorage.getItem(storeKey + tag)
+//console.log("Getting:", st)
+    return ((st && st != 'undefined') ? JSON.parse(st) : null)
   },
     
   clearState: function(tag) {
