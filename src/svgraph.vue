@@ -2,17 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Display a blank SVG background
-//X- Can scale SVG to fit its container
-//X- Can create native SVG objects
-//X- Draw link arrows for all objects
-//X- Incorporate attractive force from links
-//X- Can I still drag/drop objects?
-//X- Optional button to turn bump sort on/off
-//X- Re-adjust viewport after bumping objects (eliminate extra space on edges)
-//X- Make tools disappear, then appear on mouse hover
-//X- Label sliders
-//X- Immunize objects that have no links? (max proximity to any object?)
+//- Bias bump algorithm toward a wider aspect ratio
 //- 
 //- Later:
 //- Tug rubber bands from center of hubs? (could be more expensive in CPU time)

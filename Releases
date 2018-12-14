@@ -1,6 +1,11 @@
 Change Log:
 
-1.0.0	2018-Dec	Node.js 1.0.0
+1.0.5	2018-Dec
+	- Make Wysegi schema browser easier to access from server
+	- Widget functionality and bug fixes
+	- Better saving of state, widget geometry
+
+1.0.0	2018-Dec	Node.js
 	- Initial working javascript code reasonably functional
 	- Works with Wyseman js control layer
 	- Basic database preview, search, and editing widgets

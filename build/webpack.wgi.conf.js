@@ -9,6 +9,10 @@ module.exports = {
     filename: 'wysegi-bundle.js',
 //    libraryTarget: 'umd',
   },
+  performance: {
+    maxAssetSize: 2000000,
+    maxEntrypointSize: 1000000
+  },
   devtool: 'source-map',
   resolve: Common.resolve,
   plugins: Common.plugins,
