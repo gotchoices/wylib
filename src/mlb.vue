@@ -150,15 +150,17 @@ console.log("Context Menu: " + e.target)
           this.state.columns.find(e => (e.field == col.field)).width = col.width
         }
       }
+      this.$emit('geometry', e)
     },
 
     reorderHandler(e, args) {
-console.log("Reordered:", e, "Args:", args)
+//console.log("Reordered:", e, "Args:", args)
       let i = 0
       args.grid.getColumns().forEach(c => {
         this.state.columns.find(e => (e.field == c.field)).order = i++
       })
-console.log(" cols:", JSON.stringify(this.state.columns))
+//console.log(" cols:", JSON.stringify(this.state.columns))
+      this.$emit('geometry', e)
     },
 
     winSizeHandler(el) {
