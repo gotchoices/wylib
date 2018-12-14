@@ -9,10 +9,10 @@
 //X- dbe is getting squished horizontally when parent win is too narrow (overflow?)
 //X- Subwindows keep their state in same object
 //X- Implement modal query/alert window
-//- 
-//- Move z-index calcs to state object
-//- Menu item to save/restore state
-//- Windows like dbs/dbe shouldn't unpost on outside clicks--only menu windows
+//X- Move z-index calcs to state object
+//X- Menu item to save/restore state
+//X- Windows like dbs/dbe shouldn't unpost on outside clicks--only menu windows
+//- Get rid of separate topClick for each menu, use bus to unpost menus
 //- 
 //- Later:
 //- Implement corner menu functions (using z-index)
@@ -25,11 +25,11 @@
   <div class="wylib wylib-win" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle">
       <div class="headerbar">
-        <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
+        <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
         <wylib-button v-if="!topLevel && pinnable" :size="headerHeight" icon="pushpin" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
-      <div class="handle" v-on:dblclick="()=>{top.layer(1)}">
+      <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
         <div class="label" :style="{'font-size': (headerHeight < 16) ? (headerHeight-2) + 'px' : '1em'}">
           {{ lang.title }}
         </div>
@@ -40,13 +40,13 @@
       </div>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="topLevel" :state="state.menu" pinnable=true @close="state.menu.posted=false" :lang="wm.winMenu">
-        <wylib-menu :state="state.menu.client" :config="winMenuConfig" @done="state.menu.posted=state.menu.pinned"/>
+      <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false" :lang="wm.winMenu">
+        <wylib-menu :state="winMenu.client" :config="winMenuConfig" @done="winMenu.posted=winMenu.pinned"/>
       </wylib-win>
       <wylib-modal v-if="topLevel && modal.posted" :state="modal"/>
     </div>
-    <div class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
-      <slot :top="top"></slot>
+    <div v-show="!state.minim" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
+      <slot></slot>
     </div>
   </div>
 </template>
@@ -72,16 +72,20 @@ export default {
     fullHeader: {default: false},		//Full header only
     pinnable:	{default: false},		//Include pinning button/function
     lang:	{type: Object, default: Com.langTemplate},
-    tag:	{type: String, default: 'winn'}
+    tag:	{type: String, default: 'win'}
   },
   data() { return {
     pr:			require('./prefs'),
     wm:			{},
     myTopElement:	null,
-    top:		null,			//portal to communicate with toplevel window
+    top:		null,
     modal:		{posted: false},
     restoreMenu:	[],
     lastLoadIdx:	null,
+    winMenu:		{client:{}}, client: {}, modal: {posted: false},
+  }},
+  provide() { return {
+    top: () => {return this.top}
   }},
   computed: {
     id: function() {return 'win_' + this._uid + '_'},
@@ -110,7 +114,7 @@ export default {
     }},
     winStyleF: function () {return {		//Faster moves with these separate?
       transform:	'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
-      height:		this.state.height + 'px',
+      height:		(this.state.minim ? this.headerHeight + 6 : this.state.height) + 'px',
       width:		this.state.width + 'px',
     }},
     headerStyle: function () {return {
@@ -125,7 +129,7 @@ export default {
       this.$emit('close')
     },
     minimize() {
-      this.top.notice("Sorry, minimize not yet implemented")
+      this.state.minim = !this.state.minim
     },
     saveStateAs() {
       let resp = {t:'Default'}
@@ -135,11 +139,18 @@ export default {
       })
     },
     saveState() {
-      if (this.lastLoadIdx) State.save(this.lastLoadIdx, this.state, this.top.error); else this.saveStateAs()
+      if (this.lastLoadIdx) 
+        State.save(this.lastLoadIdx, this.state, this.top)
+      else
+        this.saveStateAs()
+    },
+    storeState() {
+console.log("Storing window state:", this.tag)
+      if (this.topLevel && this.tag) Com.saveState(this.tag, this.state)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (yesNo, tag) => {
-        if (yesNo) {this.state = {}; location.reload()}
+        if (yesNo) {Com.saveState(this.tag)}
       })
     },
 
@@ -190,13 +201,20 @@ export default {
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
     this.$on('swallow', this.swallowMenu)
+
+    if (this.topLevel) this.top = new Com.topHandler((st) => {Object.assign(this.modal, st)}, this)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
+    if (this.topLevel && !('estab' in this.state)) {		//Is this structure already established?
+      let savedState = Com.getState(this.tag)
+//console.log("Win state template:", this.state.estab, this.tag, savedState)
+      if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
+    }
+
 //console.log("Win State:", this.state);
     Com.react(this, {
-      x: null, y: null, posted: false, pinned: false, layer: 10,
-      menu: {client:{}}, client: {}, modal: {posted: false},
+      x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, estab: false,
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
     })
@@ -208,17 +226,18 @@ export default {
       margin: 3,
       edges: {top:true, left: true, right: true, bottom: true},	//Can't do top: true without losing dragability!
       restrictSize: {min: {width: 50, height: 50}},
-      onmove: this.sizeHandler
+      onmove: this.sizeHandler,
+      onend: this.storeState
     }).draggable({
       ignoreFrom: '.wylib-win-nodrag',
       allowFrom: '.wylib-win .handle',
       inertia: true,
       onmove: this.moveHandler
     })
-//console.log("Mounted; this: ", this.title + " topLevel: " + this.topLevel)
+//console.log("Mounted; this: ", this.title, "topLevel:", this.topLevel, "top:", this.top)
 
     if (this.topLevel) {
-      this.top = new Com.topHandler((st) => {this.modal = st}, this)
+//      this.top = new Com.topHandler((st) => {this.modal = st}, this)
     } else {
       this.myTopElement = this.$el.closest('.wylib-win.toplevel')
     }
@@ -236,6 +255,8 @@ export default {
       this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
 //console.log("WMC:", 1, this.winMenuConfig)
     }, this.top.error)
+    
+    this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes
   },
 
   beforeDestroy: function() {
@@ -253,7 +274,7 @@ export default {
   .wylib-win.toplevel {
     z-index: 1;
     min-width: 120px;
-    min-height: 80px;
+    min-height: 14px;
   }
   .wylib-win > .header {
     margin: 1px 1px 0 1px;
