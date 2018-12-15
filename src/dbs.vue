@@ -2,13 +2,9 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Show basic logic list in component
-//X- Include menudock
-//X- Can generate JSON from logic choices
-//X- Do display columns, display, order save with query
-//- Implement togglable "not" button before operator
-//- Can save/restore searches from database
-//- Implement full suite of matching operators (see old TCL wylib)
+//X- Implement togglable "not" button before operator
+//X- Can save/restore searches from database
+//X- Implement full suite of matching operators (see old TCL wylib)
 //- Implement case-independent matches
 //- Adjust window size to content, unless/until window has been manually sized
 //- 
@@ -19,7 +15,7 @@
       <wylib-menudock :state="state.dock" :config="dockConfig" :height="headerHeight" label="Search" title="Functions relating to stored queries"/>
       <div class="headerfill"/>
     </div>
-    <wylib-loglist :state="state.logic" :config="logicConfig" @add="addNew" @geometry="geometry"/>
+    <wylib-loglist :state="state.logic" :config="logicConfig" @add="addNew" @geometry="geometry" @submit="search"/>
   </div>
 </template>
 
@@ -43,16 +39,6 @@ export default {
     viewMeta:	null,
     viewLang:	null,
     dbData:	[],
-    operators: [
-      {tag: '=', title: '=', help: 'The left and right are the same value'},
-      {tag: '<', title: '<', help: 'The left value compares less than the right value'},
-      {tag: '<=', title: '<=', help: 'The left value compares less than or equal to the right value'},
-      {tag: '>', title: '>', help: 'The left value compares more than the right value'},
-      {tag: '>=', title: '>=', help: 'The left value compares more than or equal to the right value'},
-      {tag: '!=', title: 'Not =', help: 'The left and right side have different values'},
-      {tag: '~', title: '~', help: 'The left side matches the regular expression given on the right'},
-      {tag: 'in', title: 'In', help: 'The left value exists in a list or array expressed on the right side'},
-    ]
   }},
 
   computed: {			//Fixme: get langauge from wyseman/db
@@ -61,6 +47,19 @@ export default {
 //console.log("logicConf:", this.fields)
       return {left: this.fields, oper: this.operators, right: this.fields}
     },
+    operators: function() {return [
+      {tag: '=',	lang: this.wm.dbsEqual	},
+      {tag: '<',	lang: this.wm.dbsLess	},
+      {tag: '<=',	lang: this.wm.dbsLessEq	},
+      {tag: '>',	lang: this.wm.dbsMore	},
+      {tag: '>=',	lang: this.wm.dbsMoreEq	},
+      {tag: '~',	lang: this.wm.dbsRexExp	},
+      {tag: 'in',	lang: this.wm.dbsIn	},
+      {tag: 'null',	lang: this.wm.dbsNull	},
+      {tag: 'true',	lang: this.wm.dbsTrue	},
+      {tag: 'diff',	lang: this.wm.dbsDiff	},
+      {tag: 'nop',	lang: this.wm.dbsNop	},
+    ]},
     dockConfig: function() { return [
       {idx: 'sch', lang: this.wm.dbsSearch, call: this.search, icon: 'wand', shortcut: true},
     ]},
@@ -84,7 +83,7 @@ export default {
     recall() {
 //console.log("Dbs recall (not implemented)")
     },
-    geometry(vm) {		//Fixme: auto adjust parent geometry?
+    geometry() {		//Fixme: auto adjust parent geometry?
 //console.log("Dbs check geometry", vm.$el.getBoundingClientRect())
     },
   },

@@ -22,7 +22,7 @@
     </div>
     <div class="subdivision" v-for="(item, index) in state.items">
       <wylib-loglist v-if="'and' in item" :key="index" :index="index" :state="item" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
-      <wylib-logitem v-else :key="index" :index="index" :state="item" @input="val => {item = val}" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
+      <wylib-logitem v-else :key="index" :index="index" :state="item" @input="val=>{item = val}" @submit="submit" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
     </div>
   </div>
 </template>
@@ -57,8 +57,9 @@ export default {
 
   methods: {
     wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
+    submit(ev) {this.$emit('submit', ev)},
     addNew() {
-      this.state.items.push({left: null, oper: this.defOper})
+      this.state.items.push({left: null, not:false, oper: this.defOper})
       this.$emit('geometry', this, true)
     },
     closeChild(idx) {

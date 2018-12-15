@@ -9,14 +9,15 @@
     <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
+    <button class="button isnot" :class="{not: state.not}" @click="state.not = !state.not" :title="wMsg('lstNot')">{{notFunction}}</button>
     <select class="operator" v-model="state.oper" :title="wMsg('litCompare')">
-      <option v-for="opt in config.oper" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
+      <option v-for="opt in config.oper" :value="opt.tag" :label="title(opt)" :title="help(opt)">{{title(opt)}}</option>
     </select>
-    <select class="right" v-if="config.right" v-model="state.right" :class="{inactive: !state.right || state.right == ''}" :title="wMsg('litRight')">
-      <option value="" :label="'<'+wm.litManual.title+'>'" :title="wMsg('litManual')"></option>
+    <select class="right" v-if="config.right" v-model="state.right" v-show="isBinary" :class="{inactive: !selRight}" :title="wMsg('litRight')">
+      <option value="" :label="'<'+wMsg('litManual','title')+'>'" :title="wMsg('litManual')"></option>
       <option v-for="opt in config.right" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
-    <input v-model="state.entry" @keyup.enter="submit" :title="wMsg('litRightVal')" :class="{inactive: state.right && state.right != ''}">
+    <input v-model="state.entry" @keyup.enter="submit" :title="wMsg('litRightVal')" v-show="showEntry">
     </input>
     <wylib-button class="button close" :size="12" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
   </div>
@@ -43,16 +44,20 @@ export default {
   }},
   computed: {
     id: function() {return 'lit_' + this._uid + '_'},
-    rhValue: function() {
-      return (this.state.right == "_")
-    },
+    notFunction: function() {return (this.state.not ? 'Not' : 'Is')},
+    isBinary: function() {return (this.state.oper != 'null' && this.state.oper != 'true')},
+    selRight: function() {return (this.state.right && this.state.right != '')},
+    showEntry: function() {return (this.isBinary && !this.selRight)},
+    rhValue: function() {return (this.state.right == "_")},
     background: function() {
       return (this.dragOver ? this.pr.dragOverBackground : this.pr.titleBackground)
     }
   },
   methods: {
+    help(opt) {return opt.lang ? opt.lang.help : opt.help},
+    title(opt) {return opt.lang ? opt.lang.title : opt.title},
     wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
-    submit(ev) {this.$emit('submit')},
+    submit(ev) {this.$emit('submit', ev)},
     drop(ev) {						//Event for the one being dragged
       if (!dragTarget || dragTarget == this) return	//Aborted drag
 //console.log("This (dragged):" + this.index, " State:" + JSON.stringify(this.state))
@@ -114,14 +119,20 @@ export default {
   .wylib-logitem .right.inactive {
     max-width: 2em;
   }
-  .wylib-logitem input.inactive {
-    max-width: 0;
-    visibility: hidden;
-  }
+//  .wylib-logitem input.inactive {
+//    max-width: 0;
+//    visibility: hidden;
+//  }
   .wylib-logitem .button.close:hover {		//Fixme: prefs
     background: #ffcccc;
   }
   .wylib-logitem .button.lower:hover {		//Fixme: prefs
     background: #ccffcc;
+  }
+  .wylib-loglist .button.isnot.not {
+    background: #ffdddd;
+  }
+  .wylib-loglist .button.isnot {
+    background: #f0f0f0;
   }
 </style>
