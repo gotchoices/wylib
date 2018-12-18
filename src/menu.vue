@@ -22,14 +22,15 @@
           <td v-for="fld in layout" :key="fld">
             <svg v-if="fld=='icon'" class="icon" style="height:1em; width:1em;" v-html="iconSvg(item.icon)"></svg>
             <div v-else-if="fld=='lang'">{{ (item.lang?item.lang.title:null) || item.idx }}</div>
-            <input v-else-if="fld=='input' && item.input" :type="item.input"/>
+            <input v-else-if="fld=='input' && item.input && item.type == 'checkbox'" type="checkbox" :checked="item.input()" @input="item.input($event.target.checked)"/>
+            <input v-else-if="fld=='input' && item.input && item.type != 'checkbox'" :type="item.type" :value="item.input()" @input="item.input($event.target.value)"/>
             <svg v-else-if="fld=='input' && item.menu" class="icon" style="height: 1em; width: 1em" v-html="iconSvg('play3')"></svg>
             <div v-else>{{ item[fld] }}</div>
           </td>
         </tr>
       </table>
     </div>
-    <div class="submenus">
+    <div class="submenus subwindows">
       <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false" :lang="item.lang">
         <wylib-menu :state="state.subs[item.idx].client" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
       </wylib-win>
@@ -47,7 +48,7 @@ export default {
 //components: {'wylib-win': Win}
   props: {
     state:	{type: Object, default: () => ({})},
-    layout:	{type: Array, default: () => (['icon','lang','input'])},
+    layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
     config:	Array,
   },
   data() { return {
