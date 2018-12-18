@@ -206,15 +206,15 @@ console.log("Storing window state:", this.tag)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
-    if (this.topLevel && !('estab' in this.state)) {		//Is this structure already established?
+    if (this.topLevel) {
       let savedState = Com.getState(this.tag)
-//console.log("Win state template:", this.state.estab, this.tag, savedState)
+console.log("Win state template:", this.id, this.tag, savedState)
       if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
     }
 
 //console.log("Win State:", this.state);
     Com.react(this, {
-      x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, estab: false,
+      x: null, y: null, posted: false, pinned: false, layer: 10, minim: false,
       width: this.topLevel ? this.pr.winInitWidth : null, 
       height: this.topLevel ? this.pr.winInitHeight : null,
     })
@@ -223,13 +223,14 @@ console.log("Storing window state:", this.tag)
   mounted: function() {
     Interact(this.$el).resizable({
       inertia: true,
-      margin: 3,
-      edges: {top:true, left: true, right: true, bottom: true},	//Can't do top: true without losing dragability!
+      margin: 7,
+      edges: {top:true, left: true, right: true, bottom: true},
       restrictSize: {min: {width: 50, height: 50}},
+      ignoreFrom: '.subwindows',	//All windows with subwindows must wrap them with this class
       onmove: this.sizeHandler,
       onend: this.storeState
     }).draggable({
-      ignoreFrom: '.wylib-win-nodrag',
+//      ignoreFrom: '.wylib-win-nodrag',	//Do we need this?
       allowFrom: '.wylib-win .handle',
       inertia: true,
       onmove: this.moveHandler
@@ -260,6 +261,7 @@ console.log("Storing window state:", this.tag)
   },
 
   beforeDestroy: function() {
+//console.log("Win about to die:", this.state)
     if (this.myTopElement) this.myTopElement.removeEventListener('click', this.topClick)
   },
 }
