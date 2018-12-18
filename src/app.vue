@@ -65,7 +65,7 @@ export default {
   name: 'wylib-app',
   components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-modal': Modal, 'wylib-dbp': WylibDbp},
   props: {
-    state:	{type: Object, default: ()=>({})},
+    state:	{type: Object, default: () => ({})},
     title:	{type: String},
     help:	{type: String},
     tabs:	{type: Array},
@@ -158,8 +158,11 @@ export default {
       })
     },
     beforeUnload() {
-//console.log("About to unload.  Saving state:", JSON.stringify(this.state))
-      if (this.persistent) Com.saveState(this.tagTitle, this.state); else Com.clearState(this.tagTitle)
+//console.log("About to unload.  Saving state:", this.state)
+      if (this.persistent)
+        Com.saveState(this.tagTitle, this.state)
+      else
+        Com.clearState(this.tagTitle)
     },
   },
 
@@ -169,9 +172,8 @@ export default {
 
   beforeMount: function() {
     let savedState = Com.getState(this.tagTitle)
-//console.log("Restoring state:", JSON.stringify(savedState))
+console.log("Restoring state:", savedState)
     if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
-
 //    Com.react(this, {})
   },
 
