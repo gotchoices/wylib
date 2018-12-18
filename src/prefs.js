@@ -49,7 +49,9 @@ const Preferences = {
   dewDefHeight:			2,		//Default textarea dimensions
   dewDefWidth:			40,		//Default textarea dimensions
 
-  mlbDefWidth:			100,
+  mlbMinWidth:			20,
+  mlbMaxWidth:			200,
+  mlbDefWidth:			80,
   mlbCharWidth:			8,
 
   _callbacks:			{},
