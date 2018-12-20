@@ -13,6 +13,7 @@
 //X- Menu item to save/restore state
 //X- Windows like dbs/dbe shouldn't unpost on outside clicks--only menu windows
 //- Get rid of separate topClick for each menu, use bus to unpost menus
+//- Reload window after state reset (send close signal to parent with reopen option?)
 //- 
 //- Later:
 //- Implement corner menu functions (using z-index)
@@ -22,7 +23,7 @@
 //- Double click on header to full-size?
 //- 
 <template>
-  <div class="wylib wylib-win" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
+  <div class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle">
       <div class="headerbar">
         <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
@@ -109,7 +110,6 @@ export default {
       borderWidth:	this.pr.winBorderWidth + 'px',
       opacity:		this.pr.winOpacity,
       borderRadius:	this.pr.winBorderRad + 'px',
-      visibility:	this.state.posted ? 'visible' : 'hidden',
       zIndex:		this.topLevel ? this.state.layer : MenuLayer,
     }},
     winStyleF: function () {return {		//Faster moves with these separate?
@@ -150,7 +150,7 @@ console.log("Storing window state:", this.tag)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (yesNo, tag) => {
-        if (yesNo) {Com.saveState(this.tag)}
+        if (yesNo) {Com.saveState(this.tag); this.$emit('close', true)}
       })
     },
 
