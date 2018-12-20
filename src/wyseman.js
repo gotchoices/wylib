@@ -80,10 +80,24 @@ console.log('Notify group: ', chan, data)
             index = 'lang_' + language + '~' + view	//Save each language separately
             this.procMessages(data)			//Reorganize messages array as object
             this.langCache[language][view] = data	//Cache language data for this view
-          } else {
+          } else {					//action == meta
+//console.log(" meta data:", data)
             this.metaCache[view] = data			//Cache meta data
             this.linkLang(view)				//Can access language information from the view meta data
-            if (pkt.ui) data.ui = pkt.ui		//Add in any user interface specification, if we got one
+            if (data.styles && data.styles.subviews) data.styles.subviews.forEach((sv, ix)=>{	//We will be needing meta data for these sub-views too
+//console.log("  meta subview:", sv)
+              let svName = (typeof sv == 'string') ? sv : sv.view
+                , inCache = this.metaCache[svName]
+              if (inCache) {
+                data.styles.subviews.splice(ix, 1, {view:svName, lang:{title:inCache.title, help:inCache.help}})
+              } else {
+                this.request(view + '~' + ix, 'meta', sv, dat=>{
+//console.log("   got subview meta:", dat)
+                  data.styles.subviews.splice(ix, 1, {view:sv, lang:{title:dat.title, help:dat.help}})
+                })
+              }
+            })
+
 //Fixme: also request language for any subordinate views
           }
 //console.log(" localStorage:", index)
