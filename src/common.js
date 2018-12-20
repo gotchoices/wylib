@@ -136,7 +136,16 @@ module.exports = {
   },
     
   clearState: function(tag) {
-    localStorage.removeItem(storeKey + tag)
+    if (tag) {			//Clear a single state item
+      localStorage.removeItem(storeKey + tag)
+    } else {			//Clear all state items
+      let re = new RegExp('^' + storeKey)
+      for (var i = 0, len = localStorage.length; i < len; i++) {
+        let key = localStorage.key(i)
+//console.log("Storage key:", key, typeof key)
+        if (key && key.match(re)) localStorage.removeItem(key)
+      }
+    }
   },
     
 //  docView: function(view) {
