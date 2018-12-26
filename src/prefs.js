@@ -25,8 +25,8 @@ const Preferences = {
   winHeadColorLow:		'#b8b8c0',
   winFullHeader:		22,
   winSmallHeader:		12,
-  winInitWidth:			500,
-  winInitHeight:		300,
+//  winInitWidthx:		500,	//Deprecated
+//  winInitHeight:		300,
   winSubWindowX:		80,
   winSubWindowY:		30,
   
@@ -45,7 +45,7 @@ const Preferences = {
   dewInvalidColor:		'#f02020',
   dewDirtyColor:		'#f0a020',
   dewBorderColor:		'#808080',
-  dewFlagWidth:			3,
+  dewFlagWidth:			4,
   dewDefHeight:			2,		//Default textarea dimensions
   dewDefWidth:			40,		//Default textarea dimensions
 

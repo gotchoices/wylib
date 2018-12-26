@@ -254,7 +254,7 @@ console.log("Open preview window:", view)
       if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
 //console.log("Dbe got metadata for:", this.state.dbView, data)
         this.viewMeta = data
-        this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: data.help}, 'dbe:'+this.state.dbView)
+        this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}, 'dbe:'+this.state.dbView)
       })
     },
   },

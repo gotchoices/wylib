@@ -85,6 +85,7 @@ export default {
   methods: {
     iconSvg(icon) {return Icons(icon)},
     nodeState(n) {			//Return the state object for the named node
+//console.log("nodestate:", n, this.state.nodes)
       return this.state.nodes[n]
     },
     buttonDown() {			//Make arrange button repeat if it is held down
