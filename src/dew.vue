@@ -2,30 +2,19 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Pass in a configuration object at any time to rebuild the widget
-//X- Select has an object describing the choices
-//X- Harvest the value, how?
-//X- Pass option argument in for pdms
-//X- Check contents against validator regexp
-//X- Indicator changes from red, yellow, white on validator
 //X- Emit event when data changed
+//- Validity doesn't show on first load
 //- 
+//- Later:
 //- Display special function indicator on right side?
-//- How to invoke special function
+//- How to invoke special function?
 //- Handlers for each kind of special function
 //X-   Calendar
 //-   Calculator
 //-   Spinner
 //-   Scrolled menu (static data, or callback to parent somewhere)
 //-   Editing window
-//- 
-//X- Check all dew types from old wylib
-//X-   Multi-line text entry (rowspan)
-//- 
-//- Use subframe arguments to place in grid?
-//- Implement date/time selector
-//- Implement calculator selector
-//- Implement integer spinners
+//- Can select from scrolled menu of available countries
 //- 
 <template>
   <div class="wylib wylib-dew" :title="lang ? lang.help : null">
@@ -36,18 +25,26 @@
     <select ref="input" v-else-if="state.style == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
       <option v-for="val in values" :label="val.title" :value="val.value" :title="val.help"/>
     </select>
-    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="this.state.hint" :disabled="disabled" :style="genStyle"/>
+    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
   </div>
 </template>
 
 <script>
 import Com from './common.js'
-import InDate from './indate.vue'
+//import InDate from './indate.vue'
 import DatePicker from './date.js'
+const shortHints = {
+  date: 'YYYY-MM-DD',
+}
+const shortTpts = {
+  alpha: '^[a-zA-Z.]*$',
+  alnum: '^[\\w.]*$',
+  date: '^\\d{4}[-/\\.]\\d{1,2}[-/\\.]\\d{1,2}$',
+}
 
 export default {
   name: 'wylib-dew',
-  components: {'wylib-indate': InDate},
+//  components: {'wylib-indate': InDate},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     lang:	{type: Object},
@@ -61,11 +58,20 @@ export default {
     pr:		require('./prefs'),
     userValue:	this.value,				//Value, as modified by user
     datePicker: null,
+    stateTpt:	{style: 'ent', size: null, state: null, template: null, special: {}},
   }},
 
   computed: {
+    hint: function() {
+      let hint = this.state ? this.state.hint : null
+      if (hint in shortHints) return shortHints[hint]; else return hint
+    },
+    template: function() {
+      let temp = this.state ? this.state.template : null
+      if (temp in shortTpts) return shortTpts[temp]; else return temp
+    },
     disabled: function() {				//No user data entry, just for looking at
-      return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide)
+      return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
     dirty() {						//The user has changed the value
       let dirty = (this.userValue != this.value)
@@ -73,27 +79,27 @@ export default {
       return dirty
     },
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
-//console.log("Valid:", this.field, this.userValue, this.state.template)
       let isValid = false
       if (this.state.style == 'chk' || this.state.style == 'inf') {
         isValid = true
       } else if (this.state.style == 'pdm') {
 //console.log(' values:', this.userValues ? this.values.map(e=>(e.value)) : null)
         isValid = this.values ? this.values.map(e=>(e.value)).includes(this.userValue || '') : true
-      } else if (!this.state.template) {
+      } else if (this.template == null) {
         isValid = true
-      } else if (RegExp(this.state.template).test(this.userValue)) {
-        isValid = true
+      } else {
+        isValid = RegExp(this.template).test(this.userValue)
       }
+//console.log("Valid:", this.field, this.userValue, this.template, this.disabled, isValid)
       return isValid
     },
     genStyle() { return {		//Generate style, based on data state
       borderLeftColor: this.disabled ? this.pr.dataBackground : (this.valid ? this.pr.dewBorderColor : this.pr.dewInvalidColor),
       borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
+      borderBottomColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor),
       background: ('background' in this.state) ? this.state.background : this.pr.dataBackground,
       borderLeftWidth: this.pr.dewFlagWidth + 'px',
       borderRightWidth: this.pr.dewFlagWidth + 'px',
-      borderColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor)
     }},
     height: function() {
 //console.log("Height:", this.state.size)
@@ -126,12 +132,11 @@ export default {
     },
     set(val) {return([this.userValue = val, this.field, this.dirty, this.valid])},
     clear() {return this.set(this.state.initial)}
-//    init() {return this.set(this.value)},
   },
 
   beforeMount: function() {
 //console.log("Dew state:", this.field, JSON.stringify(this.state))
-    Com.react(this, {style: 'ent', size: null, state: null, template: null, special: {}})
+    Com.stateCheck(this)
     
     if (!('initial' in this.state)) this.state.initial = null
 //console.log(" Refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
@@ -145,7 +150,7 @@ export default {
   },
 
   mounted: function() {
-//console.log(" refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
+//console.log(" Dew mounted:", this.field, this.state)
     if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
     if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
