@@ -15,8 +15,8 @@
       	:title="(conf.lang?conf.lang.title:null) + ':\n' + (conf.lang?conf.lang.help:null)"/>
     </div>
     <div class="subwindows">
-      <wylib-win :state="state.menu" pinnable=true @close="state.menu.posted=false" :lang="lang">
-        <wylib-menu :state="state.menu.client" :config="config" @done="state.menu.posted=state.menu.pinned"/>
+      <wylib-win :state="state.menu" pinnable=true @close="state.menu.posted=false">
+        <wylib-menu :state="state.menu.client" :config="config" :lang="lang" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
     </div>
   </div>
@@ -37,10 +37,18 @@ export default {
     config:	Array,
     height:	{type: Number, default: 18}
   },
+  data() { return {
+    stateTpt:	{menu: {client: {}}},
+  }},
 
+//  mounted: function() {
+//console.log("Menu components: " + JSON.stringify(this.$options.components))
+//    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
+//    this.$parent.$emit('customize', this.lang)
+//  },
   beforeMount: function() {
-//console.log("MenuDock:", JSON.stringify(this.config))
-    Com.react(this, {menu: {client: {}}})
+    Com.stateCheck(this)
+    this.$parent.$emit('customize', this.lang)
   },
   mounted: function() {
   }

@@ -36,9 +36,10 @@ export default {
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
-    viewMeta:	null,
-    viewLang:	null,
+//    viewMeta:	null,
+//    viewLang:	null,
     dbData:	[],
+    stateTpt:	{logic: {and: true, items: [{left: null, oper: '='}]}, dock: {}},
   }},
 
   computed: {			//Fixme: get langauge from wyseman/db
@@ -77,12 +78,6 @@ export default {
     search() {
       this.$emit('search', this.state.logic)
     },
-    save() {
-//console.log("Dbs save (not implemented)")
-    },
-    recall() {
-//console.log("Dbs recall (not implemented)")
-    },
     geometry() {		//Fixme: auto adjust parent geometry?
 //console.log("Dbs check geometry", vm.$el.getBoundingClientRect())
     },
@@ -93,11 +88,12 @@ export default {
   },
 
   beforeMount: function() {
-    Com.react(this, {logic: {and: true, items: [{left: null, oper: '='}]}, dock: {}})
+    Com.stateCheck(this)
   },
 
   mounted: function() {
     this.$parent.$emit('swallow', this.$refs['header'])
+    this.$parent.$emit('customize', this.wm.dbs)
   },
 }
 </script>

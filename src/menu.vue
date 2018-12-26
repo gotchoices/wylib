@@ -31,8 +31,8 @@
       </table>
     </div>
     <div class="submenus subwindows">
-      <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false" :lang="item.lang">
-        <wylib-menu :state="state.subs[item.idx].client" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
+      <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false">
+        <wylib-menu :state="state.subs[item.idx].client" :lang="item.lang" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
       </wylib-win>
     </div>
   </div>
@@ -50,9 +50,11 @@ export default {
     state:	{type: Object, default: () => ({})},
     layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
     config:	Array,
+    lang:	{type: Object, default: Com.langTemplate},
   },
   data() { return {
     pr:		require('./prefs'),
+    stateTpt:	{subs: {}}
   }},
   computed: {
   },
@@ -98,8 +100,8 @@ export default {
   },
 
   created: function() {
-    Com.react(this, {subs: {}})
-//console.log("Menu state: ", JSON.stringify(this.state))
+    Com.stateCheck(this)
+//console.log("Menu state: ", this.lang.title, this.state)
 
     this.config.forEach((item, x) => {		//Set any object properties that are not known until now
       if (item.menu && !this.state.subs[item.idx]) {
@@ -111,6 +113,8 @@ export default {
 
   mounted: function() {
 //console.log("Menu components: " + JSON.stringify(this.$options.components))
+//    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
+    this.$parent.$emit('customize', this.lang)
   },
 }
 </script>

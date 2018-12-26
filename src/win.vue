@@ -23,7 +23,7 @@
 //- Double click on header to full-size?
 //- 
 <template>
-  <div class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
+  <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle">
       <div class="headerbar">
         <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
@@ -41,10 +41,15 @@
       </div>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false" :lang="wm.winMenu">
-        <wylib-menu :state="winMenu.client" :config="winMenuConfig" @done="winMenu.posted=winMenu.pinned"/>
+      <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false">
+        <wylib-menu :state="winMenu.client" :config="winMenuConfig" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
       </wylib-win>
-      <wylib-modal v-if="topLevel && modal.posted" :state="modal"/>
+      <wylib-win v-for="dia,idx in state.dialogs" v-if="dia" topLevel=true :key="idx" :state="dia" @close="r=>{closeDia(idx,r)}">
+        <wylib-dialog :state="dia.client"/>
+      </wylib-win>
+      <wylib-modal v-if="topLevel && modal.posted" :state="modal">
+        <wylib-dialog slot-scope="ws" :state="ws.state"/>
+      </wylib-modal>
     </div>
     <div v-show="!state.minim" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
       <slot></slot>
@@ -60,30 +65,32 @@ import Menu from './menu.vue'
 import Button from './button.vue'
 import Interact from 'interactjs'
 import Wyseman from './wyseman.js'
+import Dialog from './dialog.vue'
 import Modal from './modal.vue'
 import State from './state.js'
 //console.log("Interact:", Interact)
 
 export default {
   name: 'wylib-win',
-  components: {'wylib-menu': Menu, 'wylib-button': Button, 'wylib-modal': Modal},
+  components: {'wylib-menu': Menu, 'wylib-button': Button, 'wylib-dialog': Dialog, 'wylib-modal': Modal},
   props: {
     state:	{type: Object, default: () => ({})},
     topLevel:	{default: false},		//Full header and window menu
     fullHeader: {default: false},		//Full header only
     pinnable:	{default: false},		//Include pinning button/function
-    lang:	{type: Object, default: Com.langTemplate},
-    tag:	{type: String, default: 'win'}
   },
   data() { return {
     pr:			require('./prefs'),
     wm:			{},
+    lang:		{title: null, help: null},
+    stateTag:		{type: String, default: 'win'},
     myTopElement:	null,
     top:		null,
-    modal:		{posted: false},
+    modal:		{posted: false, client:{}},
     restoreMenu:	[],
     lastLoadIdx:	null,
-    winMenu:		{client:{}}, client: {}, modal: {posted: false},
+    winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
+    stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:[], height: null, width: null},
   }},
   provide() { return {
     top: () => {return this.top}
@@ -114,8 +121,8 @@ export default {
     }},
     winStyleF: function () {return {		//Faster moves with these separate?
       transform:	'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
-      height:		(this.state.minim ? this.headerHeight + 6 : this.state.height) + 'px',
-      width:		this.state.width + 'px',
+      height:		this.state.minim ? (this.headerHeight + 6) + 'px' : (this.state.height ? this.state.height + 'px': null),
+      width:		this.state.width ? this.state.width + 'px' : null,
     }},
     headerStyle: function () {return {
       borderRadius:	(this.pr.winBorderRad - 1) + 'px', 
@@ -135,7 +142,7 @@ export default {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
-        if (yesNo) State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
+        if (yesNo) State.saveas(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
     },
     saveState() {
@@ -145,12 +152,12 @@ export default {
         this.saveStateAs()
     },
     storeState() {
-console.log("Storing window state:", this.tag)
-      if (this.topLevel && this.tag) Com.saveState(this.tag, this.state)
+console.log("Storing window state:", this.stateTag)
+      if (this.topLevel && this.stateTag) Com.saveState(this.stateTag, this.state)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (yesNo, tag) => {
-        if (yesNo) {Com.saveState(this.tag); this.$emit('close', true)}
+        if (yesNo) {Com.saveState(this.stateTag); this.$emit('close', true)}
       })
     },
 
@@ -165,7 +172,7 @@ console.log("Storing window state:", this.tag)
     },
 
     moveHandler(event) {
-//console.log("Moving: " + JSON.stringify(event.rect));
+//console.log("Moving: ", event, this.state);
       this.state.x += event.dx
       this.state.y += event.dy
     },
@@ -186,6 +193,9 @@ console.log("Storing window state:", this.tag)
       cmenu.appendChild(childMenu)
       if (childStatus) cstat.appendChild(childStatus)
     },
+    closeDia(idx, reopen) {
+      Com.closeWindow(this.state.dialogs, idx, reopen)
+    },
   },
 
   watch: {		//Let parent and any content clients, we just posted
@@ -201,32 +211,30 @@ console.log("Storing window state:", this.tag)
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
     this.$on('swallow', this.swallowMenu)
+    this.$on('customize', (lang, tag)=>{this.lang = lang; this.stateTag})	//Allow child to set the window's title and tagging ID
 
-    if (this.topLevel) this.top = new Com.topHandler((st) => {Object.assign(this.modal, st)}, this)
+    if (this.topLevel) this.top = new Com.topHandler(this)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
     if (this.topLevel) {
       let savedState = Com.getState(this.tag)
-console.log("Win state template:", this.id, this.tag, savedState)
+//console.log("Win state template:", this.id, this.tag, savedState)
       if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
     }
-
-//console.log("Win State:", this.state);
-    Com.react(this, {
-      x: null, y: null, posted: false, pinned: false, layer: 10, minim: false,
-      width: this.topLevel ? this.pr.winInitWidth : null, 
-      height: this.topLevel ? this.pr.winInitHeight : null,
-    })
+    Com.stateCheck(this)
+//if (this.topLevel) console.log("Win state:", this.state);
   },
 
   mounted: function() {
+    let wId = '#win'+this._uid
     Interact(this.$el).resizable({
       inertia: true,
       margin: 7,
       edges: {top:true, left: true, right: true, bottom: true},
       restrictSize: {min: {width: 50, height: 50}},
-      ignoreFrom: '.subwindows',	//All windows with subwindows must wrap them with this class
+      ignoreFrom: wId + ' .subwindows',
+//      allowFrom: wId + '> .content',
       onmove: this.sizeHandler,
       onend: this.storeState
     }).draggable({
@@ -235,7 +243,7 @@ console.log("Win state template:", this.id, this.tag, savedState)
       inertia: true,
       onmove: this.moveHandler
     })
-//console.log("Mounted; this: ", this.title, "topLevel:", this.topLevel, "top:", this.top)
+//console.log("Mounted; this: ", wId, this.title, "topLevel:", this.topLevel, "top:", this.top)
 
     if (this.topLevel) {
 //      this.top = new Com.topHandler((st) => {this.modal = st}, this)
@@ -249,7 +257,8 @@ console.log("Win state template:", this.id, this.tag, savedState)
 //console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
       let menuItems = menuData.map(el=>{
         return Object.assign(el, {call:()=>{
-          Object.assign(this.state,el.data)
+          Object.assign(this.state, el.data)
+          Com.stateCheck(this)
           this.lastLoadIdx = el.idx
         }})
       })
@@ -316,8 +325,9 @@ console.log("Win state template:", this.id, this.tag, savedState)
 //  }
   .wylib-win .content {
 //    border: 2px solid green;
-    overflow-x: hidden;
-    overflow-y: scrolled;
+    margin: 0px 2px 1px 2px;
+    overflow-x: auto;
+    overflow-y: auto;
     z-index: 1;
   }
   .wylib-win .wylib-menu {

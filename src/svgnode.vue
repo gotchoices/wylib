@@ -28,8 +28,9 @@ export default {
   props: {
     state:	{type: Object, default: () => ({})},
   },
-//  data() { return {
-//  }},
+  data() { return {
+    stateTpt:	{x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0},
+  }},
   computed: {
     transform: function() {				//Moves the object around when we change x or y
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
@@ -122,9 +123,7 @@ export default {
 
   beforeMount: function() {
 //console.log("Node beforeMount:", this.state.tag)
-    Com.react(this, {		//Create any state properties that don't yet exist
-      x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0
-    })
+    Com.stateCheck(this)
     this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
       if (typeof lk == 'object' && !lk.hub) this.$set(lk, 'hub', ()=>{})	
     })

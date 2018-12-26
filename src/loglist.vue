@@ -44,9 +44,10 @@ export default {
   },
 
   data() { return {
-    isAnd: true,
-    childYs: [],
+    isAnd:	true,
+    childYs:	[],
     wm:		{},
+    stateTpt:	{and: true, items: []},
   }},
 
   computed: {
@@ -140,7 +141,7 @@ console.log("Insert:" + idx + " State:" + state)
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
   },
   beforeMount: function() {
-    Com.react(this, {and: true, items: []})
+    Com.stateCheck(this)
   },
   mounted: function() {
     this.$nextTick(() => {this.$emit('geometry', this, true)})

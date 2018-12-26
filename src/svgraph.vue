@@ -62,7 +62,8 @@ export default {
     startTimer:		null,
     repeatTimer:	null,
     toolX:		0,
-    toolY:		0
+    toolY:		0,
+    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}},
   }},
   
   computed: {
@@ -167,8 +168,7 @@ export default {
   },
 
   beforeMount: function() {
-//console.log("SVG state:", JSON.stringify(this.state))
-    Com.react(this, {minX:0, minY:0, maxX:400, maxY: 400, nodes: {}})
+    Com.stateCheck(this)
   },
 
   mounted: function() {

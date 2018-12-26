@@ -11,6 +11,7 @@
 
 <script>
 const Icons = require('./icons.js')
+const Pr = require('./prefs')
 
 export default {
   name: 'wylib-button',

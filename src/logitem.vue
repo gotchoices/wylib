@@ -38,8 +38,8 @@ export default {
     index:	Number,
   },
   data() { return {
+    pr:		require('./prefs'),
     dragOver: false,
-    pr: require('./prefs.js'),
     wm:		{},
   }},
   computed: {
