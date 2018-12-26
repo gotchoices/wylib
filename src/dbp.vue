@@ -2,31 +2,25 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Preferred display columns (wyseman)
-//X- Preferred display column order (wyseman)
-//X- Can launch a dbe on the same view
-//X- WyseGI, can launch another dbp, rather than edit window from double-click
-//X- Implement loadBy
-//X- Make column widths stick from one run to the next
-//X- Implement column menu commands
 //X- Split mlb state into layout(user-controlled) and config(meta-data-defined)
 //X- Meta-data fetched from database is not overwriting stored state data
-//- Remove test routine in menu
-//- Tables with no default view columns display nothing
+//X- Remove test routine in menu
+//X- Tables with no default view columns display nothing
+//- Display the number of loaded records
+//- Retain previous scroll position after reload
+//- Implement auto-execute option: execute the current (or first) row on each load/reload
 //- 
 //- Sorting:
 //-  Initial sort order comes from wyseman, apply to indicators
 //X-  Maintain an array of fields indicating sort order
 //X-  User can change sort order from mlb buttons
 //X-  Sort order is included in load query sent to backend
-//- Menu option to restore default column order, and default sort order
+//X- Menu option to restore default column order, and default sort order
 //- 
 //- Make menu module use toggled field correctly (instead of call function)
-//- Toggle display of columns
+//X- Toggle display of columns
 //- Toggle display of footers
-//- Move context menu to mlb?
 //- 
-//- Display the number of records loaded
 //- Can clone another similar window
 //- Can disable reload on sort controls
 //- Implement maximum rows to fetch parameter in menu settings
@@ -38,13 +32,13 @@
       <div class="headerfill"/>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true :tag="'dbe:'+state.dbView" :lang="editLang" @close="state.edit.posted=false">
-        <wylib-dbe :state="state.edit.client" @modified="modified" :bus="dbeBus"/>
+      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false">
+        <wylib-dbe :state="state.edit.client" @modified="modified" :bus="dbeBus" :master="master"/>
       </wylib-win>
-      <wylib-win :state="state.colMenu" @close="state.colMenu.posted=false" :lang="wm.dbeColMenu">
-        <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" @done="state.colMenu.posted=false"/>
+      <wylib-win :state="state.colMenu" @close="state.colMenu.posted=false">
+        <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
       </wylib-win>
-      <wylib-win v-if="this.filtPosts" :state="state.filter" topLevel=true :tag="'dbs:'+state.dbView" :lang="wm.dbs" @close="state.filter.posted=false">
+      <wylib-win v-if="this.filtPosts" :state="state.filter" topLevel=true @close="state.filter.posted=false">
         <wylib-dbs :fields="logicFields" :state="state.filter.client" @search="search"/>
       </wylib-win>
     </div>
@@ -67,6 +61,8 @@ export default {
   props: {
     state:	{type: Object, default: () => ({})},
     autoEdit:	{type: Boolean, default: true},
+    bus:	null,				//My master dbe, if any
+    master:	null,				//Current key info of my master, if any
   },
   data() { return {
     pr:		require('./prefs'),
@@ -78,29 +74,18 @@ export default {
     dbeBus:	new Bus.messageBus(this),
     lastSpec:	{},
     lastView:	null,
-    editPosts:	0,
+    editPosts:	0,			//Don't instantiate until we've posted once
     filtPosts:	0,
   }},
   inject: ['top'],
 
-  watch: {
-    'state.dbView': function(newVal, oldVal) {		//If we change our view, reset data, columns
-//console.log("Dbp dbView changed!")
-      this.gridData = []
-      this.viewMeta = null
-      if (newVal != oldVal) this.metaListen()
-    },
-    gridData: function() {
-      this.state.loaded = this.gridData ? this.gridData.length : 0
-//console.log("Dbp gridData changed:", this.state.loaded)
-    },
-  },
-
   computed: {
     id: function() {return 'dbp_' + this._uid + '_'},
-    editLang: function() {return {
-      title: (this.wm.dbe?this.wm.dbe.title:null) + ':' + this.state.dbView, 
-      help: (this.wm.dbe?this.wm.dbe.help:null) + ': ' + this.state.dbView
+    stateTpt:	function() {return {
+      dock: {}, loaded: 0, lastLoad: {}, colMenu: {x: 100, y:0},
+      edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
+      filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
+      grid: {footerOn: false, sorting: {}, columns: []}
     }},
     logicFields: function() {
       let flds = []
@@ -119,21 +104,20 @@ export default {
       {idx: 'prv', lang: this.wm.dbpPrev,     call: this.prev,         icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext,     call: this.next,         icon: 'arrowdown', shortcut: true},
       {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns,   icon: 'sun'},
-      {idx: 'tst', lang: {title:'Test', help:'XYZ!'}, call: this.test, icon: 'cirdot'},
+      {idx: 'tst', lang: {title: 'T', help: 'H'}, call: this.test, icon:'circle', shortcut: true},
       {idx: 'cvi', lang: this.wm.dbpVisible, icon:'eye', menu: this.visibleMenu},
     ]},
     visibleMenu: function() { 
-      let items = []
+      let items = [], conf = this.mlbConfig
 //console.log("Visible:", this.state.dbView)
-      for (let key in this.mlbConfig) {
-        let conf = this.mlbConfig[key]
-          , col = this.state.grid.columns.find(e => (e.field == key))
-        items.push({idx: key, lang:{title: conf.title, help: conf.help}, type: 'checkbox', input: (v)=>{
+      Object.keys(this.mlbConfig).sort((a,b)=>{return conf[a].title < conf[b].title ? -1 : 1}).forEach(key=>{
+        let col = this.state.grid.columns.find(e => (e.field == key))
+        items.push({idx: key, lang:{title: conf[key].title, help: key+'\n'+conf[key].help}, type: 'checkbox', input: (v)=>{
 //console.log("inp:", key, v, col.visible)
           if (v != null && col) {col.visible = v}
           return col ? col.visible : null
         }})
-      }
+      })
       return items
     },
     colMenuConfig: function() {return [
@@ -157,14 +141,14 @@ export default {
         if ('display' in meta.styles) foundDisplay = true
         let config = {
           field:	key,
-          width:	null, 
           title:	meta.title || key,
           help:		meta.help,
           order:	parseInt(meta.styles.display || 9999),
           just:		meta.type.match(/(int|float)[0-9]/) ? 'right' : 'left',
-          width:	(defWidth && defWidth < this.pr.mlbDefWidth) ? defWidth : this.pr.mlbDefWidth,
-          visible:	('display' in meta.styles) ? !!(meta.styles.display) : false,
+          width:	defWidth ? (defWidth <= this.pr.mlbMaxWidth ? defWidth : this.pr.mlbMaxWidth) : this.pr.mlbDefWidth,
+          visible:	('display' in meta.styles) ? !!parseInt(meta.styles.display) : false,
         }
+//console.log("Width:", meta.styles.size, config.field, defWidth, config.width)
         colConfigs[key] = config
       })
 //console.log("colConfigs:", colConfigs)
@@ -174,6 +158,12 @@ export default {
   },
 
   methods: {
+    test() {
+console.log("Test!", this.top)
+      this.top().confirm('A test message', (yesno, tag) => {
+console.log("Modal answers:", yesno, tag)
+      })
+    },
     editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
       if (this.state.edit.posted) {
@@ -195,12 +185,13 @@ export default {
 //console.log("   row: ", row, keyVal)
       if (this.autoEdit) {
         this.state.edit.posted = true
-        this.dbeBus.notify('load', keyVal)
+        this.editPosts++
+        this.$nextTick(()=>{this.dbeBus.notify('load', keyVal)})
       } else this.$emit('execute', row, this.viewMeta.pkey, keyVal)
     },
 
     load(spec) {
-//console.log("Dbp load:", spec)
+//console.log("Dbp load:", this.state.dbView, spec)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
@@ -247,11 +238,6 @@ export default {
     defColumns(ev) {
 console.log("Not yet implemented")
     },
-    test() {
-      this.top().confirm('A test message', (yesno, tag) => {
-console.log("Modal answers:", yesno, tag)
-      })
-    },
     geometry(ev) {
 //console.log("Geometry changed:", top, ev)
       this.top().emit('geometry', ev)
@@ -268,7 +254,34 @@ console.log("Modal answers:", yesno, tag)
       if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
+        this.$parent.$emit('customize', {title: this.wm.dbpMenu.title+': '+data.title, help: data.help}, 'dbp:'+this.state.dbView)
       })
+    },
+    followMaster() {		//Register which view we are dealing with
+      let { view, values, keys } = this.master
+        , hisCols = keys.join(',')
+        , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
+//console.log("Got command from master dbe:", view, hisCols, this.master, keyLink)
+//    this.viewMeta.fkeys.forEach(el=>{if (el.table == 'mychips.users_v') console.log("  el:", el.table, el.foreign.join(','))})
+      if (keyLink) {
+        let where = {}
+        keyLink.columns.forEach((key,idx)=>{where[key] = values[idx]})
+//console.log("  where:", where)
+        this.load({where})
+      }
+    },
+  },
+
+  watch: {
+    'state.dbView': function(newVal, oldVal) {		//If we change our view, reset data, columns
+//console.log("Dbp dbView changed!")
+      this.gridData = []
+      this.viewMeta = null
+      if (newVal != oldVal) this.metaListen()
+    },
+    gridData: function() {
+      this.state.loaded = this.gridData ? this.gridData.length : 0
+//console.log("Dbp gridData changed:", this.state.loaded)
     },
   },
 
@@ -284,28 +297,33 @@ console.log("Modal answers:", yesno, tag)
 
   beforeMount: function() {
 //console.log("Dbp before, state: ", this.state);
-    Com.react(this, {
-      dock: {},
-      loaded: 0, lastLoad: {}, colMenu: {x: 100, y:0},
-      edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
-      filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
-      grid: {footerOn: false, sorting: {}, columns: []}
+    if (this.bus) this.bus.register(this.id, (msg) => {		//Respond to commands from a master dbe
+      if (msg == 'clear') {
+        this.clear()
+      } else if (msg == 'load') {
+        this.followMaster()
+      }
     })
+    Com.stateCheck(this)
   },
 
   mounted: function() {
     this.$parent.$emit('swallow', this.$refs['header'])
-console.log('State:', this.id, this.state.loaded)
+//console.log('State:', this.id, this.state.loaded)
     this.$nextTick(() => {
-console.log('Was loaded, reload?', this.id, this.state.loaded)
+      if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
+      if (this.state.filter && this.state.filter.posted) this.filtPosts = 1
+//console.log('Was loaded, reload?', this.id, this.state.loaded)
       if (this.state.loaded > 0)		//If state says we had data loaded before, reload now
         this.reload()
+      else if (this.bus)
+        this.followMaster()
     })
   },
 
-  beforeDestroy: function() {
-console.log('Dbp about to die:', this.state)
-  }
+//  beforeDestroy: function() {
+//console.log('Dbp about to die:', this.state)
+//  }
 }
 </script>
 

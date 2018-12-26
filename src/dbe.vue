@@ -2,23 +2,17 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Keep track of clean/dirty status (by tracking changed events from dews)
-//X- Generate update JSON structure
-//X- Generate delete JSON structure
-//X- Generate insert JSON structure
-//X- Make modal work
-//X- Update preview after insert, update, delete
-//X- Clear needs to somehow reload any default values
-//X- Show invalid data on init, and after clear
-//X- Works well enough to add, modify, delete users, documents
-//- Can launch subordinate previews
-//- 
-//- Bugs:
-//- Change to username field turns off Add button?
+//X- Can launch subordinate previews
+//X- Review for reactivity
+//X- Split state.dews.fields into state and config
+//X- Communicate reload with sub-views
+//X- Present records in a grid layout
+//X- Added records prefill foreign key data
+//- See Fixme's below
 //- 
 //- Later:
+//- Keep state of "was loaded" (also table?) and the key value
 //- Should filter nulls out of insert fields?
-//- Present records in a grid layout
 //- Optionally, ask for confirmation on:
 //-  delete
 //-  clear, overwrite dirty record
@@ -28,13 +22,16 @@
 <template>
   <div class="wylib wylib-dbe">
     <div class="header">
-      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :height="headerHeight" llang="wm.dbeMenu"/>
+      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :height="headerHeight" :lang="wm.dbeMenu"/>
       <div class="headerfill"/>
-      <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="state.key" :size="keyEntSize"/></div>
+      <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
     <div class="subwindows">
+      <wylib-win v-for="sub,idx in state.subs" v-if="sub" topLevel=true :key="idx" :state="sub" @close="r=>{closeWin(idx, r)}">
+        <wylib-dbp :state="sub.client" :bus="subBus" :master="keyMaster"/>
+      </wylib-win>
     </div>
-    <wylib-mdew ref="mdew" :state="state.dews" :data="dbData" @input="change" :bus="msgBus"/>
+    <wylib-mdew ref="mdew" :state="state.dews" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
   </div>
 </template>
 
@@ -42,17 +39,20 @@
 import Com from './common.js'
 import Bus from './bus.js'
 import Wyseman from './wyseman.js'
-import Mdew from './mdew.vue'
 import MenuDock from './menudock.vue'
+import Mdew from './mdew.vue'
+import Dbp from './dbp.vue'
+import Win from './win.vue'
 
 export default {
   name: 'wylib-dbe',
-  components: {'wylib-mdew': Mdew, 'wylib-menudock': MenuDock},
+  components: {'wylib-mdew': Mdew, 'wylib-menudock': MenuDock, 'wylib-dbp':Dbp, 'wylib-win':Win},
   props: {
     state:	{type: Object, default: () => ({})},
-    bus:	null,
+    bus:	null,			//Commands from my parent dbp
+    master:	null,			//Key info for my master, if any
   },
-  inject: ['top'],
+  inject: ['top'],		//My toplevel window
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
@@ -60,70 +60,126 @@ export default {
     dbData:	{},		//Data as fetched from the database
     dirty:	false,
     valid:	false,
-    msgBus:	new Bus.messageBus(this),
+    lastView:	null,
+    mdewBus:	new Bus.messageBus(this),
+    subBus:	new Bus.messageBus(this),
+    stateTpt:	{dock:{}, dbView:'', key:[], subs:[], dews:{fields: []}},
   }},
 
   computed: {
-    id: function() {return 'dbe_' + this._uid + '_'},
-    actMenu: function() {
+    id() {return 'dbe_' + this._uid + '_'},
+    metaStyles() {return this.viewMeta && this.viewMeta.styles ? this.viewMeta.styles : {}},
+    actMenu() {
       let acts = []
-//console.log("actMenu:", this.viewMeta.ui)
-      if (this.viewMeta && this.viewMeta.ui) this.viewMeta.ui.actions.forEach(act => {
-        acts.push({idx: act, lang: this.viewMeta.msg[act] || {title:act}, call: ()=>{this.perform(act)}})
+//console.log("actMenu:", this.metaStyles)
+      if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
+        let name = act.name
+        acts.push({idx: name, icon: 'wand', lang: this.viewMeta.msg[name] || {title:name}, call: ()=>{this.perform(act)}})
       })
-    return acts
+      return acts
     },
-    subMenu: function() {
+    subMenu() {
       let subs = []
-      if (this.viewMeta && this.viewMeta.ui) this.viewMeta.ui.subs.forEach(sub => {
-        subs.push({idx: sub, lang: this.viewMeta.msg[sub] || {title:sub}, call: ()=>{this.preview(sub)}})
+//console.log("subMenu:", this.metaStyles)
+      if (this.metaStyles.subviews) this.metaStyles.subviews.forEach(sub => {
+        let viewName = (typeof sub == 'string') ? sub : sub.view
+            , lang = sub.lang || {title: viewName, help:null}
+        subs.push({idx: viewName, lang, icon: 'table', call: ()=>{this.addWin(sub.view)}})
       })
-    return subs
+      return subs
     },
-    dockConfig: function() { return [
+    dockConfig() { return [
       {idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu, icon: 'wand'},
       {idx: 'sub', lang: this.wm.dbeSubords, menu: this.subMenu, icon: 'table'},
       {idx: 'adr', lang: this.wm.dbeInsert,  call: this.insert,  icon: 'upload', shortcut: true, disabled: !this.valid},
       {idx: 'upd', lang: this.wm.dbeUpdate,  call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty || !this.valid},
-      {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.state.key},
+      {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.keyValues},
       {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
-      {idx: 'pre', lang: this.wm.dbePreview, call: this.docPrev, icon: 'filetext', shortcut: true},
     ]},
-    headerHeight: function() {
+    headerHeight() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
     },
-    keyEntSize: function() {
+    keyEntSize() {
       let len = 4
-      if (this.state.key) len = this.state.key.join(',').length
+      if (this.keyValues) len = this.keyValues.join(',').length
       if (len > 16) len = 16
       return len
-    }
+    },
+    mdewConfig() {			//Make the column description format mdew is looking for
+      let fieldArray = []
+      if (this.viewMeta) this.viewMeta.columns.forEach(meta => {
+//console.log("Col:", meta.col, " Meta:", meta.styles, meta.values)
+        fieldArray.push({
+          field:	meta.col,
+          lang:		{title:	meta.title || meta.col, help: meta.title + ' (' + meta.col + '):\n' + meta.help},
+          styles:	meta.styles,
+          values:	meta.values
+        })
+      })
+      return fieldArray
+    },
+    keyValues() {	//An array of current PK values
+      let keyVal = []
+      if (this.viewMeta) this.viewMeta.pkey.forEach(fld => {keyVal.push(this.dbData[fld])})
+//console.log("Dbe key:", keyVal)
+      return keyVal
+    },
+    pKey() {		//object describing current PK fields and their values
+      let ret = {}
+      if (this.viewMeta) this.viewMeta.pkey.forEach(fld => {ret[fld] = this.dbData[fld]})
+//console.log("Dbe key:", ret)
+      return ret
+    },
+    keyMaster() {return {
+      view: this.state.dbView,
+      pKey: this.pKey,
+      keys: this.viewMeta.pkey,
+      values: this.keyValues,
+    }},
   },
 
   methods: {
-    loadRec() {
-      let resp = {q:null}
-      this.top().query(this.wm.dbeLoadPrompt.help, this.top().dewArray('q', this.wm.dbeRecordID), resp, (yes) => {
-console.log("Load record:", yes, resp.q)
+    loadRec() {					//Prompt for a primary key and load that record
+      let resp = {}
+      let dews = []; this.mdewConfig.forEach((el,ix)=>{
+        if (this.viewMeta.pkey.includes(el.field)) {
+          let pkEl = Object.assign({}, el)
+          if (pkEl.styles) {delete pkEl.styles.hide; delete pkEl.styles.subframe; delete pkEl.focus}
+          dews.push(pkEl)
+        }
+      })
+      dews[0].focus = true			//Doesn't seem to work
+      this.top().query(this.wm.dbeLoadPrompt.help, dews, resp, (yes) => {
+//console.log("Load record:", yes, resp)
+        this.load(resp)
       })
     },
-    keyWhere(key = this.state.key) {		//Return an object with the where clause to identify this record
+
+//Fixme: change to access keyMaster
+    keyWhere(key = this.keyValues) {		//Return a 'where' object identifying this record
       let whereObj = {}
       this.viewMeta.pkey.forEach((fld,i) => {whereObj[fld] = key[i]})
 //console.log("Where:", whereObj)
       return whereObj
     },
-    load(key) {
-//console.log("Key:", this.state.key)
+    load(where) {				//Fetch a record from the database, by its primary key
+      if (Array.isArray(where)) where = this.keyWhere(where)	//if only key values passed in
       this.dirty = false
       this.valid = true
-      this.dataRequest('tuple', {where: this.keyWhere(key), fields: '*'}, false, () => {this.state.key = key})
+      this.dataRequest('tuple', {where, fields: '*'}, false)
     },
 
     insert() {
-      let fields = Object.assign({}, this.dbData, this.$refs.mdew.userData)
-console.log("Insert:", fields)
+      let fields = {}
+        , { view, values, keys } = this.master			//Populate foreign key fields
+        , hisCols = keys.join(',')
+        , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
+//console.log("insert:", fields, "keyMaster:", this.master, hisCols, "keyLink:", keyLink)
+      if (keyLink) keyLink.columns.forEach((key, idx)=>{fields[key] = values[idx]})
+
+      Object.assign(fields, this.dbData, this.$refs.mdew.userData)	//Fixme: fetch over mdewBus
+//console.log("Insert:", fields)
       this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
 //console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
         if (fld.styles && ('write' in fld.styles) && (!fld.styles.write || fld.styles.write==0)) {
@@ -131,29 +187,23 @@ console.log("Insert:", fields)
           delete fields[fld.field]
         }
       })
-console.log("insert:", fields)
-      this.dataRequest('insert', {fields}, true, (data)=>{
-        let keyVal = []; this.viewMeta.pkey.forEach(fld => {
-          keyVal.push(data[fld])
-        })
-        this.state.key = keyVal
-      })
+
+      this.dataRequest('insert', {fields})
     },
 
-    update() {
-      let fields = this.$refs.mdew.userData
-console.log("Update:", this.dbData, fields)
+    update() {						//Fixme: how to handle null fields?
+      let fields = this.$refs.mdew.userData		//Fixme: fetch over mdewBus
+//console.log("Update:", this.dbData, fields)
       this.dataRequest('update', {fields, where: this.keyWhere()})
     },
 
     delete() {
-console.log("Delete")
-      this.dataRequest('delete', {where: this.keyWhere()}, true, ()=>{this.state.key = null})
-//console.log(" after delete:", this.dbData)
+//console.log("Delete")
+      this.dataRequest('delete', {where: this.keyWhere()})
     },
 
     clear() {
-      let answers = this.msgBus.notify('clear')[0]
+      let answers = this.mdewBus.notify('clear')[0]
 //console.log("Clear", answers)
       answers.forEach((el,ix) => {
         let value, field
@@ -162,6 +212,7 @@ console.log("Delete")
         this.dbData[field] = value
       })
       this.top().posted()			//Act like we just posted
+      this.subBus.notify('clear')
     },
 
     change(value, field, dirty, valid) {	//Respond to changes on the data inputs
@@ -179,66 +230,63 @@ console.log("Delete")
           if (data) this.dbData = data			//If a record was returned
           if (modifies) this.$emit('modified', data)	//Tell parent dbp to update
           if (cb) cb(data)
+//console.log("Loaded:", this.viewMeta.pkey)
+          this.$nextTick(()=>{this.subBus.notify('load')})
         }
       })
     },
-    docPrev() {Com.docView(this.state.dbView)},
 
-    mdewLayout() {		//Make the column description format mdew is looking for
-      let fieldArray = []
-      if (this.viewMeta) this.viewMeta.columns.forEach(meta => {
-//console.log("Col:", meta.col, " Meta:", meta.styles, meta.values)
-        let stateElem = this.state.dews.fields.find(e => (e.field == meta.col))
-        if (!stateElem) stateElem = {
-          field:	meta.col,
-          lang:		{title:	meta.title || meta.col, help: meta.title + ' (' + meta.col + '):\n' + meta.help},
-          styles:	meta.styles,
-          values:	meta.values
-        }
-//console.log("Col:", meta.col, JSON.stringify(stateElem))
-        fieldArray.push(stateElem)
-      })
-      return fieldArray
-    },
     perform(act) {
 console.log("Perform action:", act)
+      Com.action(this.state.dbView, act, this.top)
     },
-    preview(sub) {
-console.log("Open preview:", sub)
+
+    addWin(view) {
+console.log("Open preview window:", view)
+      Com.addWindow(this.state.subs, {posted: true, x:0, y:0, client: {dbView: view}}, true)
+    },
+    closeWin(idx, reopen) {
+      Com.closeWindow(this.state.subs, idx, reopen)
+    },
+    metaListen() {			//Register which view we are dealing with
+      let zid = this.id+'cv'
+      if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register
+      if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
+//console.log("Dbe got metadata for:", this.state.dbView, data)
+        this.viewMeta = data
+        this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: data.help}, 'dbe:'+this.state.dbView)
+      })
     },
   },
 
   watch: {
-//    'state.key': function(key) {
-//console.log("Watched key changed:", key)
-//      if (key && key.length > 0) this.load(key); else this.dbData = {}
-//    },
-    'state.dbView': function() {			//If we change our view, reset data, columns
+    'state.dbView': function(newVal, oldVal) {			//If we change our view, reset data, columns
+//console.log("Dbe dbView changed!")
       this.recData = []
       this.viewMeta = null
-      Wyseman.request(this.id+'xm', 'meta', this.state.dbView, (data) => {this.viewMeta = data})
+      if (newVal != oldVal) this.metaListen()
     },
-    viewMeta: function() {this.state.dews.fields = this.mdewLayout()},
+    keyValues: function(val) {this.state.key = this.keyValues},
   },
 
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
-    if (this.state.dbView)
-      Wyseman.register(this.id+'cv', this.state.dbView, (data) => {this.viewMeta = data})
+    this.metaListen()
   },
 
   beforeMount: function() {
-//console.log("Dbe before, state: ", this.state);
-    Com.react(this, {dock: {}, dbView: '', key:[], dews: {fields: []}})
-    if (this.bus) this.bus.register(this.id, (msg, data) => {
-//console.log("Dbe bus message: ", msg, data);
-      if (msg == 'load') return this.load(data)
-    })
+//console.log("Dbe before, state:", this.state);
+    Com.stateCheck(this)
   },
 
   mounted: function() {
 //console.log("Dbe refs: ", this.$refs);
     this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
+
+    if (this.bus) this.bus.register(this.id, (msg, data) => {
+//console.log("Dbe bus message: ", msg, data);
+      if (msg == 'load') return this.load(data)
+    })
   },
 }
 </script>
@@ -246,6 +294,8 @@ console.log("Open preview:", sub)
 <style lang='less'>
   .wylib-dbe {
 //    border: 1px solid red;
+//    overflow-x: hidden;
+//    overflow-y: scrolled;
   }
   .wylib-dbe .header {
     background: linear-gradient(to top, #c0c0c0, #e0e0e0);	//Fixme: Prefs
