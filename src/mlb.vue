@@ -14,7 +14,7 @@
 
 <template>
   <div class="wylib wylib-mlb">
-    <div v-once ref="gridTable" class="slickgrid-container"></div>
+    <div v-once ref="gridTable" class="slickgrid-container" :style="{width: gridWidth}"></div>
   </div>
 </template>
 
@@ -47,16 +47,17 @@ export default {
     bus:	null,		//To receive commands from parent dbp
   },
   data: function () {return {
+    pr:		require('./prefs'),
     orderBoxes:		{},		//Div elements that show sort order in header field
     gridInstance:	null,		//Keep pointer to our grid
-    pr:			require('./prefs'),
+    stateTpt:		{FooterOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null},
   }},
 
   computed: {
     id: function() {return 'mlb_' + this._uid + '_'},
     slickColumns: function() {		//Convert wyseman column spec to what slickgrid expects
       let cols = []
-console.log("SlickColumns cols:", this.state.columns)
+//console.log("SlickColumns cols:", this.state.columns)
       
       for (let field in this.config) {
         let conf = this.config[field]
@@ -65,10 +66,11 @@ console.log("SlickColumns cols:", this.state.columns)
           col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible:conf.visible}
           this.state.columns.push(col)
         }
+//console.log("width:", col.field, col.width)
         if (col.visible) cols.push({			//Create the missing column
           id:		field,	field,		sortable:	true,	
-          order:	col.order,		width:	col.width,
-          name:	conf.title,		toolTip:	conf.help,	
+          order:	col.order,		width:		col.width,
+          name:		conf.title,		toolTip:	col.field + '\n' + conf.help,	
           minWidth:	this.pr.mlbMinWidth,	
           cssClass:	conf.just ? 'align-' + conf.just : '',
           header: {
@@ -82,6 +84,11 @@ console.log("SlickColumns cols:", this.state.columns)
       cols.sort((a,b) => {return (a.order - b.order)})
 //console.log("sorted: ", cols)
       return cols;
+    },
+    gridWidth: function() {
+      let wid = this.state.columns.reduce((acc, el)=>{return acc + (el.visible ? el.width : 0)}, 0)
+//console.log("Width: ", wid)
+      return wid + 4 + 'px'
     },
   },
 
@@ -172,7 +179,8 @@ console.log("Context Menu: " + e.target)
     winSizeHandler(el) {			//Called when our container gets resized
 //console.log("Window resize:", el.style.height)
       let height = parseInt(el.getBoundingClientRect().height)
-      this.$refs.gridTable.style.height = height + 'px'		//Set height of grid div to fill available space
+        , table = this.$refs.gridTable
+      if (table && table.style) table.style.height = height + 'px'	//Set height of grid div to fill available space
       this.gridInstance.resizeCanvas()				//Let slickgrid know about it
     },
 
@@ -227,6 +235,9 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
 //console.log(" field: " + field + " Box: ", this.orderBoxes[field])
       })
     },
+    'gridWidth': function (val) {
+      this.$refs.gridTable.style.width = this.gridWidth
+    },
 
     data: function (val) {		//Reload grid when data changes
 //console.log("Watched data changed: ", val)
@@ -238,7 +249,7 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
 
   beforeMount: function() {
 //console.log("Mlb before, state:", this.id, this.state);
-    Com.react(this, {FooterOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null})
+    Com.stateCheck(this)
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'advance') return this.advance(data)
       else if (msg == 'autosize') return this.autoSize(data)
@@ -300,9 +311,10 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
 //    border: 1px solid green;
     height: 100%;
   }
-//  .wylib-mlb .slickgrid-container {
+  .wylib-mlb .slickgrid-container {
 //    border: 1px solid red;
-//  }
+    width: auto;
+  }
   .wylib-mlb .align-right {
     text-align: right;
   }
