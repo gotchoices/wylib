@@ -31,7 +31,7 @@ new Vue(Object.assign({el: '#app', template: AppTemplate}, {
       curTab: 'db', 
       tabs: {
         db:	{windows: [{posted: true, client: {dbView: 'wm.table_data', loaded: true}}]},
-        ent:	{windows: [{posted: true, client: {dbView: 'base.ent', loaded: true}}]},
+        ent:	{windows: [{posted: true, client: {dbView: 'base.ent_v', loaded: true}}]},
         erd:	{}
       }
     },
@@ -46,18 +46,6 @@ new Vue(Object.assign({el: '#app', template: AppTemplate}, {
       return this.tabs.find(e=>(e.tag == this.state.curTab)).component
     },
   },
-//  methods: {
-//    addWin(row, pkey, keyVals) {
-//console.log("Add Window", row, pkey, keyVals)
-//      let i, view = keyVals.slice(0,2).join('.')
-//      for (i = 0; this.state.windows[i]; i++) {}
-//      if (i <= 0) view = 'wm.table_pub'
-//      let newWin = {posted: true, client: {dbView: view, loaded: true}}
-//      this.state.windows.splice(i, 0, newWin)
-////console.log(" windows:", this.state.windows)
-//      this.$forceUpdate()
-//    },
-//  },
 //  beforeMount: function() {
 //    this.db = {windows: [{posted: true, client: {dbView: 'wm.table_pub', loaded: true}}]}
 //  },

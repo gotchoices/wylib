@@ -6,11 +6,11 @@
 
 <template>
   <div style="width: 100%; height: 100%; resize: both; overflow: auto; padding: 0 4px 4px 0;">
-    <wylib-win topLevel=true :key="0" :state="state.windows[0]" :tag="'dbp:'+state.windows[0].client.dbView" :lang="lang(state.windows[0], 0)" @close="">
+    <wylib-win topLevel=true :key="0" :state="state.windows[0]" @close="">
       <wylib-dbp :state="state.windows[0].client" :autoEdit="false" @execute="addWin"/>
     </wylib-win>
     <div class="subwindows">
-      <wylib-win v-for="win,idx in state.windows" v-if="idx > 0 && win" topLevel=true :key="idx" :state="win" :tag="'dbp:'+win.client.dbView" :lang="lang(win,idx)" @close="close(idx)">
+      <wylib-win v-for="win,idx in state.windows" v-if="idx > 0 && win" topLevel=true :key="idx" :state="win" @close="close(idx)">
         <wylib-dbp :state="win.client"/>
       </wylib-win>
     </div>
@@ -26,27 +26,20 @@ export default {
   props: {
     state:	{type: Object, default: ()=>({})}
   },
-  data() { return {
-//    state:	{windows: [{posted: true, client: {dbView: 'wm.table_pub', loaded: true}}]},
-  }},
+//  data() { return {
+//  }},
   methods: {
-    lang: function(win,idx) { return {
-      title:	win.client.dbView + ':' + idx, 
-      help:	'Preview listing of view: ' + win.client.dbView
-    }},
     addWin(row, pkey, keyVals) {
-console.log("Add Window", row, pkey, keyVals)
+//console.log("Add Window", row, pkey, keyVals)
       let i, view = keyVals.slice(0,2).join('.')
       for (i = 0; this.state.windows[i]; i++) {}
       if (i <= 0) view = 'wm.table_pub'
       let newWin = {posted: true, client: {dbView: view, loaded: true}}
       this.state.windows.splice(i, 0, newWin)
 //console.log(" windows:", this.state.windows)
-      this.$forceUpdate()
     },
     close(idx) {
-      this.state.windows[idx] = null
-      this.$forceUpdate()
+      this.state.windows.splice(idx,1)
     },
   },
 }

@@ -29,6 +29,7 @@ export default {
     fontSize:	16,
     debits:	9,
     credits:	3,
+    stateTpt:	{width:600, height: 600, nodes: {}},
   }},
   methods: {
     table(name, columns) {		//Generate SVG code for a table
@@ -60,14 +61,16 @@ export default {
       }
       Wyseman.request('erd'+this._uid, 'select', spec, (data,err) => {
         if (data) data.forEach(dat => {
-//console.log("Dat:", dat)
+//console.log("Dat:", dat.obj, dat)
           if (!(dat.obj in this.state.nodes)) {
             let { code, ends, width, height } = this.table(dat.obj, dat.columns.map(el=>el.col))
               , x = Math.random() * this.state.width/2, y = Math.random() * this.state.height/2
               , radius = height / 4
               , links = []
+//console.log("  fkeys:", dat.fkeys)
             if (dat.fkeys) dat.fkeys.forEach(fkey=>{
-              if (!links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
+              let linkIdx = data.find(e=>(e.obj == fkey.table))		//Only consider tables part of our original query
+              if (linkIdx && !links.includes(fkey.table) && fkey.table != dat.obj) links.push(fkey.table)
             })
             this.$set(this.state.nodes, dat.obj, {tag:dat.obj, x, y, width, height, code, ends, links, radius})	//So it will react to changes of state
           }
@@ -82,7 +85,7 @@ export default {
     },
   },
   beforeMount: function() {
-    Common.react(this, {width:600, height: 600, nodes: {}})
+    Common.stateCheck(this)
     this.refresh()
   },
 }
