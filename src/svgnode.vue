@@ -60,8 +60,10 @@ export default {
             refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, index)	//Ask for coordinates of the other node's connection point
 //console.log("  found his connection:", refPoint.x, refPoint.y)
           } else {					//Create placeholder, for now
-            refState = this.$parent.nodeState(link)
-            refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
+            if (refState = this.$parent.nodeState(link))
+              refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
+            else
+              refPoint = {x:0, y:0, xs:0, ys:0}
           }
 //console.log(" at:", refState.x, refState.y)
           let myPoint = this.closest(this.state, ends, refPoint)		//Now find closest point on me, to other node's point
@@ -122,7 +124,7 @@ export default {
   },
 
   beforeMount: function() {
-//console.log("Node beforeMount:", this.state.tag)
+//console.log("Node beforeMount:", this.state.tag, this.state)
     Com.stateCheck(this)
     this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
       if (typeof lk == 'object' && !lk.hub) this.$set(lk, 'hub', ()=>{})	
@@ -130,7 +132,7 @@ export default {
   },
 
   mounted: function() {
-//console.log("Node Mount:", this.state.tag)
+//console.log("Node Mount:", this.state.tag, this.state)
     Interact(this.$el).draggable({
       inertia: true,
       onmove: event => {this.$emit('drag', event, this.state)}
