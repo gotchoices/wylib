@@ -9,10 +9,12 @@
 // -----------------------------------------------------------------------------
 //- TODO:
 //- Moving windows to the front will eventually overflow 990
-//- Need to renormalize all registered windows after raise
+//- Allow a child window to move behind its parent?
+//- Re-normalize all registered window layers after raise
+//- Add a trim option to stateCheck to remove obsolete properties?
 //- 
 import Wyseman from './wyseman.js'
-var docIndex = 0
+var actIndex = 0
 var topWins = {}
 const zLevelMod = 10
 const storeKey = 'wylibState_'
@@ -21,17 +23,15 @@ module.exports = {
 
   langTemplate() {return {title: null, help: null}},
 
-  react(vm, properties, node = vm.state) {	//Initialize properties at a specified node in a component object
-    Object.keys(properties).forEach(key => {
-//console.log("React:", key);
-      if (!(key in node)) vm.$set(node, key, properties[key])
-//      if (!(key in node)) vm.$set(node, key, null)
-//      if (!node[key]) node[key] = properties[key]
+  stateCheck(context, properties = context.stateTpt) {			//Initialize any needed properties in a component's state
+    let st = context.state
+//console.log("stateCheck:", context, properties, st)
+    if (st && properties) Object.keys(properties).forEach(key => {
+      if (!(key in st)) context.$set(st, key, properties[key])
     })
   },
-  
-  topHandler(cb, context) {		//Create a handler for communicating to/from the toplevel window and generating modal dialogs there
-    this.modalCB = cb
+
+  topHandler(context) {		//Manage communication to/from the toplevel window for generating dialogs
     this.postCB = null
     this.context = context
     
@@ -93,17 +93,36 @@ module.exports = {
       return retArr
     }
 
+    this.postModal = function(msg, conf) {
+      if (this.context.modal) {
+        let client = {message: this.makeMessage(msg)}
+        Object.assign(client, conf)
+        Object.assign(this.context.modal, {posted: true, client})
+//console.log("Modal:", this.context.modal)
+      }
+    }
     this.error = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modError', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', dews:{}, data:{}, cb})
+      this.postModal(msg, {reason:'modError', buttons: ['modOK'], affirm: 'modOK', dews:[], data:{}, cb})
     }
     this.notice = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modNotice', message: this.makeMessage(msg), buttons: ['modOK'], affirm: 'modOK', dews:{}, data:{}, cb})
+      this.postModal(msg, {reason:'modNotice', buttons: ['modOK'], affirm: 'modOK', dews:[], data:{}, cb})
     }
     this.confirm = function(msg, cb) {
-      this.modalCB({posted: true, reason:'modConfirm', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews:{}, data:{}, cb})
+      this.postModal(msg, {reason:'modConfirm', buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews:[], data:{}, cb})
     }
     this.query = function(msg, fields, data, cb) {
-      this.modalCB({posted: true, reason:'modQuery', message: this.makeMessage(msg), buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: {fields}, data, cb})
+      this.postModal(msg, {reason:'modQuery', buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: fields, data, cb})
+    }
+
+    this.dialog = function(message, fields, data, cb, tag='dialog', buttons = ['modCancel', 'modYes']) {
+      if (this.context.state && this.context.state.dialogs) {
+//console.log("Dialog launch", this.context.state.dialogs)
+        let client = {lang: message, reason:'modQuery', buttons, affirm: 'modYes', dews: fields, data, cb}
+        let newState = {posted: true, tag, client, x:50, y:50}
+          , wins = this.context.state.dialogs
+//console.log("  newState:", newState)
+        for(var i = 0; wins[i]; i++); wins.splice(i, 1, newState)
+      }
     }
     
     this.onPosted = function(cb) {		//Register to get a callback when a dialog window posts
@@ -125,20 +144,20 @@ module.exports = {
     return output
   },
 
-  saveState: function(tag, data) {
+  saveState: function(tag, data) {		//Save a component's state in local storage
     localStorage.setItem(storeKey + tag, JSON.stringify(data))
   },
     
-  getState: function(tag) {
+  getState: function(tag) {			//Retrieve a stored state from local storage
     let st = localStorage.getItem(storeKey + tag)
 //console.log("Getting:", st)
     return ((st && st != 'undefined') ? JSON.parse(st) : null)
   },
     
-  clearState: function(tag) {
-    if (tag) {			//Clear a single state item
+  clearState: function(tag) {			//Delete state data stored in local storage
+    if (tag) {					//Clear a single state item
       localStorage.removeItem(storeKey + tag)
-    } else {			//Clear all state items
+    } else {					//Clear all state items
       let re = new RegExp('^' + storeKey)
       for (var i = 0, len = localStorage.length; i < len; i++) {
         let key = localStorage.key(i)
@@ -147,13 +166,38 @@ module.exports = {
       }
     }
   },
+  
+  addWindow(winArr, template, placement) {		//Create a new subwindow in an array of config objects
+//console.log("Add Window")
+    let newState = this.clone(template)
+    if (placement) {
+      if (typeof placement == 'object') {
+        newState.x = placement.x
+        newState.y = placement.y
+      } else {
+        newState.x += (Math.random() - 0.5) * 100
+        newState.y += (Math.random() - 0.5) * 100
+      }
+    }
+    for(var i = 0; winArr[i]; i++); winArr.splice(i, 1, newState)
+  },
+
+  closeWindow(winArr, idx, template) {
+//console.log("Close Window", idx, "reopen:", reopen)
+    let { x, y } = winArr[idx]
+    winArr.splice(idx,1)
+    if (template) this.$nextTick(()=>{this.addWindow(winArr, template, {x, y})})
+  },
     
-//  docView: function(view) {
-//    docIndex++
-//console.log("Ddocument preview:", view)
-//    Wyseman.request('doc_'+docIndex, 'preview', {view}, (data) => {
-//console.log("Open document preview:", data)
-////      window.open
-//    })
-//  }
+  action: function(view, action, top) {
+    actIndex++
+//console.log("Launch action:", action.name, action)
+    top().dialog(action.lang, action.options, {}, (yesno) => {
+console.log("Dialog answers:", yesno)
+//      Wyseman.request('act_'+actIndex, 'action', {view, action}, (msg) => {
+//        window.open
+//      })
+    }, 'action.name', ['modCancel','modApply','modYes'])
+
+  }
 }

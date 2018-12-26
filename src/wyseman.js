@@ -169,6 +169,16 @@ console.log('Notify group: ', chan, data)
     Object.keys(meta.col).forEach((key) => {
       if (lang.col[key]) Object.assign(meta.col[key], lang.col[key])
     })
+    if (meta.styles && meta.styles.actions) meta.styles.actions.forEach(act=>{
+      act.lang = meta.msg[act.name]
+      if (act.options) act.options.forEach((opt,x)=>{	//Link to language for action options
+        let langTag = act.name + '.' + opt.tag		//Re-structure to look more like native table column data structure
+          , newElem = {field: opt.tag, lang: lang.msg[langTag], type: opt.type, styles: opt}
+        act.options[x] = newElem
+//console.log("  act:", x, act.name, newElem)
+      })
+    })
+    
   },			//procColumns
 
   request(id, action, opt, cb) {			//Ask to receive specified information back asynchronously

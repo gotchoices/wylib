@@ -32,14 +32,16 @@
         </div>
         <div class="tab-filler">
           <wylib-button :size="tabHeight" icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
-          <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false" :lang="lang">
+          <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false">
             <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
         </div>
       </div>
       <div class="subwindows">
-        <wylib-modal v-if="modal.posted" :state="modal"/>
-        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" :tag="'dbp:'+win.client.dbView" :lang="{title: win.client.dbView + ':' + idx, help: 'Preview listing of view: ' + win.client.dbView}" @close="win.posted=false">
+        <wylib-modal v-if="modal.posted" :state="modal">
+          <wylib-dialog slot-scope="ws" :state="ws.state"/>
+        </wylib-modal>
+        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" @close="win.posted=false">
           <wylib-dbp :state="win.client"/>
         </wylib-win>
       </div>
@@ -58,12 +60,13 @@ import Button from './button.vue'
 import Menu from './menu.vue'
 import WylibDbp from '../src/dbp.vue'
 import Modal from './modal.vue'
+import Dialog from './dialog.vue'
 import Win from './win.vue'
 import State from './state.js'
 
 export default {
   name: 'wylib-app',
-  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-modal': Modal, 'wylib-dbp': WylibDbp},
+  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-dialog': Dialog, 'wylib-modal':Modal, 'wylib-dbp': WylibDbp},
   props: {
     state:	{type: Object, default: () => ({})},
     title:	{type: String},
@@ -72,21 +75,20 @@ export default {
     tag:	{type: String},
     current:	{type: String},
     tryEvery:	{default: 5},
-    lang:	{type: Object, default: Com.langTemplate},
   },
   data() { return {
     conMenuPosted:	true,
     appMenu:		{posted: false, client: {}, title: 'Application menu'},
-    modal:		{posted: false, dews:{}, data:{}},
+    modal:		{posted: false, client: {}},
     currentSite:	null,
     siteTry:		'',
     retryIn:		null,
     menuTitle:		'',
     wm:			{},
     persistent:		true,
-    top:		new Com.topHandler((st) => {Object.assign(this.modal, st)}),
+    top:		new Com.topHandler(this),
     restoreMenu:	[],
-    previews:		[{posted: false, client:{dbView: 'wylib.data_v'}}],
+    previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
   }},
   provide() { return {
@@ -154,7 +156,11 @@ export default {
     },
     defaultState() {
       this.top.confirm(this.wm.appDefault.help, (yesNo, tag) => {
-        if (yesNo) {this.persistent = false; location.reload()}
+        if (yesNo) {
+          this.persistent = false
+          Com.clearState()
+          location.reload()
+        }
       })
     },
     beforeUnload() {
@@ -172,9 +178,9 @@ export default {
 
   beforeMount: function() {
     let savedState = Com.getState(this.tagTitle)
-console.log("Restoring state:", savedState)
-    if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
-//    Com.react(this, {})
+//console.log("Restoring state:", savedState)
+    if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
+//    Com.stateCheck(this)
   },
 
   mounted: function () {
