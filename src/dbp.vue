@@ -6,9 +6,9 @@
 //X- Meta-data fetched from database is not overwriting stored state data
 //X- Remove test routine in menu
 //X- Tables with no default view columns display nothing
+//X- Implement auto-execute option: execute the current (or first) row on each load/reload
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
-//- Implement auto-execute option: execute the current (or first) row on each load/reload
 //- 
 //- Sorting:
 //-  Initial sort order comes from wyseman, apply to indicators
@@ -82,7 +82,7 @@ export default {
   computed: {
     id: function() {return 'dbp_' + this._uid + '_'},
     stateTpt:	function() {return {
-      dock: {}, loaded: 0, lastLoad: {}, colMenu: {x: 100, y:0},
+      dock: {}, loaded: 0, autoLoad:true, lastLoad: {}, colMenu: {x: 100, y:0},
       edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
       filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
       grid: {footerOn: false, sorting: {}, columns: []}
@@ -96,15 +96,16 @@ export default {
       return flds
     },
     dockConfig: function() { return [
-      {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download',  shortcut: false},
+      {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download'},
+      {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(), icon: 'spinner',   shortcut: true},
-      {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2', shortcut: false},
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
+      {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
       {idx: 'prv', lang: this.wm.dbpPrev,     call: this.prev,         icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext,     call: this.next,         icon: 'arrowdown', shortcut: true},
       {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns,   icon: 'sun'},
-      {idx: 'tst', lang: {title: 'T', help: 'H'}, call: this.test, icon:'circle', shortcut: true},
+//      {idx: 'tst', lang: {title: 'T', help: 'H'}, call: this.test, icon:'circle', shortcut: true},
       {idx: 'cvi', lang: this.wm.dbpVisible, icon:'eye', menu: this.visibleMenu},
     ]},
     visibleMenu: function() { 
@@ -158,17 +159,24 @@ export default {
   },
 
   methods: {
-    test() {
-console.log("Test!", this.top)
-      this.top().confirm('A test message', (yesno, tag) => {
-console.log("Modal answers:", yesno, tag)
-      })
+//    test() {
+//console.log("Test!", this.top)
+//      this.top().confirm('A test message', (yesno, tag) => {
+//console.log("Modal answers:", yesno, tag)
+//      })
+//    },
+    autoTog(ev) {				//Toggle auto loading mode
+      this.state.autoLoad = !this.state.autoLoad
+    },
+    autoLoadValue(v) {				//Set/get autoload value
+      if (v != null) this.state.autoLoad = v
+      return this.state.autoLoad
     },
     editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
       if (this.state.edit.posted) {
         this.editPosts++
-        this.executeRows(this.$refs.mlb.getSelection())
+        this.executeRows()
       }
     },
     advance(delta=1) {this.mlbBus.notify('advance', delta)},
@@ -176,8 +184,9 @@ console.log("Modal answers:", yesno, tag)
     prev(ev) {this.advance(-1)},
 
     executeRows(selection) {
+      if (!selection) selection = this.$refs.mlb.getSelection()
 //console.log("Execute rows: ", selection, this.viewMeta.pkey)
-      if (!selection || selection.length <= 0) return
+      if (selection.length <= 0) return
       let idx = selection[0], row = this.gridData[idx], keyVal = []
       this.viewMeta.pkey.forEach(fld => {
         keyVal.push(row[fld])
@@ -195,6 +204,7 @@ console.log("Modal answers:", yesno, tag)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
+        if (this.state.edit.posted && this.state.autoLoad) this.executeRows()
       })
       this.lastSpec = spec
     },
