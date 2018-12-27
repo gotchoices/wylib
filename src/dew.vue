@@ -3,18 +3,19 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Emit event when data changed
-//- Validity doesn't show on first load
+//X- Validity doesn't show on first load
+//- Why do fields show changed after a clear?
 //- 
 //- Later:
-//- Display special function indicator on right side?
-//- How to invoke special function?
+//- Display special function indicator on right side of entry
+//- How to invoke special function (right click, or icon press)
 //- Handlers for each kind of special function
 //X-   Calendar
 //-   Calculator
 //-   Spinner
 //-   Scrolled menu (static data, or callback to parent somewhere)
 //-   Editing window
-//- Can select from scrolled menu of available countries
+//- Can select from scrolled menu of available countries (and other queries)
 //- 
 <template>
   <div class="wylib wylib-dew" :title="lang ? lang.help : null">
@@ -39,7 +40,7 @@ const shortHints = {
 const shortTpts = {
   alpha: '^[a-zA-Z.]*$',
   alnum: '^[\\w.]*$',
-  date: '^\\d{4}[-/\\.]\\d{1,2}[-/\\.]\\d{1,2}$',
+  date: '^\\d{4}[-/\\.](\\d{1,2}|[\\w]{3})[-/\\.]\\d{1,2}$',
 }
 
 export default {
@@ -88,7 +89,10 @@ export default {
       } else if (this.template == null) {
         isValid = true
       } else {
-        isValid = RegExp(this.template).test(this.userValue)
+        if (this.userValue == '' || this.userValue == null)
+          isValid = true
+        else
+          isValid = RegExp(this.template).test(this.userValue)
       }
 //console.log("Valid:", this.field, this.userValue, this.template, this.disabled, isValid)
       return isValid
