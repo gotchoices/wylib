@@ -11,6 +11,7 @@
 //- See Fixme's below
 //- 
 //- Later:
+//- After a realod, action dialog's lose their call-back (can it be restored by relaunching the dialog?)
 //- Keep state of "was loaded" (also table?) and the key value
 //- Should filter nulls out of insert fields?
 //- Optionally, ask for confirmation on:
@@ -64,6 +65,7 @@ export default {
     mdewBus:	new Bus.messageBus(this),
     subBus:	new Bus.messageBus(this),
     stateTpt:	{dock:{}, dbView:'', key:[], subs:[], dews:{fields: []}},
+    reports:	{},
   }},
 
   computed: {
@@ -150,9 +152,9 @@ export default {
         }
       })
       dews[0].focus = true			//Doesn't seem to work
-      this.top().query(this.wm.dbeLoadPrompt.help, dews, resp, (yes) => {
+      this.top().query(this.wm.dbeLoadPrompt.help, dews, resp, (tag) => {
 //console.log("Load record:", yes, resp)
-        this.load(resp)
+        if (tag == 'diaYes') this.load(resp)
       })
     },
 
@@ -236,11 +238,6 @@ export default {
       })
     },
 
-    perform(act) {
-console.log("Perform action:", act)
-      Com.action(this.state.dbView, act, this.top)
-    },
-
     addWin(view) {
 console.log("Open preview window:", view)
       Com.addWindow(this.state.subs, {posted: true, x:0, y:0, client: {dbView: view}}, true)
@@ -248,6 +245,42 @@ console.log("Open preview window:", view)
     closeWin(idx, reopen) {
       Com.closeWindow(this.state.subs, idx, reopen)
     },
+    perform(action) {
+console.log("Perform action:", action)
+      let data = {}
+        , view = this.state.dbView
+        , tag = 'action' + ':' + view + ':' + action.name
+//      if (action.options)
+        this.top().dialog(action.lang, action.options, data, null, tag, ['diaCancel','diaApply','diaYes'])
+    },
+    report(dia, but, data, idx) {
+      let [ command, view, name ] = dia.split(':')
+        , rptIndex = dia + ':' + idx
+        , myPopup = this.reports[rptIndex]
+console.log("Report:", rptIndex, myPopup)
+      if (but == 'diaCancel') {
+        if (myPopup) myPopup.close()
+        return true			//Close dialog without doing anything
+      }
+      Wyseman.request(dia+':'+idx, 'action', {view, name, data, keys:this.keyValues}, (msg) => {
+console.log("DB answers:", msg, window.location.hostname)
+        let origin = window.location.protocol + '//' + window.location.hostname + ':' + msg.port
+          , url = origin + msg.path + '/' + msg.file
+          , params = "height=800,width=600"
+console.log("  url:", url)
+        if (msg.status == 'open') {
+          myPopup = this.reports[rptIndex] = window.open(url, dia, params)
+        } else if (msg.status = 'reload') {
+console.log("  closed?", myPopup ? myPopup.closed : null)
+          if (!myPopup || myPopup.closed)
+            myPopup = this.reports[rptIndex] = window.open(url, dia, params)
+          else
+            myPopup.postMessage('reload', origin)
+        }
+      })
+      return (but != 'diaApply')				//Tell top window to close the dialog
+    },
+
     metaListen() {			//Register which view we are dealing with
       let zid = this.id+'cv'
       if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register
@@ -255,6 +288,12 @@ console.log("Open preview window:", view)
 //console.log("Dbe got metadata for:", this.state.dbView, data)
         this.viewMeta = data
         this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}, 'dbe:'+this.state.dbView)
+        if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
+          this.top().registerDialog('action' + ':' + this.state.dbView + ':' + act.name, (dia, but, data, idx)=>{
+console.log("Dbe got action callback", dia, but, data, idx)
+            return this.report(dia, but, data, idx)
+          })
+        })
       })
     },
   },
