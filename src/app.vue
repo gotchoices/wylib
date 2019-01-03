@@ -144,8 +144,8 @@ export default {
     saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
-      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (yesNo, tag) => {
-        if (yesNo) State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
+      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
+        if (tag == 'diaYes') State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
     },
     saveState() {
@@ -155,8 +155,8 @@ export default {
         this.saveStateAs()
     },
     defaultState() {
-      this.top.confirm(this.wm.appDefault.help, (yesNo, tag) => {
-        if (yesNo) {
+      this.top.confirm(this.wm.appDefault.help, (tag) => {
+        if (tag == 'diaYes') {
           this.persistent = false
           Com.clearState()
           location.reload()

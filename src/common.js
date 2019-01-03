@@ -14,7 +14,6 @@
 //- Add a trim option to stateCheck to remove obsolete properties?
 //- 
 import Wyseman from './wyseman.js'
-var actIndex = 0
 var topWins = {}
 const zLevelMod = 10
 const storeKey = 'wylibState_'
@@ -34,11 +33,26 @@ module.exports = {
   topHandler(context) {		//Manage communication to/from the toplevel window for generating dialogs
     this.postCB = null
     this.context = context
+    this.dialogCB = {}
     
     if (context) topWins[context.id] = context	//Keep a list of all participating windows
 //console.log("Registering ID", context ? context.id : null)
 
-    this.emit = function(code, ev) {
+    this.registerDialog = function(dialogTag, cb) {
+      if (cb)
+        this.dialogCB[dialogTag] = cb
+      else
+        delete this.dialogCB[dialogTag]
+//console.log("Top registering:", dialogTag)
+    }
+    
+    this.submitDialog = function(dialogTag, buttonTag, ...args) {
+//console.log("Top calling:", dialogTag, buttonTag)
+      if (this.dialogCB[dialogTag])
+        return this.dialogCB[dialogTag](dialogTag, buttonTag, ...args)
+    }
+
+    this.emit = function(code, ev) {		//Do we still use this?
       this.context.$emit(code, ev)
     },
 
@@ -102,23 +116,23 @@ module.exports = {
       }
     }
     this.error = function(msg, cb) {
-      this.postModal(msg, {reason:'modError', buttons: ['modOK'], affirm: 'modOK', dews:[], data:{}, cb})
+      this.postModal(msg, {reason:'diaError', buttons: ['diaOK'], dews:[], data:{}, cb})
     }
     this.notice = function(msg, cb) {
-      this.postModal(msg, {reason:'modNotice', buttons: ['modOK'], affirm: 'modOK', dews:[], data:{}, cb})
+      this.postModal(msg, {reason:'diaNotice', buttons: ['diaOK'], dews:[], data:{}, cb})
     }
     this.confirm = function(msg, cb) {
-      this.postModal(msg, {reason:'modConfirm', buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews:[], data:{}, cb})
+      this.postModal(msg, {reason:'diaConfirm', buttons: ['diaCancel', 'diaYes'], dews:[], data:{}, cb})
     }
-    this.query = function(msg, fields, data, cb) {
-      this.postModal(msg, {reason:'modQuery', buttons: ['modCancel', 'modYes'], affirm: 'modYes', dews: fields, data, cb})
+    this.query = function(msg, dews, data, cb) {
+      this.postModal(msg, {reason:'diaQuery', buttons: ['diaCancel', 'diaYes'], dews, data, cb})
     }
 
-    this.dialog = function(message, fields, data, cb, tag='dialog', buttons = ['modCancel', 'modYes']) {
+    this.dialog = function(message, dews, data, cb, tag='dialog', buttons = ['diaCancel', 'diaYes']) {
       if (this.context.state && this.context.state.dialogs) {
 //console.log("Dialog launch", this.context.state.dialogs)
-        let client = {lang: message, reason:'modQuery', buttons, affirm: 'modYes', dews: fields, data, cb}
-        let newState = {posted: true, tag, client, x:50, y:50}
+        let client = {message, reason:'diaQuery', buttons, dews, data, tag, cb}
+        let newState = {posted: true, client, x:50, y:50}
           , wins = this.context.state.dialogs
 //console.log("  newState:", newState)
         for(var i = 0; wins[i]; i++); wins.splice(i, 1, newState)
@@ -182,22 +196,11 @@ module.exports = {
     for(var i = 0; winArr[i]; i++); winArr.splice(i, 1, newState)
   },
 
-  closeWindow(winArr, idx, template) {
-//console.log("Close Window", idx, "reopen:", reopen)
+  closeWindow(winArr, idx, template) {		//Fixme: no 'this' for nextTick!
+console.log("Close Window", idx, "template:", template)
     let { x, y } = winArr[idx]
     winArr.splice(idx,1)
     if (template) this.$nextTick(()=>{this.addWindow(winArr, template, {x, y})})
   },
     
-  action: function(view, action, top) {
-    actIndex++
-//console.log("Launch action:", action.name, action)
-    top().dialog(action.lang, action.options, {}, (yesno) => {
-console.log("Dialog answers:", yesno)
-//      Wyseman.request('act_'+actIndex, 'action', {view, action}, (msg) => {
-//        window.open
-//      })
-    }, 'action.name', ['modCancel','modApply','modYes'])
-
-  }
 }

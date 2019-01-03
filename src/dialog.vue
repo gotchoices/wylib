@@ -2,15 +2,16 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Make this work under modal
-//- Then make it work under a toplevel window
+//X- Make it work under a toplevel window
+//- Keepopen status of buttons should be a config status--not the handler return value
+//- Test under a modal frame
 //-
 <template>
   <div class="wylib wylib-dialog">
     <div class="title" v-html="reason + ': ' + message" :title="help"/>
     <wylib-mdew :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
     <div class="buttons">
-      <button v-for="but in buttons" :key="but.tag" @click="press(but.tag)" v-html="but.lang ? but.lang.title : 'OK'" :title="but.lang ? but.lang.help : 'Confirm'"/>
+      <button v-for="but in buttons" :key="but.tag" @click="press(but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
     </div>
   </div>
 </template>
@@ -29,7 +30,7 @@ export default {
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
-    stateTpt:	{message: {}, buttons: ['modOK'], affirm: 'modOK', dews: [], data: {}},
+    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: [], data: {}, tag:'dialog'},
   }},
 
   computed: {
@@ -63,16 +64,13 @@ export default {
   methods: {
     submit() {
 //console.log("Modal submit")
-      this.press('modYes')
+      this.press('diaYes')
     },
     press(tag) {
-console.log("Button:", tag, this.state.affirm, this.state)
-      let butRec = this.state.buttons.find(e=>(e.tag==tag))
-      if (butRec && butRec.cb)		//Call-back specific to our button
-        butRec.cb(tag == this.state.affirm, tag)
-      else if (this.state.cb)		//Callback for the dialog
-        this.state.cb(tag == this.state.affirm, tag)
-      this.$parent.$emit('submit', tag)
+//console.log("Button:", tag, this.state)
+      if (this.state.cb)		//Callback for the dialog; Will not be persistent across reloads!
+        this.state.cb(tag)
+      this.$parent.$emit('submit', tag, this.state.tag, this.state.data)
     },
     change(value, field, dirty, valid) {	//When data changed
 //console.log("Dialog press:", field, value, dirty, valid, this.state.data[field])
@@ -86,7 +84,7 @@ console.log("Button:", tag, this.state.affirm, this.state)
 
   beforeMount: function() {
     Com.stateCheck(this)
-console.log("Dialog state:", this.state)
+//console.log("Dialog state:", this.state)
     this.$parent.$emit('customize', this.wm.dia, 'dia:'+ this.state.tag)
   },
 }
