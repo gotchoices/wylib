@@ -1,0 +1,66 @@
+Design Concepts for Report Module
+
+Some Examples of Reports to Generate:
+- Financial Reports (Balance Sheet, Income Statement, Trial Balance)
+  This category is limited to tabular data.  Ideally, each report would derive
+  its information from a database view which produces the exact data, given 
+  solely the parameters available to modify the report.  In other words, there
+  is no processing of the data required in the GUI--just presentation.
+  
+  Ideally, this could even include the generation of one or more summary rows 
+  if the object being queried is a function that can be reasonably instructed 
+  on how to generate the data.  Summary rows could be marked as such in a
+  column so they could be filtered out if/when necessary.
+  
+  Using this approach, all tabular reports could easily be exported to a
+  spreadsheet using a standard export function built into the dbp.  Then, if
+  we want to display it natively, our report component can contain a tabular
+  subcomponent that can render the information happily in HTML when that is 
+  wanted.
+  
+- Financial Analysis (Charts, Graphs, Dashboard)
+  This would likely contain a header or title explaining what is being
+  presented.  Then it would contain one or more embedded objects, presumably
+  in a graphics format such as gif, jpg, svg, etc.  Each embedded object
+  would likely have its own labeling above, below, or both.
+
+- MyCHIPs Transaction Hardcopy (Ticket, Tally, Check)
+  This has a simple header indicating the transaction type and a summary of 
+  the information in the transaction (like totals, recipient, etc.).  Most 
+  importantly, it includes a QR code which contains the exact data for the 
+  transaction.
+
+- MyCHIPs Contract Document
+  This is much like a transaction document, in that it contains one or more QR 
+  codes as needed to contain the entire document.  However, it must also 
+  render much like a legal document.  This means it will contain referenceable 
+  sections, subsections and paragraphs. A contract document will contain a 
+  checksum, in order to ensure that it is the desired contract and version.  
+  So no document can contain any content that cannot reliably be consumed by a 
+  hashing function.
+  
+- Directories
+  This could be an employee directory with pictures, a collection of pictures
+  of a product or the like.
+
+The Approach:
+Reports will be implemented in an HTML structure in order to facilitate live,
+interactive links.  For example, if the user wants more detail, he may
+be able to click on a live link to open a new report, or open a preview.
+
+HTML generation will be done with Vue in order to make things simpler and to
+facilitate the live updating.
+
+Reports could be generated inside a wylib-win.  But this has some limitations.
+It might be desirable when building a dashboard to have multiple report views 
+open on a single tab or page.  However, if we are trying to get to a paper 
+printout, it would be better to render in a separate browser popup which 
+contains only the single report component.  Then we can rely on the browser to 
+generate PDF or such other format as is wanted of just that report.
+
+Implementation:
+The Wylib-report component can optionally contain any of the following
+  - A header
+  - An embedded graph or figure
+  - HTML text
+  - A 1D or 2D array of children reports
