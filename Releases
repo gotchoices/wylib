@@ -1,5 +1,10 @@
 Change Log:
 
+1.0.8	2019-Jan
+	- Improve how modals work
+	- Implement view actions and reports
+	- Dialog window for controlling reports
+
 1.0.5	2018-Dec
 	- Make Wysegi schema browser easier to access from server
 	- Widget functionality and bug fixes

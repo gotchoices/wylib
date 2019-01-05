@@ -64,7 +64,7 @@ const Wyseman = {
         if (action == 'notify' && pkt.channel) {
           let chan = pkt.channel
           if (this.listens[chan]) Object.values(this.listens[chan]).forEach(cb => {
-console.log('Notify group: ', chan, data)
+//console.log('Notify group: ', chan, data)
             cb(data)				//Call any listeners
           })
         }

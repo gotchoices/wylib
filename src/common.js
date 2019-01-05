@@ -112,7 +112,7 @@ module.exports = {
         let client = {message: this.makeMessage(msg)}
         Object.assign(client, conf)
         Object.assign(this.context.modal, {posted: true, client})
-//console.log("Modal:", this.context.modal)
+//console.log("Modal:", this.context.modal, client.message)
       }
     }
     this.error = function(msg, cb) {

@@ -161,8 +161,8 @@ export default {
   methods: {
 //    test() {
 //console.log("Test!", this.top)
-//      this.top().confirm('A test message', (yesno, tag) => {
-//console.log("Modal answers:", yesno, tag)
+//      this.top().confirm('A test message', (tag) => {
+//console.log("Modal answers:", tag)
 //      })
 //    },
     autoTog(ev) {				//Toggle auto loading mode
