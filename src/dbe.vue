@@ -8,10 +8,13 @@
 //X- Communicate reload with sub-views
 //X- Present records in a grid layout
 //X- Added records prefill foreign key data
+//X- After a relaod, action dialog's lose their call-back (can it be restored by relaunching the dialog?)
+//- Option to open reports in popup or wylib-win
+//- How to choose reasonable size for report popup window?
 //- See Fixme's below
 //- 
 //- Later:
-//- After a realod, action dialog's lose their call-back (can it be restored by relaunching the dialog?)
+//- Move reports to an outside module and allow calling it from dbp (with possibly multiple records)
 //- Keep state of "was loaded" (also table?) and the key value
 //- Should filter nulls out of insert fields?
 //- Optionally, ask for confirmation on:
@@ -253,7 +256,7 @@ console.log("Perform action:", action)
 //      if (action.options)
         this.top().dialog(action.lang, action.options, data, null, tag, ['diaCancel','diaApply','diaYes'])
     },
-    report(dia, but, data, idx) {
+    report(dia, but, parms, idx) {
       let [ command, view, name ] = dia.split(':')
         , rptIndex = dia + ':' + idx
         , myPopup = this.reports[rptIndex]
@@ -262,21 +265,20 @@ console.log("Report:", rptIndex, myPopup)
         if (myPopup) myPopup.close()
         return true			//Close dialog without doing anything
       }
-      Wyseman.request(dia+':'+idx, 'action', {view, name, data, keys:this.keyValues}, (msg) => {
-console.log("DB answers:", msg, window.location.hostname)
-        let origin = window.location.protocol + '//' + window.location.hostname + ':' + msg.port
-          , url = origin + msg.path + '/' + msg.file
-          , params = "height=800,width=600"
-console.log("  url:", url)
-        if (msg.status == 'open') {
+      Wyseman.request(dia+':'+idx, 'action', {view, name, data:{parms, keys:this.keyValues}}, (msg) => {
+        let url = '/' + msg.file
+          , params = "height=600,width=500"
+console.log("DB answers:", msg, window.location.hostname, url)
+        if (msg.error) {this.top().notice(msg.error); return}
+        if (!myPopup || myPopup.closed) {
           myPopup = this.reports[rptIndex] = window.open(url, dia, params)
-        } else if (msg.status = 'reload') {
-console.log("  closed?", myPopup ? myPopup.closed : null)
-          if (!myPopup || myPopup.closed)
-            myPopup = this.reports[rptIndex] = window.open(url, dia, params)
-          else
-            myPopup.postMessage('reload', origin)
+          myPopup.addEventListener('load', (ev)=>{
+            myPopup.document.getElementById('content').innerHTML = msg.content
+          }, false)
+        } else {
+          myPopup.document.getElementById('content').innerHTML = msg.content
         }
+        if (!myPopup) this.top().notice(this.dbePopupErr)
       })
       return (but != 'diaApply')				//Tell top window to close the dialog
     },
@@ -327,6 +329,12 @@ console.log("Dbe got action callback", dia, but, data, idx)
       if (msg == 'load') return this.load(data)
     })
   },
+
+  beforeDestroy: function() {
+console.log("Dbe closing popups:", this.reports)
+    Object.values(this.reports).forEach(popup=>{popup.close()})
+sludge
+  },
 }
 </script>
 
@@ -337,7 +345,7 @@ console.log("Dbe got action callback", dia, but, data, idx)
 //    overflow-y: scrolled;
   }
   .wylib-dbe .header {
-    background: linear-gradient(to top, #c0c0c0, #e0e0e0);	//Fixme: Prefs
+    background: linear-gradient(to top, #c0c0c0, #e0e0e0);	//Fixme => Prefs
     width: 100%;
     display: flex;
   }
