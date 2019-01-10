@@ -7,6 +7,7 @@
 //X- Remove test routine in menu
 //X- Tables with no default view columns display nothing
 //X- Implement auto-execute option: execute the current (or first) row on each load/reload
+//- An initial load should respect existing sort fields, and the autoexecute flag
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
 //- 
