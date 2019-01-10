@@ -177,11 +177,13 @@ export default {
 
     insert() {
       let fields = {}
-        , { view, values, keys } = this.master			//Populate foreign key fields
-        , hisCols = keys.join(',')
-        , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
+      if (this.master) {
+        let { view, values, keys } = this.master			//Populate foreign key fields
+          , hisCols = keys.join(',')
+          , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
 //console.log("insert:", fields, "keyMaster:", this.master, hisCols, "keyLink:", keyLink)
-      if (keyLink) keyLink.columns.forEach((key, idx)=>{fields[key] = values[idx]})
+        if (keyLink) keyLink.columns.forEach((key, idx)=>{fields[key] = values[idx]})
+      }
 
       Object.assign(fields, this.dbData, this.$refs.mdew.userData)	//Fixme: fetch over mdewBus
 //console.log("Insert:", fields)
@@ -331,9 +333,8 @@ console.log("Dbe got action callback", dia, but, data, idx)
   },
 
   beforeDestroy: function() {
-console.log("Dbe closing popups:", this.reports)
-    Object.values(this.reports).forEach(popup=>{popup.close()})
-sludge
+//console.log("Dbe closing popups:", this.reports)
+    Object.values(this.reports).forEach(popup=>{popup.close()})		//Fixme: Doesn't really get called much--create onunload handler?
   },
 }
 </script>
