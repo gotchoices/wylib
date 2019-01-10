@@ -7,7 +7,7 @@
 //- 
 <template>
     <g :transform="transform">
-      <g v-html="state.code" :style="objStyle"/>
+      <g v-html="state.body" :style="objStyle"/>
       <g class="hubs">
         <g v-for="link in state.links" v-html="hubs[hubIndex(link)]"></g>
       </g>
@@ -29,7 +29,7 @@ export default {
     state:	{type: Object, default: () => ({})},
   },
   data() { return {
-    stateTpt:	{x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, links: [], ends: [], radius: 0},
+    stateTpt:	{x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, body:'', links: [], ends: [], radius: 0},
   }},
   computed: {
     transform: function() {				//Moves the object around when we change x or y

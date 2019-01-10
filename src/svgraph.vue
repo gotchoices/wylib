@@ -30,9 +30,9 @@
         <button class="nodrag" @click="$emit('refresh')" title="Reload chart from its source data">Refresh</button>
         <button class="nodrag" @click="$emit('reset')" title="Reload chart and reinitialize arrangement">Reset</button>
         <div class="sliders">
-          <input type="range" min="1" max="100" v-model="pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{pushForce}}</input>
-          <input type="range" min="1" max="100" v-model="pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{pullForce}}</input>
-          <input type="range" min="1" max="100" v-model="randForce" class="slider nodrag" title="How much random force to introduce">Random: {{randForce}}</input>
+          <input type="range" min="1" max="100" v-model="state.pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{state.pushForce}}</input>
+          <input type="range" min="1" max="100" v-model="state.pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{state.pullForce}}</input>
+          <input type="range" min="1" max="100" v-model="state.randForce" class="slider nodrag" title="How much random force to introduce">Random: {{state.randForce}}</input>
         </div>
       </div>
     </div>
@@ -56,14 +56,14 @@ export default {
     repeatTime:		{default: 200}
   },
   data() { return {
-    pushForce:		50,
-    pullForce:		50,
-    randForce:		50,
+//    pushForce:		50,
+//    pullForce:		50,
+//    randForce:		50,
     startTimer:		null,
     repeatTimer:	null,
     toolX:		0,
     toolY:		0,
-    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}},
+    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}, pushForce:50, pullForce:50, randForce:50},
   }},
   
   computed: {
@@ -125,19 +125,20 @@ export default {
           if (ix1 != ix2) {
             let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
+              , aspectBias = {x:vm2.center.x * 0.001, y: -vm2.center.y * 0.001}		//Squish vertically a little
               , maxMove = (this.state.maxX - this.state.minX) / 10			//Don't try to expand faster than this
               , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 10 (or negative)
-              , push = Math.min(this.pushForce * 800 / Math.pow(mag,2), maxMove)
-              , pull = this.pullForce * mag / 1000000000	//All objects have a little attractive gravity
+              , push = Math.min(this.state.pushForce * 800 / Math.pow(mag,2), maxMove)
+              , pull = this.state.pullForce * mag / 1000000000	//All objects have a little attractive gravity
               , randPull = 0
-//console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push)
+//console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push, aspectBias)
 
             if (links.includes(vm2.state.tag)) {
-              pull += this.pullForce * Math.pow(mag,2) / 1000000			//Linked objects have a lot more attraction
-              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * this.randForce}	//Inject an extra random burst 2% of the time
+              pull += this.state.pullForce * Math.pow(mag,2) / 1000000			//Linked objects have a lot more attraction
+              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * this.state.randForce}	//Inject an extra random burst 2% of the time
             }
             forces[ix1] = vector.add(forces[ix1], {r:-push + pull + randPull, a:polar12.a})
-            forces[ix2] = vector.add(forces[ix2], {r: push - pull + randPull, a:polar12.a})
+            forces[ix2] = vector.add(forces[ix2], {r: push - pull + randPull, a:polar12.a}, aspectBias)
           }
         })
       })
