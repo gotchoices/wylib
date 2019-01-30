@@ -1,25 +1,8 @@
 Wylib TODO
-
-X- Get mlb single and multi-row selection working
-X- Write dbp to wrap mlb
-X-   Get columns, text from database
-X-   Get data from database
-X- Write dbe to wrap ldew
-X- Launch dbe from selected row in dbp
-X- Backend module for dbp calls (just call wyseman?)
-X- Can push/query prefs from subwidgets
-X- Integrate button changes into menudock
-X- dbe posting toggles correctly from dbp
-X- Windows are opaque throughout (no empty transparent spots)
-X- Find quoting library/method for building queries
-X- Get prefs working enough to fetch language data from DB
-X- Fix dbp/dbe to get meta-data from Wyseman and language text from prefs
-X- Show space between menudock buttons
-X- Get rid of border on mlb (especially when it is inside a win)
-X- mlb fills win height
-X- Redo Dew to not include stretcher (or label, by default)
 X- Get basic dbe insert, update, delete working
 X- Dbp should save/restore state per table/view to wylib.data
+- Make a simple doc file showing how to init a basic database, launch wysegi
+- 
 - Multiview delete doesn't delete entity--just user
 - 
 - Login/validation facility (passport?)

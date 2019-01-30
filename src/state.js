@@ -35,6 +35,7 @@ const StateManager = {
   saveas: function(comp, name, descr, state, errCB, okCB) {
     let view = 'wylib.set_data(text, text, text, int, jsonb)'
       , params = [comp, name, descr, null, JSON.stringify(state)]
+//console.log("Save as:", comp, name)
     Wyseman.request(this.id+'ss', 'tuple', {view, params}, (res, err)=>{
 //console.log("Insert res:", res)
       if (err) errCB(err); else okCB(res.set_data)
@@ -50,7 +51,7 @@ const StateManager = {
   },
 
   queryData: function(component, id) {
-    let view = 'wylib.data_v', fields = ['ruid','own_name','access','name','descr','data'], where = {component}, order=[3]
+    let view = 'wylib.data_v', fields = ['ruid','own_name','access','name','descr','data'], where = {component}, order=[4]
         , compListen = id ? this.listens[component][id] : null
     this.pending[component] = true
 //console.log("Will query for:", component, this.pending[component])
@@ -75,7 +76,7 @@ const StateManager = {
 }
 
 Wyseman.listen('state_listen', 'wylib', msg =>{
-console.log("Got async wylib message:", msg)
+//console.log("Got async wylib message:", msg)
   if (msg.target == "data") StateManager.queryData(msg.component)	//Refresh restore states menu
 })
 

@@ -2,11 +2,8 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Split mlb state into layout(user-controlled) and config(meta-data-defined)
-//X- Meta-data fetched from database is not overwriting stored state data
-//X- Remove test routine in menu
-//X- Tables with no default view columns display nothing
 //X- Implement auto-execute option: execute the current (or first) row on each load/reload
+//- Should be able to reset to default column specs
 //- An initial load should respect existing sort fields, and the autoexecute flag
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
@@ -186,7 +183,7 @@ export default {
 
     executeRows(selection) {
       if (!selection) selection = this.$refs.mlb.getSelection()
-//console.log("Execute rows: ", selection, this.viewMeta.pkey)
+//console.log("Dbp execute rows: ", selection, this.viewMeta.pkey)
       if (selection.length <= 0) return
       let idx = selection[0], row = this.gridData[idx], keyVal = []
       this.viewMeta.pkey.forEach(fld => {
@@ -201,7 +198,7 @@ export default {
     },
 
     load(spec) {
-//console.log("Dbp load:", this.state.dbView, spec)
+//console.log("Dbp load:", this.state.dbView, spec, this.state.edit)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
@@ -211,7 +208,7 @@ export default {
     },
     reload(spec) {this.load(Object.assign(this.lastSpec, spec))},
     loadAll(ev) {this.load({where: null})},
-    clear() {this.gridData = []},		//Fixme: Should dbe also get cleared or not?
+    clear() {this.gridData = []},
     
     modified(data) {this.reload()},		//On signal from dbe
     sort(cols) {this.reload({order: cols.reverse()})},
@@ -307,7 +304,7 @@ console.log("Not yet implemented")
   },
 
   beforeMount: function() {
-//console.log("Dbp before, state: ", this.state);
+//console.log("Dbp before, state: ", JSON.stringify(this.state))
     if (this.bus) this.bus.register(this.id, (msg) => {		//Respond to commands from a master dbe
       if (msg == 'clear') {
         this.clear()

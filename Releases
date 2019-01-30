@@ -1,5 +1,9 @@
 Change Log:
 
+1.0.10	2019-Jan
+        - Make report windows work correctly
+	- Code structure improvements
+
 1.0.8	2019-Jan
 	- Improve how modals work
 	- Implement view actions and reports
