@@ -4,7 +4,7 @@
 //TODO:
 //- 
 <template>
-  <div class="wylib wylib-button button" :style="buttonStyle" v-on:mouseenter="mouseEnter" v-on:mouseleave="mouseLeave" v-on:mousedown="mouseDown" v-on:mouseup="mouseUp" v-on:click="click">
+  <div class="wylib wylib-button button" :style="buttonStyle" v-on:mouseenter="mouseEnter" v-on:mouseleave="mouseLeave" v-on:mousedown="mouseDown" v-on:mouseup="mouseUp" v-on:mousedown.prevent="click">
     <svg class="icon" :style="iconStyle" v-html='iconSvg'></svg>
   </div>
 </template>
