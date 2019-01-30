@@ -166,7 +166,7 @@ module.exports = function topHandler(context) {
           if (msg.error) {this.notice(msg.error); return}
 //console.log("DB answers:", msg)
           if (win && msg.content)
-            win.postMessage({request:'populate', format:action.format, content:msg.content}, location.origin)	//send content to report window
+            win.postMessage({request:'populate', format:action.format, content:msg.content, config}, location.origin)	//send content to report window
         })
       } else {
 console.log("Report:", repTag, "requests:", req, data)
