@@ -18,7 +18,7 @@
   <div class="wylib wylib-menu">
     <div class="menu" title=''>
       <table>
-        <tr v-for="item in config" :key="item.idx" @click="execute(item.call)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
+        <tr v-for="item in config" :key="item.idx" @click="execute(item.call, $event)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
           <td v-for="fld in layout" :key="fld">
             <svg v-if="fld=='icon'" class="icon" style="height:1em; width:1em;" v-html="iconSvg(item.icon)"></svg>
             <div v-else-if="fld=='lang'">{{ (item.lang?item.lang.title:null) || item.idx }}</div>
@@ -89,9 +89,9 @@ export default {
       }
 //console.log("  Posted: ", theSub)
     },
-    execute(cb) {		//Execute the specified callback
+    execute(cb, ev) {		//Execute the specified callback
       this.$emit('done')
-      if (cb) cb()
+      if (cb) cb(ev)
     },
   },
 
