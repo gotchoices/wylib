@@ -4,7 +4,8 @@
 //TODO:
 //X- Emit event when data changed
 //X- Validity doesn't show on first load
-//- Why do fields show changed after a clear?
+//X- Why do fields show changed after a clear?
+//- Honor -justify field from wyseman wmd files
 //- 
 //- Later:
 //- Display special function indicator on right side of entry
@@ -20,13 +21,14 @@
 <template>
   <div class="wylib wylib-dew" :title="lang ? lang.help : null">
     <div v-if="state.style == 'chk'" class="check" :style="genStyle">
-      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="changed($event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
+      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
     </div>
     <textarea ref="input" v-else-if="state.style == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
     <select ref="input" v-else-if="state.style == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
       <option v-for="val in values" :label="val.title" :value="val.value" :title="val.help"/>
     </select>
-    <input ref="input" v-else="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
+    <input ref="input" v-else-if="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
+    <input ref="input" v-else :type="state.style" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
   </div>
 </template>
 
@@ -117,19 +119,22 @@ export default {
 
   watch: {
     value: function(val) {
-      this.userValue = val
+      this.userValue = (val != null && (typeof val == 'object')) ? JSON.stringify(val) : val
 //console.log("Watched value:", this.field, val, this.userValue)
     },
   },
 
   methods: {
-    input(ev) {this.changed(ev.target.value)},
-    submit(ev) {this.$emit('submit')},
-    changed(val) {
-//console.log("Dew input:", this.field, val)
-      this.userValue = val
-      this.$emit('input', val, this.field, this.dirty, this.valid)
+    input(ev, value = ev.target.value) {
+//console.log("Dew input:", ev.target, value)
+      if (this.state.style == 'file' && ev.target.files) {	//Special handler for file selectors
+        value = ev.target.files
+      } else {
+        this.userValue = value
+      }
+      this.$emit('input', value, this.field, this.dirty, this.valid)
     },
+    submit(ev) {this.$emit('submit')},
     focus() {			//Focus cursor on this entry field
 //console.log("Focusing:", this.$refs, this.field)
       this.$refs.input.focus()
@@ -154,7 +159,7 @@ export default {
   },
 
   mounted: function() {
-//console.log(" Dew mounted:", this.field, this.state)
+//console.log(" Dew mounted:", this.field, this.state, this.value, typeof this.value)
     if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
     if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
