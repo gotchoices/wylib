@@ -2,13 +2,14 @@ Design Concepts for Report Module
 
 Some Examples of Reports to Generate:
 - Financial Reports (Balance Sheet, Income Statement, Trial Balance)
-  This category is limited to tabular data.  Ideally, each report would derive
-  its information from a database view which produces the exact data, given 
+  This category is limited to tabular data.  Such reports would derive their
+  information from a database view which produces the exact data, given 
   solely the parameters available to modify the report.  In other words, there
-  is no processing of the data required in the GUI--just presentation.
+  is not much processing required on the data required in the GUI--mostly just 
+  presentation.
   
-  Ideally, this could even include the generation of one or more summary rows 
-  if the object being queried is a function that can be reasonably instructed 
+  This could even include the generation of one or more summary rows if the 
+  object being queried is a function that can be reasonably instructed 
   on how to generate the data.  Summary rows could be marked as such in a
   column so they could be filtered out if/when necessary.
   
@@ -43,24 +44,57 @@ Some Examples of Reports to Generate:
   This could be an employee directory with pictures, a collection of pictures
   of a product or the like.
 
-The Approach:
-Reports will be implemented in an HTML structure in order to facilitate live,
-interactive links.  For example, if the user wants more detail, he may
-be able to click on a live link to open a new report, or open a preview.
+Format:
+Most report generation will be done with Vue in order to make things simpler 
+and to facilitate live updating.  However, there should also be an option for
+displaying a raw HTML page, or other media such as PDF, which may be created
+entirely in the backend, and is merely fetched from an express-driven URL 
+provided by the control layer.
 
-HTML generation will be done with Vue in order to make things simpler and to
-facilitate the live updating.
+Reports will typically be generated inside a wylib-win.  This would make it
+pretty easy to generate a control dashboard with multiple report views open on 
+a single tab or page.  However if the shift key is held down while launching
+the report, it will open instead in a separate popup window.
 
-Reports could be generated inside a wylib-win.  But this has some limitations.
-It might be desirable when building a dashboard to have multiple report views 
-open on a single tab or page.  However, if we are trying to get to a paper 
-printout, it would be better to render in a separate browser popup which 
-contains only the single report component.  Then we can rely on the browser to 
-generate PDF or such other format as is wanted of just that report.
+In either case, the report is in its own document (window or iframe) so it
+can be printed by regular means supplied by the browser.
 
-Implementation:
-The Wylib-report component can optionally contain any of the following
-  - A header
-  - An embedded graph or figure
-  - HTML text
-  - A 1D or 2D array of children reports
+Approach:
+Implement reports within the context of general control-layer actions, which 
+fall into the following categories:
+
+  - No UI
+    The action is invoked but nothing new is generated in the UI.  The control 
+    layer should send a status reply indicating if the action was successful.
+    This way an error or confirmation message can be generated if necessary.  
+    Otherwise, the user can assume the action has been taken.
+  
+  - Direct UI Report
+    A report window is opened immediately and populated with content according 
+    to the report type and nature.  Some reports may simply be static.
+    However any reports should also be able to send further commands back to
+    the control layer.  One example would be following a hyperlink in the
+    report.  This should be able to trigger other defined actions as though
+    they had been invoked normally.  An interactive report should also be
+    capable of initiating regular table/view inserts, updates and so forth.
+    
+    The data dictionary indicate to the UI, by the presence of a format key,
+    that a report window should be generated, and of what variety.
+  
+  - Polled UI Report
+    In this case, the immediate purpose is to collect further data from the
+    user before generating a report.  Typically a set of data inputs will be 
+    displayed, as specified by the options key in the data dictionary, along 
+    with three buttons: Cancel, Apply, OK.  Once the options have been 
+    collected, they are sent to the control layer report generator, and the 
+    ultimate objective is now completed.
+    
+    This ultimate objective may be a no-UI action, or another Direct UI Report.
+    In either case, the dialog buttons behave as follows:
+    
+    - Apply: Perform the action each time the button is pressed.  Keep the 
+      initial dialog open.  In the case of a report, this should regenerate the 
+      report contents each time.
+    - OK: Perform the action and then close the dialog (but not the report).
+    - Cancel: do not perform the action, or open a report.  In fact, if any
+      existing reports are open, associated with this dialog, close them.

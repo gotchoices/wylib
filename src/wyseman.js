@@ -175,7 +175,7 @@ const Wyseman = {
         let langTag = act.name + '.' + opt.tag		//Re-structure to look more like native table column data structure
           , newElem = {field: opt.tag, lang: lang.msg[langTag], type: opt.type, styles: opt}
         act.options[x] = newElem
-//console.log("  act:", x, act.name, newElem)
+//console.log("  act:", act, x, act.name, newElem)
       })
     })
     

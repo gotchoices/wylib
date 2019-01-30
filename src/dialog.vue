@@ -8,10 +8,12 @@
 //-
 <template>
   <div class="wylib wylib-dialog">
-    <div class="title" v-html="reason + ': ' + message" :title="help"/>
-    <wylib-mdew :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
-    <div class="buttons">
-      <button v-for="but in buttons" :key="but.tag" @click="press(but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
+    <div v-if="message && reason" class="title" v-html="reason + ': ' + message" :title="help"/>
+    <component ref="component" v-if="state.component" :is="'wylib-'+stateVar('component','type')" :state="stateVar('component','state')" @submit="submit"/>
+    <iframe ref="iframe" v-if="state.iframe" :src="stateVar('iframe','src')" :name="stateVar('iframe','name')" :height="stateVar('iframe','width','100%')"/>
+    <wylib-mdew v-if="state.dews" :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
+    <div v-if="buttons" class="buttons">
+      <button v-for="but in buttons" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
     </div>
   </div>
 </template>
@@ -19,18 +21,19 @@
 <script>
 import Com from './common.js'
 import Mdew from './mdew.vue'
+import Strdoc from './strdoc.vue'
 import Wyseman from './wyseman.js'
 
 export default {
   name: 'wylib-dialog',
-  components: {'wylib-mdew': Mdew},
+  components: {'wylib-mdew': Mdew, 'wylib-strdoc': Strdoc},
   props: {
     state:	{type: Object, default: () => ({})},
   },
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
-    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: [], data: {}, tag:'dialog'},
+    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null},
   }},
 
   computed: {
@@ -62,15 +65,14 @@ export default {
   },
 
   methods: {
-    submit() {
-//console.log("Modal submit")
-      this.press('diaYes')
+    stateVar(sub1, sub2, def) {
+      return (this.state[sub1] ? this.state[sub1][sub2] : def)
     },
-    press(tag) {
-//console.log("Button:", tag, this.state)
+    submit(ev, butTag = 'diaYes', data = this.state.data) {
+//console.log("Dia submit:", ev, butTag, data)
       if (this.state.cb)		//Callback for the dialog; Will not be persistent across reloads!
-        this.state.cb(tag)
-      this.$parent.$emit('submit', tag, this.state.tag, this.state.data)
+        this.state.cb(butTag)
+      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
     },
     change(value, field, dirty, valid) {	//When data changed
 //console.log("Dialog press:", field, value, dirty, valid, this.state.data[field])
@@ -85,22 +87,35 @@ export default {
   beforeMount: function() {
     Com.stateCheck(this)
 //console.log("Dialog state:", this.state)
-    this.$parent.$emit('customize', this.wm.dia, 'dia:'+ this.state.tag)
+    this.$parent.$emit('customize', this.state.report ? this.wm.diaReport : this.wm.diaDialog, 'dia:'+ this.state.tag, this.state.iframe != null)
+  },
+
+  beforeDestroy: function() {
+//console.log("Dialog destroy:", this.state)
+    this.state.destroyed = true			//At least report module needs to know
   },
 }
 </script>
 
 <style lang='less'>
-//  .wylib-dialog {
-//  }
+  .wylib-dialog {
+    height: 100%;
+//    border: 1px solid blue;
+  }
   .wylib-dialog .buttons {
     padding:	5px;
     width:	100%;
     text-align: right;
-//border: 1px solid red;
   }
   .wylib-dialog .title {
     padding: 10px 10px 10px 4px;
+//border: 1px solid violet;
+  }
+  .wylib-dialog iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+//border: 1px solid red;
   }
   .wylib-dialog .buttons button {
     margin: 0 2px 0 2px;

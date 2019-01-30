@@ -31,7 +31,7 @@
       <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win v-for="sub,idx in state.subs" v-if="sub" topLevel=true :key="idx" :state="sub" @close="r=>{closeWin(idx, r)}">
+      <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" @close="r=>{closeWin(key, r)}">
         <wylib-dbp :state="sub.client" :bus="subBus" :master="keyMaster"/>
       </wylib-win>
     </div>
@@ -67,7 +67,7 @@ export default {
     lastView:	null,
     mdewBus:	new Bus.messageBus(this),
     subBus:	new Bus.messageBus(this),
-    stateTpt:	{dock:{}, dbView:'', key:[], subs:[], dews:{fields: []}},
+    stateTpt:	{dock:{}, dbView:'', key: {}, loaded:false, subs:{}, dews:{fields: []}},
     reports:	{},
   }},
 
@@ -79,7 +79,7 @@ export default {
 //console.log("actMenu:", this.metaStyles)
       if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
         let name = act.name
-        acts.push({idx: name, icon: 'wand', lang: this.viewMeta.msg[name] || {title:name}, call: ()=>{this.perform(act)}})
+        acts.push({idx: name, icon: 'wand', lang: this.viewMeta.msg[name] || {title:name}, call: (ev)=>{this.perform(ev, act)}})
       })
       return acts
     },
@@ -124,17 +124,18 @@ export default {
       })
       return fieldArray
     },
-    keyValues() {	//An array of current PK values
-      let keyVal = []
-      if (this.viewMeta) this.viewMeta.pkey.forEach(fld => {keyVal.push(this.dbData[fld])})
-//console.log("Dbe key:", keyVal)
-      return keyVal
-    },
     pKey() {		//object describing current PK fields and their values
       let ret = {}
       if (this.viewMeta) this.viewMeta.pkey.forEach(fld => {ret[fld] = this.dbData[fld]})
-//console.log("Dbe key:", ret)
+      this.state.key = ret	//side effect
+//console.log("Dbe pKey:", ret)
       return ret
+    },
+    keyValues() {	//An array of current PK values
+      let keyVals = []
+      Object.keys(this.pKey).forEach(fld => {keyVals.push(this.dbData[fld])})
+//console.log("Dbe keyValues:", keyVals)
+      return keyVals
     },
     keyMaster() {return {
       view: this.state.dbView,
@@ -215,11 +216,13 @@ export default {
       answers.forEach((el,ix) => {
         let value, field
         [ value, field, this.dirty, this.valid ] = el
-//console.log("Dbe clear:", field, value, this.dirty, this.valid)
+console.log("Dbe clear:", field, value, this.dirty, this.valid)
         this.dbData[field] = value
       })
       this.top().posted()			//Act like we just posted
-      this.subBus.notify('clear')
+      Object.keys(this.pKey).forEach(fld => {this.dbData[fld] = null})	//Force PK fields, even if they don't display
+      this.state.loaded = false
+      this.subBus.notify('clear')		//Clear any subordinate previews
     },
 
     change(value, field, dirty, valid) {	//Respond to changes on the data inputs
@@ -237,6 +240,7 @@ export default {
           if (data) this.dbData = data			//If a record was returned
           if (modifies) this.$emit('modified', data)	//Tell parent dbp to update
           if (cb) cb(data)
+          this.state.loaded = true
 //console.log("Loaded:", this.viewMeta.pkey)
           this.$nextTick(()=>{this.subBus.notify('load')})
         }
@@ -244,58 +248,37 @@ export default {
     },
 
     addWin(view) {
-console.log("Open preview window:", view)
-      Com.addWindow(this.state.subs, {posted: true, x:0, y:0, client: {dbView: view}}, true)
+//console.log("Open preview window:", view)
+      Com.addWindow(this.state.subs, {posted: true, x:0, y:0, client: {dbView: view}}, this.$set, true)
     },
     closeWin(idx, reopen) {
-      Com.closeWindow(this.state.subs, idx, reopen)
-    },
-    perform(action) {
-console.log("Perform action:", action)
-      let data = {}
-        , view = this.state.dbView
-        , tag = 'action' + ':' + view + ':' + action.name
-//      if (action.options)
-        this.top().dialog(action.lang, action.options, data, null, tag, ['diaCancel','diaApply','diaYes'])
-    },
-    report(dia, but, parms, idx) {
-      let [ command, view, name ] = dia.split(':')
-        , rptIndex = dia + ':' + idx
-        , myPopup = this.reports[rptIndex]
-console.log("Report:", rptIndex, myPopup)
-      if (but == 'diaCancel') {
-        if (myPopup) myPopup.close()
-        return true			//Close dialog without doing anything
-      }
-      Wyseman.request(dia+':'+idx, 'action', {view, name, data:{parms, keys:this.keyValues}}, (msg) => {
-        let url = '/' + msg.file
-          , params = "height=600,width=500"
-console.log("DB answers:", msg, window.location.hostname, url)
-        if (msg.error) {this.top().notice(msg.error); return}
-        if (!myPopup || myPopup.closed) {
-          myPopup = this.reports[rptIndex] = window.open(url, dia, params)
-          myPopup.addEventListener('load', (ev)=>{
-            myPopup.document.getElementById('content').innerHTML = msg.content
-          }, false)
-        } else {
-          myPopup.document.getElementById('content').innerHTML = msg.content
-        }
-        if (!myPopup) this.top().notice(this.dbePopupErr)
-      })
-      return (but != 'diaApply')				//Tell top window to close the dialog
+      Com.closeWindow(this.state.subs, idx, this, reopen)
     },
 
-    metaListen() {			//Register which view we are dealing with
+    perform(event, action) {
+//console.log("Perform action:", action, event.shiftKey)
+      let data = {}
+        , view = this.state.dbView
+        , diaTag = ['action', view, action.name].join(':')
+      if (action.options) {			//Do we need to prompt for report options?
+        this.top().dialog(action.lang, action.options, data, null, diaTag + ':opts', this.top().diaButs3)
+      } else {
+        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, ()=>{return [this.pKey]})	//Go direct to action/report
+      }
+    },
+
+    metaListen() {				//Register which DB view we are dealing with
       let zid = this.id+'cv'
-      if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register
+      if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register any prior view
       if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
 //console.log("Dbe got metadata for:", this.state.dbView, data)
         this.viewMeta = data
+        this.lastView = this.state.dbView
         this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}, 'dbe:'+this.state.dbView)
-        if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
-          this.top().registerDialog('action' + ':' + this.state.dbView + ':' + act.name, (dia, but, data, idx)=>{
-console.log("Dbe got action callback", dia, but, data, idx)
-            return this.report(dia, but, data, idx)
+        if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
+          this.top().registerDialog(['action',this.state.dbView,act.name].join(':'), (dia, info)=>{
+//console.log("Dbe got action callback:", dia, act, info)
+            return this.top().actionLaunch(this.state.dbView, act, info, ()=>{return [this.pKey]})
           })
         })
       })
@@ -309,7 +292,6 @@ console.log("Dbe got action callback", dia, but, data, idx)
       this.viewMeta = null
       if (newVal != oldVal) this.metaListen()
     },
-    keyValues: function(val) {this.state.key = this.keyValues},
   },
 
   created: function() {
@@ -318,12 +300,19 @@ console.log("Dbe got action callback", dia, but, data, idx)
   },
 
   beforeMount: function() {
-//console.log("Dbe before, state:", this.state);
+//console.log("Dbe before, state:", JSON.stringify(this.state.key))
     Com.stateCheck(this)
+    let preloadKey = this.state.key
+    this.$nextTick(() => {		//Attempt reload to previous state
+      if (this.state.loaded) {
+        this.load(preloadKey)
+//console.log("Dbe reload:", this.state.loaded, JSON.stringify(preloadKey))
+      }
+    })
   },
 
   mounted: function() {
-//console.log("Dbe refs: ", this.$refs);
+//console.log("Dbe refs: ", this.$refs, JSON.stringify(this.state.key))
     this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
 
     if (this.bus) this.bus.register(this.id, (msg, data) => {

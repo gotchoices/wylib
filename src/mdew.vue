@@ -93,7 +93,7 @@ export default {
   methods: {
     wmLang(tag, type='title') {return this.wm[tag] ? this.wm[tag][type] : tag},
     togOption() {this.state.optional = !this.state.optional},
-    submit(ev) {this.$emit('submit')},
+    submit(ev) {this.$emit('submit', ev)},
     input(value, field, dirty, valid) {			//An input has been changed
       this.$set(this.dirtys, field, dirty)
       this.valid = valid

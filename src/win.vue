@@ -2,16 +2,9 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- send 'close' event to parent and let it decide what to do with it.
-//X- Incorporate a state prop to keep sizing and menu-posted status
-//X- Try speeding up drag/move by using smaller style object
-//X- Can sub-menus be visible when parent isn't?
-//X- dbe is getting squished horizontally when parent win is too narrow (overflow?)
-//X- Subwindows keep their state in same object
-//X- Implement modal query/alert window
-//X- Move z-index calcs to state object
 //X- Menu item to save/restore state
 //X- Windows like dbs/dbe shouldn't unpost on outside clicks--only menu windows
+//- Default state doesn't seem to do anything
 //- Get rid of separate topClick for each menu, use bus to unpost menus
 //- Reload window after state reset (send close signal to parent with reopen option?)
 //- 
@@ -44,14 +37,17 @@
       <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false">
         <wylib-menu :state="winMenu.client" :config="winMenuConfig" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
       </wylib-win>
-      <wylib-win v-for="dia,idx in state.dialogs" v-if="dia" topLevel=true :key="idx" :state="dia" @submit="(bt,dt,da)=>{dialogSubmit(bt,dt,da,idx)}" @close="r=>{closeDia(idx,r)}">
+      <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @submit="(...a)=>{dialogSubmit(key,...a)}" @close="r=>{closeDia(key,r)}">
         <wylib-dialog :state="dia.client"/>
+      </wylib-win>
+      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" @close="r=>{closeRep(key,r)}" @report="(v,a,i,k)=>{top.actionLaunch(v,a,i,k)}">
+        <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client"/>
       </wylib-win>
       <wylib-modal v-if="topLevel && modal.posted" :state="modal">
         <wylib-dialog slot-scope="ws" :state="ws.state"/>
       </wylib-modal>
     </div>
-    <div v-show="!state.minim" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
+    <div v-show="!state.minim" ref="content" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
       <slot></slot>
     </div>
   </div>
@@ -61,18 +57,21 @@
 const MenuLayer = 1000
 
 import Com from './common.js'
+import Bus from './bus.js'
+import TopHandler from './top.js'
 import Menu from './menu.vue'
 import Button from './button.vue'
 import Interact from 'interactjs'
 import Wyseman from './wyseman.js'
 import Dialog from './dialog.vue'
+import Report from './report.vue'
 import Modal from './modal.vue'
 import State from './state.js'
 //console.log("Interact:", Interact)
 
 export default {
   name: 'wylib-win',
-  components: {'wylib-menu': Menu, 'wylib-button': Button, 'wylib-dialog': Dialog, 'wylib-modal': Modal},
+  components: {'wylib-menu': Menu, 'wylib-button': Button, 'wylib-dialog': Dialog, 'wylib-modal': Modal, 'wylib-report': Report},
   props: {
     state:	{type: Object, default: () => ({})},
     topLevel:	{default: false},		//Full header and window menu
@@ -89,8 +88,12 @@ export default {
     modal:		{posted: false, client:{}},
     restoreMenu:	[],
     lastLoadIdx:	null,
+    lastLoadName:	null,
+    popWin:		null,
+//    printabler:		false,
+    repBus:		new Bus.eventBus(),
     winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
-    stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:[], height: null, width: null},
+    stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null},
   }},
   provide() { return {
     top: () => {return this.top}
@@ -100,12 +103,21 @@ export default {
     headerHeight: function () {
       return ((this.topLevel || this.fullHeader) ? this.pr.winFullHeader : this.pr.winSmallHeader)
     },
+    saveTitle: function() {
+      let lang = Object.assign({}, this.wm.winSave)
+      if (this.lastLoadName) lang.title += ' (' + this.lastLoadName + ')'
+      return lang
+    },
     winMenuConfig: function() {let wm = this.wm
+      let prElem = this.printable ?
+        {idx: 'prn', lang: wm.winPrint,    icon: 'printer',   call: this.print} :
+        {idx: 'pop', lang: wm.winPopUp,    icon: 'rocket',    call: this.popup}
       return [
-      {idx: 'sav', lang: wm.winSave,     icon: 'upload',    call: this.saveState},
+      {idx: 'sav', lang: this.saveTitle, icon: 'upload',    call: this.saveState},
       {idx: 'sas', lang: wm.winSaveAs,   icon: 'upload2',   call: this.saveStateAs},
       {idx: 'res', lang: wm.winRestore,  icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
       {idx: 'def', lang: wm.winDefault,  icon: 'home',      call: this.defaultState},
+      prElem,
       {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
       {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
       {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
@@ -138,11 +150,35 @@ export default {
     minimize() {
       this.state.minim = !this.state.minim
     },
+    print() {
+      let frame = this.$el.querySelector('iframe')
+console.log("Found iframe:", frame)
+      if (frame) frame.contentWindow.print()
+    },
+    popup() {
+      let pop = this.popWin, body, style, popId = this.id+'popUp'
+console.log("Clone to popup:", popId)
+      if (!pop || pop.closed) {
+        pop = this.popWin = window.open('', popId, 'height=9in,width=7in')
+        pop.document.write('<html><head></head><body></body></html>')
+        pop.document.close()
+      }
+      if (body = pop.document.body) {
+        if (body.firstChild) body.firstChild.remove()
+      }
+      let fragment = Com.deepCloneWithStyles(this.$refs.content)
+        , newNode = pop.document.importNode(fragment, true)
+      pop.document.body.appendChild(newNode)
+    },
     saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
-        if (tag == 'diaOK') State.saveas(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
+//console.log("tag", tag)
+        if (tag == 'diaYes') State.saveas(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{
+          this.lastLoadIdx=ruid
+          this.lastLoadName=resp.t
+        })
       })
     },
     saveState() {
@@ -157,7 +193,9 @@ console.log("Storing window state:", this.stateTag)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (tag) => {
-        if (tag == 'diaOK') {Com.saveState(this.stateTag); this.$emit('close', true)}
+        if (tag == 'diaYes') {
+          Com.saveState(this.stateTag); this.$emit('close', true)
+        }
       })
     },
 
@@ -172,7 +210,7 @@ console.log("Storing window state:", this.stateTag)
     },
 
     moveHandler(event) {
-//console.log("Moving: ", event, this.state);
+//console.log("Moving: ", event, this.state, this.winStyleF);
       this.state.x += event.dx
       this.state.y += event.dy
     },
@@ -193,13 +231,58 @@ console.log("Storing window state:", this.stateTag)
       cmenu.appendChild(childMenu)
       if (childStatus) cstat.appendChild(childStatus)
     },
-    closeDia(idx, reopen) {
-      Com.closeWindow(this.state.dialogs, idx, reopen)
-    },
-    dialogSubmit(buttonTag, dialogTag, data, idx) {
-//console.log("Dialog submit", dialogTag, buttonTag, data, idx)
+
+    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},
+    closeDia(idx, reopen) {Com.closeWindow(this.state.dialogs, idx, this, reopen)},
+    dialogSubmit(dialogIndex, ev, buttonTag, dialogTag, options) {
+//console.log("Dialog submit", dialogIndex, dialogTag, buttonTag, options, ev)
       if (this.top)
-        if (this.top.submitDialog(dialogTag, buttonTag, data, idx)) this.closeDia(idx)
+        if (this.top.submitDialog(dialogTag, {buttonTag, options, dialogIndex, popUp:event.shiftKey}))
+          this.closeDia(dialogIndex)
+    },
+
+    reportWin(repTag, src, config) {
+      let winState = this.state.reports[repTag]
+        , popUp = config.info ? config.info.popUp : null
+        , ready = (iframe) => {}	//Dummy function can't survive reload in state
+        , wasPosted = winState ? winState.posted : null
+        , foundState = false
+//console.log("Report win state:", winState, repTag, this.state.reports)
+      if (!winState) {
+        winState = {posted: false, x:25, y:25, client:{src, name:repTag}, ready}
+        this.$set(this.state.reports, repTag, winState)	//Create new report record
+      } else {
+        if (!winState.ready) winState.ready = ready	//Will have been lost in any reload
+        foundState = true				//Found existing report status
+      }
+      winState.client.config = config
+      if (popUp) {			//Generate browser popup
+        winState.posted = false
+        this.$nextTick(()=>{		//Let any report iframe die before launching the popup
+//console.log("!pop:")
+          let win = window.open(src, repTag, 'height=600,width=600').onbeforeunload = () => {
+//console.log("Pop closed:", repTag, winState.posted)
+            if (!winState.posted) this.closeRep(repTag)			//If user closed the window
+          }
+        })
+      } else {				//Regular internal report window
+//console.log("!regular:", winState, winState.posted)
+        winState.posted = true
+        if (foundState) {
+          if (wasPosted)						//If existing internal window
+            this.repBus.notify(repTag, 'reload')			//reload it
+          else								//If there was a popup open
+            window.open('', repTag, 'height=600,width=600').close()	//find it and close it
+        }
+      }
+    },
+
+    closeRep(repTag, reopen) {
+//console.log("Close regular report:", repTag)
+      let oldState = this.state.reports[repTag]
+      this.$delete(this.state.reports, repTag)
+      if (reopen) this.addReport(repTag, oldState.src, oldState.ready)
+      if (oldState.popWin) oldState.popWin.close()
     },
   },
 
@@ -216,9 +299,13 @@ console.log("Storing window state:", this.stateTag)
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
     this.$on('swallow', this.swallowMenu)
-    this.$on('customize', (lang, tag)=>{this.lang = lang; this.stateTag = tag})	//Allow child to set the window's title and tagging ID
+    this.$on('customize', (lang, tag, print)=>{		//Allow child to set the window's title and tagging ID
+      this.lang = lang
+      this.stateTag = tag
+      this.printable = print
+    })
 
-    if (this.topLevel) this.top = new Com.topHandler(this)
+    if (this.topLevel) this.top = new TopHandler(this)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
@@ -263,6 +350,7 @@ console.log("Storing window state:", this.stateTag)
           Object.assign(this.state, el.data)
           Com.stateCheck(this)
           this.lastLoadIdx = el.idx
+          this.lastLoadName = el.lang.title
         }})
       })
       this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
