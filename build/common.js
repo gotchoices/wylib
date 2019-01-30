@@ -15,7 +15,16 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
-        use: { loader: 'babel-loader' }
+        use: {
+          loader: 'babel-loader',
+          options: {
+            plugins: ['transform-custom-element-classes','transform-es2015-classes'],	//ES5
+            presets: [
+//              ["env", {"targets": {browsers: "chrome 68"}}]		//ES6
+              ["env", {"targets": "last 1 versions, > 2%, not dead"}]
+            ]
+          }
+        }
       },
       {
         test: /\.vue$/,
