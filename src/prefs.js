@@ -14,7 +14,8 @@ const Preferences = {
   dataBackground:		'#fefefe',	//Data entry areas
   frameBackground:		'#f4f4f4',	//Containers
   titleBackground:		'#dfdfdf',	//Labels, column headers, etc.
-  dragOverBackground:		'#ffa800',
+  highlightBackground:		'#ddffff',
+  dragOverBackground:		'#ffd8a0',
   
   winBorderWidth:		2,
   winBorderRad:			5,
@@ -27,8 +28,8 @@ const Preferences = {
   winSmallHeader:		12,
 //  winInitWidthx:		500,	//Deprecated
 //  winInitHeight:		300,
-  winSubWindowX:		80,
-  winSubWindowY:		30,
+  winSubWindowX:		40,
+  winSubWindowY:		40,
   
   butSize:			18,
   butHoverColor:		'#88ff88',
@@ -55,7 +56,7 @@ const Preferences = {
   mlbCharWidth:			8,
 
   _callbacks:			{},
-  _currentLanguage:		'en',
+  _currentLanguage:		'eng',
 
   get language() {return this._currentLanguage},
   set language(lang) {
