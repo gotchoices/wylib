@@ -54,6 +54,7 @@
 
 <script>
 import Com from './common.js'
+import TopHandler from './top.js'
 import Connect from './connect.vue'
 import Wyseman from './wyseman.js'
 import Button from './button.vue'
@@ -86,13 +87,13 @@ export default {
     menuTitle:		'',
     wm:			{},
     persistent:		true,
-    top:		new Com.topHandler(this),
+    top:		new TopHandler(this),
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
   }},
   provide() { return {
-    top: this.top,
+    top: () => {return this.top}
   }},
   computed: {
     id: function() {return 'app_' + this._uid + '_'},
@@ -164,7 +165,7 @@ export default {
       })
     },
     beforeUnload() {
-//console.log("About to unload.  Saving state:", this.state)
+//console.log("About to unload.  Saving state:", JSON.stringify(this.state))
       if (this.persistent)
         Com.saveState(this.tagTitle, this.state)
       else
@@ -178,7 +179,7 @@ export default {
 
   beforeMount: function() {
     let savedState = Com.getState(this.tagTitle)
-//console.log("Restoring state:", savedState)
+//console.log("Restoring state:", JSON.stringify(savedState))
     if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
 //    Com.stateCheck(this)
   },

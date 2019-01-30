@@ -14,6 +14,7 @@
 
 <script>
 import Com from './common.js'
+import TopHandler from './top.js'
 
 export default {
   name: 'wylib-modal',
@@ -49,12 +50,12 @@ export default {
   beforeMount:	function() {
     Com.stateCheck(this)
     this.$on('submit', (tag)=>{
-console.log("Modal got submit:", tag)
+//console.log("Modal got submit:", tag)
       this.state.posted = false
     })
   },
   mounted:	function() {
-    this.top = new Com.topHandler()
+    this.top = new TopHandler()
   },
 }
 </script>
