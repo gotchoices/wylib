@@ -6,24 +6,23 @@
 //TODO:
 //X- Combine addChild with addSubs?
 //X- What to do with illegally added sections in paragraph 0?
-//- Launch this component as action from mychips contract dbe
-//- Call back to dbe with update command
+//X- Launch this component as action from mychips contract dbe
+//- Call back to database with update command
 //- Can edit contracts in database
 //- Can mark a cross reference link from contenteditable view (insertHTML)
 //- 
 //- Later:
-//- Paragraphs created by fiat in editLeave don't exit direct editing right away on dblclick
-//- Open in separate browser window, for printing
+//- Paragraphs created automatically editLeave don't exit direct editing right away on dblclick
 //- Implement headers/footers for printing
 //- Implement undo stack for state
 //- Scan for illegal codes when leaving textarea
 //- Drag/drop doesn't always land where you expect; More testing.
-//- Can indent by dragging to the right
+//- Can indent/undent by dragging to the right
 //- 
 <template>
   <div class="wylib wylib-strdoc">
-    <div v-if="level <= 0"  ref="header" class="header">
-      <wylib-menudock :config="dockConfig" :height="headerHeight" :state="state.dock" :lang="wm.sdcMenu"/>
+    <div ref="header" class="header">
+      <wylib-menudock class="menudock" :config="dockConfig" :height="headerHeight" :state="state.dock" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
     <div class="content" draggable='true' v-on:dblclick="togEdit" :style="comStyle"
@@ -401,16 +400,34 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   },
   mounted: function() {
     if (this.iAmChief) {
-      this.$parent.$emit('swallow', this.$refs['header'])
-      this.$parent.$emit('customize', this.wm.sdc, 'strdoc:1')		//Should there be any better tag?
+      this.top().context.$emit('swallow', this.$refs.header)
+//      this.$parent.$emit('customize', this.wm.sdc, 'strdoc:1')		//Should there be any better tag?
     }
   },
 }
 </script>
 
 <style lang='less'>
-//  .wylib-strdoc {
-//  }
+  .wylib-strdoc .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0.20;
+//    transition: opacity 800ms ease-in;	//Things go blurry during transition
+  }
+  .wylib-strdoc .header:hover {
+    opacity: 0.94;
+//    transition: opacity 50ms ease-in;
+  }
+  .wylib-strdoc .header .menudock {		//Override menudock default outline
+    border: 0;
+  }
+
+  @media print {
+    .wylib-strdoc .header {
+      display: none;
+    }
+  }
   .wylib-strdoc .preview .title {
     font-size: 120%;
     text-align: center;
@@ -421,8 +438,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     width: 30%;
   }
   .wylib-strdoc div .text.input {
-//    margin-right: 10px;
-    margin: 0px 1em 4px 0px;		//To see blue outline fully
+    margin: 0px 1em 4px 0px;		//To see blue outline fully when editing
 //    border: 1px solid purple;
   }
   .wylib-strdoc .content {
