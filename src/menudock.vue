@@ -57,8 +57,9 @@ export default {
 
 <style>
   .wylib-menudock {
-    border: 1px solid black;
+    border: 1px solid #666688;
     border-bottom: 0;
+    border-radius: 4px 4px 0 0;
     padding: 0;
   }
   .wylib-menudock .buttons {
