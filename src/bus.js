@@ -30,7 +30,8 @@ module.exports = {
     }
   },
 
-  eventBus() {			//Like messageBus, but clients can listen for specific events
+  eventBus(vm) {			//Like messageBus, but clients can listen for specific events
+    this.master = vm
     this.events = {}
     this.register = function(id, event, cb) {		//I:ID am listening for events:event
       if (!(event in this.events)) this.events[event] = {}
@@ -41,11 +42,11 @@ module.exports = {
         delete this.events[events][id]
       }
     }
-    this.notify = function(event, data) {			//Invoke all listener callbacks for: event
+    this.notify = function(event, ...args) {			//Invoke all listener callbacks for: event
       let replies = []
 //console.log("Notify event:", event, this.events[event])
       if (this.events[event]) Object.keys(this.events[event]).forEach(id => {
-        replies.push(this.events[event][id](data))
+        replies.push(this.events[event][id](...args))
       })
       return replies
     }
