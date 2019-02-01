@@ -3,8 +3,9 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Implement auto-execute option: execute the current (or first) row on each load/reload
-//- Should be able to reset to default column specs
+//X- Should be able to reset to default column specs
 //- An initial load should respect existing sort fields, and the autoexecute flag
+//- Reload should retain sort fields
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
 //- 
@@ -185,12 +186,14 @@ export default {
       if (!selection) selection = this.$refs.mlb.getSelection()
 //console.log("Dbp execute rows: ", selection, this.viewMeta.pkey)
       if (selection.length <= 0) return
-      let idx = selection[0], row = this.gridData[idx], keyVal = []
-      this.viewMeta.pkey.forEach(fld => {
+      let idx = selection[0]
+        , row = this.gridData[idx]
+        , keyVal = []
+      if (row) this.viewMeta.pkey.forEach(fld => {
         keyVal.push(row[fld])
       })
 //console.log("   row: ", row, keyVal)
-      if (this.autoEdit) {
+      if (row && this.autoEdit) {
         this.state.edit.posted = true
         this.editPosts++
         this.$nextTick(()=>{this.dbeBus.notify('load', keyVal)})
