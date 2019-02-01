@@ -7,6 +7,14 @@
 //X- Combine addChild with addSubs?
 //X- What to do with illegally added sections in paragraph 0?
 //X- Launch this component as action from mychips contract dbe
+//- 
+//- Chief contains readonly: title, author, language, version, released, hash
+//- All are displayed, printable in preview mode
+//- Tag is fixed for chief as Author-Main_Title-Version-Language
+//- 
+//- Make a way to include other documents by reference
+//- 
+//- 
 //- Call back to database with update command
 //- Can edit contracts in database
 //- Can mark a cross reference link from contenteditable view (insertHTML)
@@ -33,18 +41,18 @@
           <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
           {{lang('sdcTitle','title','Title')}}:
         </span>
-        <span draggable='false' :title="lang('sdcTitle')"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="lang('sdcTitle','title')"></span>
+        <span draggable='false' :title="lang('sdcTitle')"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="lang('sdcTitle','title')" @input="change"></span>
         <span>{{lang('sdcTag','title','Tag')}}:</span>
-        <span draggable='false' :title="lang('sdcTag')"><input class="input tag" v-model="state.tag" :placeholder="lang('sdcTag','title')"></span>
+        <span draggable='false' :title="lang('sdcTag')"><input class="input tag" v-model="state.tag" :placeholder="lang('sdcTag','title')" @input="change"></span>
         <span draggable='false'><button class="input" @click="addChild">+</button></span>
         <span v-if="level > 0" draggable='false'><button class="input" @click="$emit('delete',index)">X</button></span>
         <div>
-          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="lang('sdcText')" :placeholder="lang('sdcText','title')"/>
+          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="lang('sdcText')" :placeholder="lang('sdcText','title')" @input="change"/>
         </div>
       </div>
       <div v-if="!state.edit" class="preview">
         <div v-if="level <= 0 && state.title" class="title" v-html="state.title"/>
-        <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp"/>
+        <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="subs" v-for="(sub, idx) in state.subs">
         <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sub" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
@@ -95,7 +103,6 @@ export default {
     dragType:	'move',			//'move', 'copy', 'none', 'trash', kept by the dragged
     over:	false,
     wm:		{},
-    valid:	false,
     dirty:	false,
     contEdit:	false,
     undoStack:	[],
@@ -143,10 +150,10 @@ export default {
     }},
     dockConfig: function() { return [
       {idx: 'und', lang: this.wm.sdcUndo,   call: this.undo,    icon: 'undo',   shortcut: true, disabled: !this.undoStack.length},
-      {idx: 'upd', lang: this.wm.sdcUpdate, call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty || !this.valid},
+      {idx: 'upd', lang: this.wm.sdcUpdate, call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty},
       {idx: 'clr', lang: this.wm.sdcClear,  call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'imp', lang: this.wm.sdcImport, call: this.import,  icon: 'boxin',  disabled: !this.dirty},
-      {idx: 'exp', lang: this.wm.sdcExport, call: this.export,  icon: 'boxout', shortcut: true, disabled: !this.valid},
+      {idx: 'exp', lang: this.wm.sdcExport, call: this.export,  icon: 'boxout', shortcut: true},
       {idx: 'spl', lang: this.wm.sdcSpell,  call: this.spellTog,icon: 'spell',  type: 'checkbox', toggled: this.spellCheck, input: this.spellCheckValue},
       {idx: 'eda', lang: this.wm.sdcEditAll,icon: 'pencil',     shortcut: true, call: ev=>this.subBus.notify('edit')},
       {idx: 'pra', lang: this.wm.sdcPrevAll,icon: 'document',   shortcut: true, call: ev=>this.subBus.notify('preview')},
@@ -159,6 +166,10 @@ export default {
   methods: {
     lang(key, type='help', defVal) {
       return this.wm[key] ? this.wm[key][type] : defVal
+    },
+    change(ev) {
+      if (this.bus) this.bus.master.$emit('dirty')
+      else this.dirty = true
     },
 
     processXrefs(ev) {
@@ -257,7 +268,7 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
 //      this.$nextTick(()=>{ev.target.innerHTML = this.titledText})
     },
     update() {
-      this.$emit('submit', 'update', this.state)
+      this.$parent.$emit('submit', 'editor', {request:'update', data:this.state})
     },
 
     clear() {				//Empty workspace
@@ -266,6 +277,7 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
           let tmpState = Com.clone(this.stateTpt)
           this.state = Object.assign(this.state, tmpState)
           this.state.edit = true
+          this.dirty = false
         }
       })
     },
@@ -377,6 +389,13 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     },
   },
 
+  watch: {
+    dirty: function(data) {
+      if (this.iAmChief)
+        this.$parent.$emit('submit', 'report', {request:'dirty', data})	//Let my container know my clear/dirty status
+    },
+  },
+
   beforeCreate: function() {
     this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
   },
@@ -389,6 +408,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     if (this.iAmChief) {
       this.subBus = new Bus.messageBus(this)		//Parent
       this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from subs
+      this.$on('dirty', ()=>{this.dirty = true})
     }
     if (this.subBus) this.subBus.register(this.id, (msg, data) => {	//Children (and parent) listen
 //console.log("Got bus message:", this.secNumber, msg, data, this.state)
@@ -401,7 +421,6 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   mounted: function() {
     if (this.iAmChief) {
       this.top().context.$emit('swallow', this.$refs.header)
-//      this.$parent.$emit('customize', this.wm.sdc, 'strdoc:1')		//Should there be any better tag?
     }
   },
 }

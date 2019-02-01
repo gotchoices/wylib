@@ -9,8 +9,8 @@
 //X- Present records in a grid layout
 //X- Added records prefill foreign key data
 //X- After a relaod, action dialog's lose their call-back (can it be restored by relaunching the dialog?)
-//- Option to open reports in popup or wylib-win
-//- How to choose reasonable size for report popup window?
+//X- If window closed/reopened, we lose dirty status
+//X- Option to open reports in popup or wylib-win
 //- See Fixme's below
 //- 
 //- Later:
@@ -114,12 +114,13 @@ export default {
     mdewConfig() {			//Make the column description format mdew is looking for
       let fieldArray = []
       if (this.viewMeta) this.viewMeta.columns.forEach(meta => {
-//console.log("Col:", meta.col, " Meta:", meta.styles, meta.values)
+//console.log("Col:", meta.col, " Meta:", meta, meta.styles, meta.values)
         fieldArray.push({
           field:	meta.col,
           lang:		{title:	meta.title || meta.col, help: meta.title + ' (' + meta.col + '):\n' + meta.help},
           styles:	meta.styles,
-          values:	meta.values
+          values:	meta.values,
+          nonull:	meta.nonull
         })
       })
       return fieldArray
@@ -133,9 +134,11 @@ export default {
     },
     keyValues() {	//An array of current PK values
       let keyVals = []
-      Object.keys(this.pKey).forEach(fld => {keyVals.push(this.dbData[fld])})
+      Object.keys(this.pKey).forEach(fld => {
+        if (this.dbData[fld] != undefined) keyVals.push(this.dbData[fld])
+      })
 //console.log("Dbe keyValues:", keyVals)
-      return keyVals
+      return keyVals.length > 0 ? keyVals : undefined
     },
     keyMaster() {return {
       view: this.state.dbView,
@@ -170,6 +173,7 @@ export default {
       return whereObj
     },
     load(where) {				//Fetch a record from the database, by its primary key
+//console.log("Dbe load:", where)
       if (Array.isArray(where)) where = this.keyWhere(where)	//if only key values passed in
       this.dirty = false
       this.valid = true
@@ -199,10 +203,10 @@ export default {
       this.dataRequest('insert', {fields})
     },
 
-    update() {						//Fixme: how to handle null fields?
-      let fields = this.$refs.mdew.userData		//Fixme: fetch over mdewBus
-//console.log("Update:", this.dbData, fields)
-      this.dataRequest('update', {fields, where: this.keyWhere()})
+    update(fields, modifies = false) {
+      if (!fields) fields = this.mdewBus.notify('userData')[0]
+console.log("Update data:", this.dbData, "fields:", fields, "mod:", modifies)
+      this.dataRequest('update', {fields, where: this.keyWhere()}, modifies)
     },
 
     delete() {
@@ -212,11 +216,11 @@ export default {
 
     clear() {
       let answers = this.mdewBus.notify('clear')[0]
-//console.log("Clear", answers)
+console.log("Clear", answers)
       answers.forEach((el,ix) => {
         let value, field
         [ value, field, this.dirty, this.valid ] = el
-console.log("Dbe clear:", field, value, this.dirty, this.valid)
+//console.log("Dbe clear:", field, value, this.dirty, this.valid)
         this.dbData[field] = value
       })
       this.top().posted()			//Act like we just posted
@@ -234,10 +238,13 @@ console.log("Dbe clear:", field, value, this.dirty, this.valid)
     dataRequest(action, options, modifies = true, cb) {
 //console.log("Dbe dataRequest:", action, options)
       Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
-//console.log("   data:", err, data)
+//console.log("  data received:", err, data)
         if (err) this.top().error(err)
         else {
-          if (data) this.dbData = data			//If a record was returned
+          if (data) {
+            this.dbData = data
+            this.$nextTick(()=>{this.mdewBus.notify('set')})
+          }
           if (modifies) this.$emit('modified', data)	//Tell parent dbp to update
           if (cb) cb(data)
           this.state.loaded = true
@@ -255,6 +262,20 @@ console.log("Dbe clear:", field, value, this.dirty, this.valid)
       Com.closeWindow(this.state.subs, idx, this, reopen)
     },
 
+    reportQuery(request, data) {		//Requests from a launched report
+//console.log("Dbe got request from report:", request, data)
+      if (!request || request == 'pKey') {
+        return (this.keyValues ? [this.pKey] : null)
+      } else if (request == 'update') {
+        let uData = {}
+        this.mdewConfig.forEach(el => {		//Grab only valid and changed fields
+          let key = el.field
+          if (key in data && data[key] != this.dbData[key]) uData[key] = data[key]
+        })
+        this.update(uData, true)
+      }
+    },
+    
     perform(event, action) {
 //console.log("Perform action:", action, event.shiftKey)
       let data = {}
@@ -263,7 +284,7 @@ console.log("Dbe clear:", field, value, this.dirty, this.valid)
       if (action.options) {			//Do we need to prompt for report options?
         this.top().dialog(action.lang, action.options, data, null, diaTag + ':opts', this.top().diaButs3)
       } else {
-        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, ()=>{return [this.pKey]})	//Go direct to action/report
+        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, this.reportQuery)	//Go direct to action/report
       }
     },
 
@@ -274,11 +295,14 @@ console.log("Dbe clear:", field, value, this.dirty, this.valid)
 //console.log("Dbe got metadata for:", this.state.dbView, data)
         this.viewMeta = data
         this.lastView = this.state.dbView
-        this.$parent.$emit('customize', {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}, 'dbe:'+this.state.dbView)
+        
+        let lang = {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}
+        this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
+        
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
           this.top().registerDialog(['action',this.state.dbView,act.name].join(':'), (dia, info)=>{
 //console.log("Dbe got action callback:", dia, act, info)
-            return this.top().actionLaunch(this.state.dbView, act, info, ()=>{return [this.pKey]})
+            return this.top().actionLaunch(this.state.dbView, act, info, this.reportQuery)
           })
         })
       })
@@ -315,7 +339,7 @@ console.log("Dbe clear:", field, value, this.dirty, this.valid)
 //console.log("Dbe refs: ", this.$refs, JSON.stringify(this.state.key))
     this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
 
-    if (this.bus) this.bus.register(this.id, (msg, data) => {
+    if (this.bus) this.bus.register(this.id, (msg, data) => {	//Commands from my parent dbp
 //console.log("Dbe bus message: ", msg, data);
       if (msg == 'load') return this.load(data)
     })

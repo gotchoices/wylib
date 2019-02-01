@@ -75,6 +75,8 @@ module.exports = function topHandler(context) {
       if (msg.lang && msg.lang.title && msg.lang.help)
         return msg.lang.title + ':<br>' + msg.lang.help + (msg.detail ? '<br>(' + msg.detail + ')' : '')
       if (msg.message) return msg.message
+      else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
+      else return this.context.wm.winUnknown
     }
     return msg
   }
@@ -141,17 +143,21 @@ module.exports = function topHandler(context) {
     if (this.postCB) this.postCB()
   }
 
-  this.actionLaunch = function(view, action, info, keys) {	//Handle request for a report/action
+  this.actionLaunch = function(view, action, info, editCB) {	//Handle request for a report/action
     if (typeof action == 'string') {
       return notImplemented()				//Fixme: fetch action metadata, and call actionLaunch recursively
     }
     let { buttonTag, options, dialogIndex, popUp } = info
       , name = action.name
       , actTag = ['action', view, name].join(':')
-      , getKeys = () => {return (typeof keys == 'function') ? keys() : keys}
+      , getKeys = () => {				//Try to get keys from callback, or fall back to key value in info
+        let fromFunc = ((typeof editCB == 'function') ? editCB() : null)
+        return fromFunc || info.keys
+      }
       , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : RepCom.unique(actTag))
-      , config = {view, action, info, keys:getKeys()}		//Will save this
-//console.log("Action Launcher:", view, "act:", action, "keys:", keys, "info:", info)
+      , config = {repTag, view, action, info}		//Will save this for restore purposes
+    info.keys = getKeys()				//Remember the last key values too
+//console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config)
 //console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp)
 
     if (buttonTag == 'diaCancel') {			//If we came from a dialog, and user says cancel
@@ -159,17 +165,26 @@ module.exports = function topHandler(context) {
       return true
     }
     
-    var perform = (req, data, win) => {			//Function to query database
-//console.log("Report query:", repTag, req, data, location.origin)
-      if (req == 'ready') {
-        Wyseman.request(repTag, 'action', {view, name, data:{options, keys:getKeys()}}, (msg) => {
-          if (msg.error) {this.notice(msg.error); return}
-//console.log("DB answers:", msg)
-          if (win && msg.content)
-            win.postMessage({request:'populate', format:action.format, content:msg.content, config}, location.origin)	//send content to report window
+    var perform = (target, message, win) => {			//Respond to messages from report window
+      let {request, data} = message ? message : {}
+//console.log("Report query:", repTag, request, data, location.origin)
+
+      if (target == 'report') {
+//console.log("Report:", repTag, "dirty:", data)
+        this.context.repBus.notify(repTag, request, data)
+
+      } else if (target == 'control') {
+        let request = data
+        Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys:getKeys()}}, (content, error) => {
+//console.log("DB answers:", content, "error:", error)
+          if (error) {this.error(error); return}
+          if (win && content)
+            win.postMessage({request:'populate', format:action.format, content, config}, location.origin)	//send content to report window
         })
-      } else {
-console.log("Report:", repTag, "requests:", req, data)
+
+      } else if (target == 'editor') {
+//console.log("Send to Dbe:", request, data)
+        if (editCB) editCB(request, data)
       }
     }
     
@@ -177,7 +192,7 @@ console.log("Report:", repTag, "requests:", req, data)
       RepCom.register(repTag, perform)
       this.context.reportWin(repTag, ReportFile, config)
     } else {						//Immediate query, execute it
-      perform('ready')
+      perform('control', 'ready')
     }
     return (buttonTag != 'diaApply')		//Tell top window to close the options dialog, if any
   }

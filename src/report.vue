@@ -2,7 +2,8 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//- Behaves analogously to a popup window as far as report module needs
+//X- Behaves analogously to a popup window as far as report module needs
+//- Can this auto size its popup window based on content size?
 //- 
 
 <template>
@@ -22,6 +23,7 @@ export default {
   },
   data() { return {
     stateTpt:		{src: '', name: '', config:null},
+    dirty:		false,
   }},
   inject: ['top'],
   computed: {
@@ -30,7 +32,7 @@ export default {
   },
   methods: {
     reload(req, data) {
-console.log("Reloading iframe:", this.state.src)
+//console.log("Reloading iframe:", this.state.src)
       let win = this.$refs.iframe ? this.$refs.iframe.contentWindow : null
         , location = win ? win.location : null
       if (location) location.reload()
@@ -41,23 +43,26 @@ console.log("Reloading iframe:", this.state.src)
 //  },
   beforeMount: function() {
     Com.stateCheck(this)
-    if (this.bus) this.bus.register(this.id, this.state.name, (command)=>{
-//console.log("Report got command:", command)
-      if (command == 'reload')
-        this.reload()
+    if (this.bus) this.bus.register(this.id, this.state.name, (req, data)=>{
+//console.log("Report got request:", req, data)
+      if (req == 'reload') this.reload()
+      else if (req == 'dirty') this.dirty = data
     })
   },
 
   mounted: function () {
-    let {view, action, info, keys} = this.state.config
+    let action = this.state.config ? this.state.config.action : null
 //console.log("Report mounted:", this.ready, this.state.name, this.state.config)
-    this.$parent.$emit('customize', action.lang, this.state.name)
+    this.$parent.$emit('customize', action.lang, this.state.name, true, ()=>{return this.dirty})
 
     if (this.ready && (typeof this.ready == 'function')) {
       this.ready(this.$refs.iframe)
+
     } else if (!this.ready && this.state.config) {
-//console.log("Report restoring from config:", view, action, info, keys)
-      this.$parent.$emit('report', view, action, info, keys)
+//console.log("Report restoring from config:", this.state.config, this.bus)
+      if (this.bus) this.$nextTick(()=>{
+        this.bus.master.$emit('report', this.state.config)
+      })
     }
   },
 
@@ -67,8 +72,9 @@ console.log("Reloading iframe:", this.state.src)
 </script>
 
 <style lang='less'>
-//.wylib-rep {
-//  width: 100%;
-//  border: 1px solid #c0c0c0;
-//}
+.wylib-rep {
+  width: 100%;
+  min-height: 100%;
+  border: 1px solid #c0c0c0;
+}
 </style>

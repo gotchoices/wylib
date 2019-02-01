@@ -9,6 +9,7 @@ var repWins = {}		//Callbacks for known report windows
 window.addEventListener('message', function (ev) {		//Listen for messages from report popups/iframes
   let { request, data } = (typeof ev.data == 'object') ? ev.data : {request:ev.data}
 //if (!ev.data.payload) console.log("Got message:", ev.source, ev.data, repWins)
+
   if (request && repWins[ev.source.name]) {			//If this window is registered
 //console.log("Got report request:", request, "from:", ev.source.name)
     repWins[ev.source.name](request, data, ev.source)		//call its handler

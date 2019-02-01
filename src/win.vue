@@ -90,8 +90,9 @@ export default {
     lastLoadIdx:	null,
     lastLoadName:	null,
     popWin:		null,
-//    printabler:		false,
-    repBus:		new Bus.eventBus(),
+    dirty:		null,
+    printable:		false,
+    repBus:		new Bus.eventBus(this),
     winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
     stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null},
   }},
@@ -121,7 +122,7 @@ export default {
       {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
       {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
       {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
-      {idx: 'cls', lang: wm.winClose,    icon: 'close',     call: ()=>{this.$emit('close')}}
+      {idx: 'cls', lang: wm.winClose,    icon: 'close',     call: this.close}
     ]},
     winStyleS: function () {return {
       borderColor:	this.pr.winBorderColor,
@@ -143,16 +144,21 @@ export default {
   },
   methods: {
     close(ev) {
-      this.state.pinned = false
-//console.log("In close", this.id)
-      this.$emit('close')
+//console.log("In close", this.id, this.dirty, this.dirty ? this.dirty() : null)
+      let closeIt = () => {
+        this.state.pinned = false
+        this.$emit('close')
+      }
+      if (this.dirty ? this.dirty() : false) this.top.confirm(this.wm.winModified.help, tag => {
+        if (tag == 'diaYes') closeIt()
+      }); else closeIt()
     },
     minimize() {
       this.state.minim = !this.state.minim
     },
     print() {
       let frame = this.$el.querySelector('iframe')
-console.log("Found iframe:", frame)
+//console.log("Found iframe:", frame)
       if (frame) frame.contentWindow.print()
     },
     popup() {
@@ -222,7 +228,7 @@ console.log("Storing window state:", this.stateTag)
       this.state.y += event.deltaRect.top
     },
     swallowMenu(childMenu, childStatus) {	//Eat the menu bar, and optionally status bar of a child component
-//console.log("Swallow Menu:", typeof childMenu)
+//console.log("Swallow Menu:", childMenu, childStatus)
       if (childMenu && '$el' in childMenu) childMenu = childMenu.$el		//Can pass in element or vue object
       if (childStatus && '$el' in childStatus) childStatus = childStatus.$el
       let cmenu = this.$refs['childMenu'], cstat = this.$refs['childStatus']
@@ -281,7 +287,7 @@ console.log("Storing window state:", this.stateTag)
 //console.log("Close regular report:", repTag)
       let oldState = this.state.reports[repTag]
       this.$delete(this.state.reports, repTag)
-      if (reopen) this.addReport(repTag, oldState.src, oldState.ready)
+      if (reopen) this.reportWin(repTag, oldState.src, oldState.client.config)
       if (oldState.popWin) oldState.popWin.close()
     },
   },
@@ -299,11 +305,6 @@ console.log("Storing window state:", this.stateTag)
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
     this.$on('swallow', this.swallowMenu)
-    this.$on('customize', (lang, tag, print)=>{		//Allow child to set the window's title and tagging ID
-      this.lang = lang
-      this.stateTag = tag
-      this.printable = print
-    })
 
     if (this.topLevel) this.top = new TopHandler(this)
   },
@@ -316,6 +317,19 @@ console.log("Storing window state:", this.stateTag)
     }
     Com.stateCheck(this)
 //if (this.topLevel) console.log("Win state:", this.state);
+
+    this.$on('customize', (lang, tag, print, dirty)=>{		//Allow child to set the window's title and tagging ID
+//console.log("Customize", this.id, lang, tag, print, dirty)
+      this.lang = lang
+      if (tag) this.stateTag = tag
+      this.printable = print
+      if (dirty) this.dirty = dirty
+    })
+    this.$on('report', (config)=>{
+//console.log("Win got message to launch report: ", config);
+      let { repTag, info } = config
+      this.top.submitDialog(repTag, info)
+    })
   },
 
   mounted: function() {
