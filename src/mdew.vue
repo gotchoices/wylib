@@ -110,7 +110,11 @@ export default {
   beforeMount: function() {
     Com.stateCheck(this)
     if (this.bus) this.bus.register(this.id, (msg, data) => {
-      return this.dewBus.notify(msg, data)		//Pass down to children
+      if (msg == 'userData') {
+        return this.userData
+      } else {
+        return this.dewBus.notify(msg, data)		//Pass down to children
+      }
     })
 //console.log("Mdew before:", this.config)
   },
@@ -135,7 +139,7 @@ export default {
           if (item.styles && item.styles.optional != null && item.styles.optional) rowOptional = true
           let dew = h('wylib-dew', {			//Make our data editing widget
             attrs: {value: this.data[item.field]},
-            props: {field: item.field, state: item.styles, lang: item.lang, values: item.values, bus:this.dewBus},
+            props: {field: item.field, state: item.styles, lang: item.lang, values: item.values, nonull:item.nonull, bus:this.dewBus},
             on: {input: this.input, submit: this.submit},
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang.title + ':' : null))

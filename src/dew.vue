@@ -54,12 +54,13 @@ export default {
     value:	{default: null},			//value to compare dirty to
     values:	{type: Array, default: () => ([])},	//valid values for select
     field:	{default: null},			//column or field code
+    nonull:	{type: Boolean, default: false},	//No nulls allowed
     bus:	null,					//message bus from parent
   },
   inject: ['top'],
   data() { return {
     pr:		require('./prefs'),
-    userValue:	this.value,				//Value, as modified by user
+    userValue:	this.mapValue,				//Value, as modified by user
     datePicker: null,
     stateTpt:	{style: 'ent', size: null, state: null, template: null, special: {}},
   }},
@@ -76,9 +77,12 @@ export default {
     disabled: function() {				//No user data entry, just for looking at
       return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
+    mapValue() {
+      return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value) : this.value
+    },
     dirty() {						//The user has changed the value
-      let dirty = (this.userValue != this.value)
-//console.log("dirty:", this.field, this.value, this.userValue, dirty)
+      let dirty = (this.userValue != this.mapValue)
+//console.log("dirty:", this.field, this.mapValue, this.userValue, dirty)
       return dirty
     },
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
@@ -117,12 +121,12 @@ export default {
     },
   },
 
-  watch: {
-    value: function(val) {
-      this.userValue = (val != null && (typeof val == 'object')) ? JSON.stringify(val) : val
+//  watch: {			//Using set now
+//    value: function(val) {
+//      this.userValue = (val != null && (typeof val == 'object')) ? JSON.stringify(val) : val
 //console.log("Watched value:", this.field, val, this.userValue)
-    },
-  },
+//    },
+//  },
 
   methods: {
     input(ev, value = ev.target.value) {
@@ -130,6 +134,7 @@ export default {
       if (this.state.style == 'file' && ev.target.files) {	//Special handler for file selectors
         value = ev.target.files
       } else {
+        if (!this.nonull && !value) value = null		//Map '' to null if allowed
         this.userValue = value
       }
       this.$emit('input', value, this.field, this.dirty, this.valid)
@@ -139,7 +144,9 @@ export default {
 //console.log("Focusing:", this.$refs, this.field)
       this.$refs.input.focus()
     },
-    set(val) {return([this.userValue = val, this.field, this.dirty, this.valid])},
+    set(val) {
+      return([this.userValue = val, this.field, this.dirty, this.valid])
+    },
     clear() {return this.set(this.state.initial)}
   },
 
@@ -153,13 +160,12 @@ export default {
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
       if (msg == 'clear') return this.clear()
-      else if (msg == 'set') return this.set(data)
-//      else if (msg == 'init') return this.init(data)
+      else if (msg == 'set') return this.set(this.mapValue)
     })
   },
 
   mounted: function() {
-//console.log(" Dew mounted:", this.field, this.state, this.value, typeof this.value)
+//console.log(" Dew mounted:", this.field, this.state, this.mapValue, typeof this.mapValue)
     if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
     if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
