@@ -203,10 +203,10 @@ export default {
       this.dataRequest('insert', {fields})
     },
 
-    update(fields, modifies = false) {
-      if (!fields) fields = this.mdewBus.notify('userData')[0]
-console.log("Update data:", this.dbData, "fields:", fields, "mod:", modifies)
-      this.dataRequest('update', {fields, where: this.keyWhere()}, modifies)
+    update() {
+      let fields = this.mdewBus.notify('userData')[0]
+console.log("Update data:", fields)
+      this.dataRequest('update', {fields, where: this.keyWhere()}, true)
     },
 
     delete() {
@@ -236,7 +236,7 @@ console.log("Clear", answers)
     },
 
     dataRequest(action, options, modifies = true, cb) {
-//console.log("Dbe dataRequest:", action, options)
+console.log("Dbe dataRequest:", action, options)
       Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
 //console.log("  data received:", err, data)
         if (err) this.top().error(err)
@@ -272,7 +272,7 @@ console.log("Clear", answers)
           let key = el.field
           if (key in data && data[key] != this.dbData[key]) uData[key] = data[key]
         })
-        this.update(uData, true)
+        this.dataRequest('update', {fields:uData, where: this.keyWhere()}, true)
       }
     },
     
