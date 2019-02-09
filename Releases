@@ -1,5 +1,10 @@
 Change Log:
 
+1.0.11	2019-Feb
+        - Authenticated login from private key
+        - Better handling of changes in DB entry fields
+        - Structured document editor report
+
 1.0.10	2019-Jan
         - Make report windows work correctly
 	- Code structure improvements
