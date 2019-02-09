@@ -116,7 +116,7 @@ export default {
         return this.dewBus.notify(msg, data)		//Pass down to children
       }
     })
-//console.log("Mdew before:", this.config)
+//console.log("Mdew before:", this.config, this.data)
   },
 
   render: function(h, context) {

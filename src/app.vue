@@ -18,10 +18,9 @@
     <div class="header">
       <div class="title" :title="help">{{ title }}</div>
       <div class="status">
-        <button @click="conMenuPosted=!conMenuPosted" title="Open a dialog for connecting to backend servers">Site:</button>
-        <span title="The server you are currently connected to">{{ currentSite || 'Not connected' }}</span>
-        {{ retryIn ? ' (' + retryIn + ')' : null}}
-        <wylib-connect v-if="conMenuPosted" :default="siteTry"/>
+        <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
+        <span :title="lang('appServerURL')">{{ siteConnected }}</span>
+        <wylib-connect v-show="conMenuPosted" @site="siteChange"/>
       </div>
     </div>
     <hr/>
@@ -31,7 +30,7 @@
           {{ tab.title }}
         </div>
         <div class="tab-filler">
-          <wylib-button :size="tabHeight" icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
+          <wylib-button icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
           <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false">
             <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
@@ -75,32 +74,33 @@ export default {
     tabs:	{type: Array},
     tag:	{type: String},
     current:	{type: String},
-    tryEvery:	{default: 5},
   },
   data() { return {
     conMenuPosted:	true,
     appMenu:		{posted: false, client: {}, title: 'Application menu'},
     modal:		{posted: false, client: {}},
     currentSite:	null,
-    siteTry:		'',
-    retryIn:		null,
     menuTitle:		'',
-    wm:			{},
     persistent:		true,
     top:		new TopHandler(this),
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
+    wm:			{			//English defaults
+      appServer:	{title:'Server',	help:'Toggle menu for connecting to various servers'},
+      appServerURL:	{title:'Server URL',	help:'The domain and port of the server you are currently connected to'},
+      appNoConnect:	{title:'Not Connected',	help:'The application is not connected to a backend server'},
+    },
   }},
   provide() { return {
     top: () => {return this.top}
   }},
   computed: {
     id: function() {return 'app_' + this._uid + '_'},
-    tagTitle: function () {return this.tag || this.title},
-    tabHeight: function () {
-      return 20
+    siteConnected: function() {
+      return this.currentSite || this.lang('appNoConnect',1,'Not Connected')
     },
+    tagTitle: function () {return this.tag || this.title},
     appMenuConfig: function() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.appSave,      icon: 'upload', call: this.saveState},
@@ -110,15 +110,14 @@ export default {
       {idx: 'edi', lang: wm.appEditState, icon: 'pencil', call: ()=>{this.previews[0].posted = true}},
     ]},
   },
-  watch: {
-    currentSite: function(val, oldVal) {
-      if (!val && oldVal) {		//If connection lost
-        this.conMenuPosted = true
-        this.retryConnect()
-      }
-    }
-  },
   methods: {
+    lang(key, title, defVal) {
+      return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
+    },
+    siteChange(site) {
+      this.currentSite = site
+//      this.conMenuPosted = !site	//Fixme!
+    },
     postAppMenu(ev) {
 //console.log("postAppMenu:", ev, this.appMenu.x, this.appMenu.y, this.appMenu)
       if (!(this.appMenu.posted = !this.appMenu.posted)) return
@@ -135,18 +134,11 @@ export default {
 //console.log("tabSelect:", idx)
       this.$emit('tab', idx)
     },
-    retryConnect() {
-//console.log("retryConnect", this.current)
-      if (this.currentSite) {this.retryIn = null; return}
-      if (this.retryIn == 0) Wyseman.connect()
-      if (!this.retryIn) {this.retryIn = this.tryEvery} else {this.retryIn--}
-      setTimeout(this.retryConnect, 1000)
-    },
     saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
-        if (tag == 'diaYes') State.saveas(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
+        if (tag == 'diaYes') State.saveAs(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
     },
     saveState() {
@@ -185,10 +177,6 @@ export default {
   },
 
   mounted: function () {
-    Wyseman.request('_main', 'connect', {stay: true}, addr => {
-      if (this.currentSite = addr) this.conMenuPosted = false;
-    })
-    Wyseman.connect()
     window.addEventListener('beforeunload', this.beforeUnload)
 
     State.listen(this.id+'sl', this.tag, (menuData) => {

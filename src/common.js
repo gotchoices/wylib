@@ -4,7 +4,7 @@
 //- TODO:
 //X- Add a trim option to stateCheck to remove obsolete properties?
 //- 
-const storeKey = 'wylibState_'
+const storeKey = 'wylib_'
 
 module.exports = {
 
@@ -51,11 +51,12 @@ module.exports = {
 
   saveState: function(tag, data) {		//Save a component's state in local storage
     localStorage.setItem(storeKey + tag, JSON.stringify(data))
+console.log("Saving:", storeKey+tag)
   },
     
   getState: function(tag) {			//Retrieve a stored state from local storage
     let st = localStorage.getItem(storeKey + tag)
-//console.log("Getting:", st)
+//console.log("Getting:", storeKey+tag)
     return ((st && st != 'undefined') ? JSON.parse(st) : null)
   },
     
@@ -74,18 +75,13 @@ module.exports = {
   
   addWindow(winObj, template, ctx, placement, clone) {	//Create a new subwindow in an array of config objects
 //console.log("Add Window", template, placement)
+    template.x = null; template.y = null
     var newState = clone ? this.clone(template) : template
     if (clone) newState.template = this.clone(template)	//Remember how to reset myself
     if (placement) {
-      if (typeof placement == 'object') {
-        newState.x = placement.x || 0
-        newState.y = placement.y || 0
-      } else {
-        newState.x += (Math.random() - 0.5) * 100
-        newState.y += (Math.random() - 0.5) * 100
-      }
+      newState.x = placement.x || (Math.random() - 0.5) * 50 + 150
+      newState.y = placement.y || (Math.random() - 0.5) * 100 + 250
     }
-
     for(var newIndex = 0; newIndex in winObj; newIndex++);	// console.log('test', newIndex);
     ctx.$set(winObj, newIndex, newState)
 //console.log(" at:", newIndex)
@@ -99,6 +95,37 @@ module.exports = {
       this.addWindow(winObj, template, ctx, {x, y})	//Force to open in a new slot
     ctx.$delete(winObj, idx)
 //console.log(" after:", winObj)
+  },
+
+  fileReader(target, timeout, cb) {		//Read a JSON file
+    for (let i = 0, f; f = target.files[i]; i++) {
+      let reader = new FileReader();
+      reader.onload = ()=>{
+        let fileData = JSON.parse(reader.result)
+//console.log("fileData:", fileData)
+        cb(fileData)
+      }
+      reader.readAsText(f)
+    }
+    if (timeout) setTimeout(()=>{target.value = null}, timeout)
+  },
+
+  ajax(url, cb) {			//Read JSON data from a URL
+    let data, xmlhttp = new XMLHttpRequest()
+    xmlhttp.onreadystatechange = () => {
+      if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+//console.log('responseText:' + xmlhttp.responseText)
+        try {
+          data = JSON.parse(xmlhttp.responseText)
+        } catch(err) {
+//console.log(err.message + " in " + xmlhttp.responseText)
+          return
+        }
+        cb(data)
+      }
+    }
+    xmlhttp.open("GET", url, true)
+    xmlhttp.send()
   },
     
 }

@@ -26,7 +26,7 @@
 <template>
   <div class="wylib wylib-dbe">
     <div class="header">
-      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :height="headerHeight" :lang="wm.dbeMenu"/>
+      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :lang="wm.dbeMenu"/>
       <div class="headerfill"/>
       <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
@@ -236,7 +236,7 @@ console.log("Clear", answers)
     },
 
     dataRequest(action, options, modifies = true, cb) {
-console.log("Dbe dataRequest:", action, options)
+//console.log("Dbe dataRequest:", action, options)
       Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
 //console.log("  data received:", err, data)
         if (err) this.top().error(err)
@@ -256,7 +256,7 @@ console.log("Dbe dataRequest:", action, options)
 
     addWin(view) {
 //console.log("Open preview window:", view)
-      Com.addWindow(this.state.subs, {posted: true, x:0, y:0, client: {dbView: view}}, this.$set, true)
+      Com.addWindow(this.state.subs, {posted: true, client: {dbView: view}}, this, true)
     },
     closeWin(idx, reopen) {
       Com.closeWindow(this.state.subs, idx, this, reopen)

@@ -71,7 +71,7 @@ export default {
     submit(ev, butTag = 'diaYes', data = this.state.data) {
 //console.log("Dia submit:", ev, butTag, data)
       if (this.state.cb)		//Callback for the dialog; Will not be persistent across reloads!
-        this.state.cb(butTag)
+        this.state.cb(butTag, data)
       this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
     },
     change(value, field, dirty, valid) {	//When data changed
@@ -100,7 +100,7 @@ export default {
 <style lang='less'>
   .wylib-dialog {
     height: 100%;
-//    border: 1px solid blue;
+//    border: 1px solid green;
   }
   .wylib-dialog .buttons {
     padding:	5px;

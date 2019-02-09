@@ -3,91 +3,395 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//- Has to be independent of database, wylib until connection made
-//- Default language to english, but update to current language once connection made
+//X- Has to be independent of database, wylib until connection made
+//X- Default language to english, but update to current language once connection made
+//X- Add icons to show if each connection has a key or a ticket
+//X- How to enter a username for a new connection (with ticket)
+//X- Kickstart generates a ticket for admin
+//X- Can't connect without ticket
+//- Can only store one key at a time with same host, port, user
+//- Can store keys in browser localStorage
+//- Can password-protect keys exported, and/or stored in localStorage
+//- Get automatic reconnect working again
 //- 
 
 <template>
   <div class="wylib-connect">
-    <div class="header" title="Keeps a list of servers and ports you normally connect to">Connections:</div>
-    <table>
-      <tbody>
-        <tr>
-          <td><input v-model:value="newSite" v-on:keyup.13="addSite(newSite)" title="Type in the URL (domain:port) of the server you want to connect to"/></td>
-          <td><button @click="connectSite(newSite)" title="Connect to an application server at this URL">Connect</button></td>
-          <td><button @click="addSite(newSite)" title="Add a new server URL to my list">+</button></td>
+    <div class="header">
+      <wylib-menudock :config="dockConfig" :state="dock" :lang="wm.conMenu"/>
+      <div>{{lang(status)}}</div>
+    </div>
+    <div class="label" :title="lang('conTitle')">{{lang('conTitle', 1)}}:</div>
+    <div class="sitelist" :title="lang('conTitle')">
+      <table>
+        <tr v-for="site,idx in sites" :style="rowStyle(site.selected)" v-on:click="selectSite($event, idx)" v-on:dblclick="()=>{connectSite()}">
+          <td><svg :style="keyStyle(site)" v-html="keyIcon(site)"/></td>
+          <td>{{site.host}}</td>
+          <td>{{site.port}}</td>
+          <td>{{site.user}}</td>
         </tr>
-        <tr v-for="site in sites">
-          <td><label>{{ site }}</label></td>
-          <td><button @click="connectSite(site)" title="Connect to an application server at this URL">Connect</button></td>
-          <td><button @click="removeSite(site)" title="Remove this server from my list">-</button></td>
-        </tr>
-      </tbody>
-    </table>
+      </table>
+    </div>
+    <div class="label" :title="lang('conImport')">{{lang('conImport',1)}}:<input type="file" @input="importKeys"/></div>
   </div>
 </template>
 
 <script>
+const CountDown = 5
+const Crypto = window.crypto.subtle
+const KeyConfig = {
+  name: 'RSA-PSS',
+  modulusLength: 2048,
+  publicExponent: new Uint8Array([1,0,1]),
+  hash: 'SHA-256'
+}
+const SignConfig = {
+  name: 'RSA-PSS',
+  saltLength: 128
+}
+const SaltLength = 128		//For signing with RSA-PSS
+
+import Com from './common.js'
 import Wyseman from './wyseman.js'
+import FileSaver from 'file-saver'
+import MenuDock from './menudock.vue'
+import Button from './button.vue'
+import Icons from './icons.js'
+
+const WmDefs = {		//English defaults, as we may not yet be connected
+  conmenu:    {title:'Connect Menu', help:'Functions controlling how you connect to server sites'},
+  conTitle:   {title:'Connection Keys',  help:'A list of servers where you normally connect'},
+  conConnect: {title:'Connect',	help:'Connect/disconnect with this server'},
+  conDelete:  {title:'Delete', help:'Remove this server from my list'},
+  conZap:     {title:'Forget Sites', help:'Remove this site information from this browser'},
+  conLoad:    {title:'Load Sites', help:'Find site information stored in this browser'},
+  conLock:    {title:'Lock Sites', help:'Encrypt this site information in this browser'},
+  conKey:     {title:'Connect Key', help:'A private key allowing connection to the site'},
+  conImport:  {title:'Import Key', help:'Drag/drop file here or click to use a connection key or one-time access ticket'},
+  conExport:  {title:'Export Keys', help:'Save connection keys to a file'},
+  conRetry:   {title:'Retrying', help:'Attempting to connect again'},
+  conUsername: {title:'Username', help:'Input the authorized username you will connect by'},
+  conNoCrypto: {title:'No Crypto', help:'No crypto library found in browser.  Make sure you are connected by https.'},
+  conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
+  conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
+}
 
 export default {
+  name: 'wylib-connect',
+  components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
   props: {
     siteKey:	{type: String, default: 'wylib_sites'},
-    default:	{type: String, default: ''},
-    port:	{type: Number, default: 54320}
   },
   data() { return {
-    newSite: this.default,
-    sites: []
+    pr:			require('./prefs'),
+    wm:			WmDefs,		//Language data
+    sites:		[],		//site keys we have in memory
+    lastSelect:		null,		//index of the last one clicked on
+    dock:		{},		//State for menu dock
+    currentSite:	null,		//URL we are connected to, if any
+    status:		null,		//Name of a language key to display in status area
+    tryEvery:		CountDown,
+    retryIn:		2,
+    tryTimer:		null,
   }},
-  watch: {
-    default: function(val) {this.newSite = this.default}
+  inject: ['top'],
+  computed: {
+    id() {return 'con_' + this._uid + '_'},
+    selectedSite()  {return (this.lastSelect == null) ? null : this.sites[this.lastSelect]},
+    connected() {return !!this.currentSite},
+    tryView() {return this.tryTimer ? this.retryIn : null},
+    dockConfig: function() { return [
+      {idx:'con', lang:this.wm.conConnect, call:this.togConn,   icon:'link',   shortcut:true, toggled:this.connected},
+      {idx:'sub', lang:this.wm.conDelete,  call:this.delSites,  icon:'minus',  shortcut:true},
+      {idx:'exp', lang:this.wm.conExport,  call:this.exportKeys,icon:'boxout'},
+      {idx:'lod', lang:this.wm.conLoad,    call:this.loadSites, icon:'search'},
+      {idx:'zap', lang:this.wm.conZap,     call:this.zapSites,  icon:'bin'},
+      {idx:'lok', lang:this.wm.conLock,    call:this.lockSites, icon:'lock'},
+    ]},
   },
   methods: {
-    connectSite(addr) {		//Force connection to a specified site
-//console.log("Connecting to: " + addr)
-      Wyseman.connect(addr)
+    bwm(key) {return this.wm[key] || WmDefs[key] || {}},
+    lang(key, title, defVal='') {
+      return this.bwm(key)[title ? 'title' : 'help'] || defVal
     },
-    addSite(addr) {		//Add favorite site to our list
-//console.log("Add: " + addr)
-      if (addr != '' && (this.sites.length == 0 || this.sites.indexOf(addr) < 0))
-        this.sites.push(addr)
+    keyIcon(site) {
+      let icon = site.priv ? 'key' : (site.token ? 'ticket' : 'exclaim')
+      return Icons(icon)
+    },
+    keyStyle(site) {
+      let color = site.priv ? 'gold' : (site.token && site.user) ? 'green' : 'red'
+      return {
+        height: '1.1em', width: '1.1em',
+        fill: color, stroke: color,
+        backgroundColor: '#888888',
+      }
+    },
+    rowStyle(sel) {return {
+      backgroundColor: sel ? this.pr.highlightBackground : this.pr.dataBackground,
+      userSelect:'none'
+    }},
+    selectSite(ev, idx) {			//Select, deselect a site
+      if (ev.shiftKey) {
+        if (this.lastSelect != null) {
+          let min = Math.min(this.lastSelect, idx), max = Math.max(this.lastSelect, idx)
+          for(let i = min; i <= max; i++) this.sites[i].selected = true
+        } else {
+          this.sites[idx].selected = true
+        }
+      } else if (ev.ctrlKey || ev.metaKey) {
+        this.sites[idx].selected = !this.sites[idx].selected
+      } else {
+        this.sites.forEach(el=>{el.selected = false})
+        this.sites[idx].selected = true
+      }
+      this.lastSelect = idx
+console.log("Select:", this.lastSelect, this.sites)
+    },
+    togConn(ev) {	 			//Connect/disconnect
+console.log("Toggle Connection:", this.connected, this.lastSelect, this.selectedSite)
+      if (this.connected) 
+        this.disconnect()	
+      if (this.selectedSite && !ev.shiftKey)
+       this.$nextTick(()=>{this.connectSite()})
+    },
+    bufferToHex(buffer) {			//Convert ArrayBuffer to hex string
+      var s = '', h = '0123456789ABCDEF';
+      (new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
+      return s
+    },
+    keyCheck(site, cb) {			//Check for, and possibly generate connection keys
+console.log("Key check:")
+      if (site.priv) cb(site)
+      else if (Crypto) {			//Crypto API found
+console.log("  generating key:")
+        Crypto.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
+          site.priv = keyPair.privateKey
+          return Crypto.exportKey('spki', keyPair.publicKey)
+        }).then(pubKey => {
+          site.pub = this.bufferToHex(pubKey)
+console.log("  pub:", site.pub)
+          cb(site)
+        }).catch(err => {
+console.log("Error:", err.message)
+          this.top().error(this.bwm('conCryptErr'))
+        })
+      } else if (location.protocol == 'http:') {
+        site.proto = 'ws:'			//Try to connect insecurely
+        cb(site)
+      } else {
+        this.top().error(this.bwm('conNoCrypto')) 
+      }
+    },
+    userCheck(site, cb) {			//Make sure the key has a username
+console.log("User check:", site)
+      if (site.user) cb()
+      else this.top().input(this.bwm('conUsername'), (ans, data)=>{
+        if (ans == 'diaYes' && data.value) {
+          site.user = data.value
+          cb(site)
+        }
+      })
+    },
+    signCheck(site, cb) {			//Add a current signature with the key
+console.log("Sign check:", site)
+      Com.ajax(window.location.origin + '/clientip', (data)=>{
+        let encoder = new TextEncoder()
+          , { ip, cookie, userAgent, date } = data
+          , message = JSON.stringify({ip, cookie, userAgent, date})	//Rebuild in this same order in backend!
+//console.log("  Client data:", data, date, site.priv)
+        if (Crypto) {
+          Crypto.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
+//console.log("  signed:", sign, date)
+            site.sign = this.bufferToHex(sign)
+            site.date = date
+            cb()
+          }, (err)=>{
+//console.log("Error:", err.message)
+            this.top().error(this.bwm('conCryptErr'))
+          })
+        } else if (site.proto == 'ws:') 
+          cb(site)
+      })
+    },
+    connectSite(site = this.selectedSite) {		//Make connection to a specified site
+console.log("Connecting to:", site, window.location.origin)
+      this.keyCheck(site, ()=>this.userCheck(site, ()=>{
+        this.signCheck(site, ()=>{
+//        this.tryEvery = CountDown			//Retry if disconnected
+          Wyseman.connect(site)
+        })
+      }))
+    },
+    delSites(ev) {					//Remove site from our favorites list
+      for (let i = this.sites.length-1; i >= 0; i--) {
+//console.log("Remove site", i, this.sites[i].selected)
+        if (this.sites[i].selected) this.sites.splice(i, 1)
+      }
+    },
+    importKeys(ev) {					//Set/get ticket value
+      Com.fileReader(ev.target, 1500, (fileData) => {
+console.log("Keys data:", fileData)
+        let eatObject = (obj) => {			//Import a key object
+console.log("  eat:", obj)
+          for (let keyType in obj) {
+            let site = obj[keyType]
+            if (keyType == 'ticket' || keyType == 'login') {
+              if (!site.user) site.user = null		//Empty stubs so user is reactive
+              site.priv = null
+              site.selected = null
+              this.sites.splice(0, 0, site)
+              if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
+                site.priv = priv
+              }, (err)=>{
+console.log("Error:", err.message)
+                this.top().error(this.bwm('conCryptErr'))
+              })
+            }
+          }
+        }
+        if (Array.isArray(fileData)) fileData.forEach(el => {
+          eatObject(el)
+        }); else if (typeof fileData == 'object')
+          eatObject(fileData)
+      })
+    },
+
+    exportKeys(v) {					//Write selected keys to a file
+console.log("Export:")
+      let expData = [], expKeys = []			//Make local copy of the keys
+        , writeToFile = (keyData) => {
+            if (keyData.length > 0) this.top().input(this.bwm('conExpFile'), (ans, file) => {
+              if (ans == 'diaYes' && file.value) {
+console.log("Export file:", file.value)
+                if (keyData.length == 1) keyData = keyData[0]	//Write a single object rather than an array
+                let blob = new Blob([JSON.stringify(keyData)], {type: "text/plain;charset=utf-8"})
+                FileSaver.saveAs(blob, file.value)
+              }
+            }, 'keys.json')
+          }
+      for (let i = this.sites.length-1; i >= 0; i--) {		//Get just the selected ones, in reverse order
+        if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
+      }
+console.log(" keys:", this.sites, expKeys)
+      for (let i = 0; i < expKeys.length; i++) {	//Get just the selected ones
+        Crypto.exportKey('jwk', expKeys[i].priv).then(keyData=>{
+console.log(" key data:", keyData)
+          let k = expKeys[i]
+          expData.push({login: {host:k.host, port:k.port, user:k.user, jwk:keyData}})
+          expKeys.splice(i,1)
+          if (expKeys.length <= 0) writeToFile(expData)
+        },(err)=>{
+console.log("Error:", err.message)
+          this.top().error(this.bwm('conCryptErr'))
+        })
+      }
+    },
+
+    loadSites() {
+console.log("Load sites:")
+    },
+    zapSites() {
+console.log("Erase sites:")
+    },
+    lockSites() {
+console.log("Lock sites:")
+    },
+    saveSites() {
       localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
     },
-    removeSite(addr) {		//Remove site from our favorites list
-//console.log("Remove: " + addr)
-      this.sites.splice(this.sites.indexOf(addr),1)
-      localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
-    }
+    disconnect() {
+console.log("Disconnect:")
+      this.tryEvery = null		//And don't retry connect
+      Wyseman.close()
+    },
+//    retryConnect(init) {
+//console.log("Retry connect", this.currentSite, this.tryEvery, this.retryIn)
+//      if (this.currentSite) {			//If we got reconnected
+//        this.retryIn = this.tryEvery = CountDown
+//        this.tryTimer = null
+//      } else if (this.retryIn <= 0) {		//If we counted down to zero
+//console.log("  try connect", this.currentSite, this.retryIn)
+//        Wyseman.connect()			//Try a reconnect, next time we'll wait longer
+//        this.retryIn = this.tryEvery++
+//        this.tryTimer = null
+//      } else {
+//        this.retryIn--				//Else keep counting down
+//console.log("  decrement", this.retryIn)
+//        this.timer = setTimeout(this.retryConnect, 1000)
+//      }
+//    },
   },
 
-  mounted: function () {	//When this GUI element is activated
-//console.log("Mounted:", this.sites)
-    this.$nextTick(function () {
-      if (localStorage[this.siteKey])	//Get our list of favorites
-        this.sites = JSON.parse(localStorage.getItem(this.siteKey))
+  created: function() {
+    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+  },
+
+  mounted: function () {
+//console.log("Connect mounted:", this.sites)
+    if (localStorage[this.siteKey])		//Get our list of favorites
+      this.sites = JSON.parse(localStorage.getItem(this.siteKey))
+
+//if (false)      this.sites = [
+//      {host:'lux2.batemans.org', port:54320, selected:null},
+//      {host:'lux1.batemans.org', port:54320, selected:null},
+//      {host:'sludge', port:80, selected:null},
+//    ]
+this.sites.forEach((el, ix)=>{
+  if (typeof el == 'string') {
+    let [ host, port ] = el.split(':')
+    this.sites.splice(ix, 1, {host, port, user:null, key:null, selected:null})
+  }
+})
         
-      let suggested = window.location.hostname + ":" + this.port
-      if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
-        this.newSite = suggested	//Offer a resonable default to connect to
+    let suggested = window.location.hostname + ":" + this.port
+    if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
+      this.newSite = suggested			//Offer a resonable default to connect to
 //console.log("newSite:", this.newSite)
+
+    Wyseman.request('_main', 'connect', {stay: true}, addr => {
+console.log("Connect callback:", addr, this.retryIn)
+      this.$emit('site', this.currentSite = addr)
+//Disable retrying for now
+//      if (!addr && this.tryEvery && !this.tryTimer) {
+//        this.retryConnect()
+//      } else if (addr) {
+//        this.tryEvery = CountDown		//Retry if disconnected
+//        if (this.timer) {clearTimeout(this.timer); this.timer = null}
+//      }
     })
+//    Wyseman.connect()				//Automatically try last connected site
   }
 }
 </script>
 
 <style lang='less'>
 .wylib-connect {
-  border: 1px solid black;
+  border: 1px solid blue;
   border-radius: 4px;
   background: white;
   padding: 4px;
 }
 .wylib-connect .header {
-  padding: 4px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
 }
-.wylib-connect table label {
+.wylib-connect input {
+  width: 100%;
+}
+.wylib-connect .label {
+  padding: 0.4em 0 0 0.1em;
+}
+.wylib-connect .sitelist {
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  padding: 4px;
   font-family: Helvetica;
   font-size: 0.8em;
+  min-height: 6em;
+  max-height: 12em;
+  max-width: 30em;
+  min-width: 15em;
+  overflow-y: scroll;
 }
 </style>

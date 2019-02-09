@@ -25,14 +25,13 @@
 </template>
 
 <script>
-//import Com from './common.js'
-//import Wyseman from './wyseman.js'
 import TopHandler from './top.js'
+import Dialog from './dialog.vue'
 import Modal from './modal.vue'
 
 export default {
   name: 'wylib-pop',
-  components: {'wylib-modal':Modal},
+  components: {'wylib-modal': Modal, 'wylib-dialog': Dialog},
   props: {
     state:	{type: Object, default: () => ({})},
     title:	{type: String},

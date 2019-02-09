@@ -34,7 +34,7 @@ export default {
     dialogStyle: function() {return {
       background:	this.pr.dataBackground,
       borderColor:	this.pr.winHighlightColor,
-      borderWidth:	this.pr.winBorderWidth
+      borderWidth:	this.pr.winBorderWidth + 'px'
     }},
   },
   watch: {			//Let parent and any content clients, we just posted
@@ -81,5 +81,6 @@ export default {
     padding:	5px;
     border-radius: 6px;
     border-style: solid;
+//    border-width: 10px;
   }
 </style>

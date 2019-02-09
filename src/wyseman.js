@@ -34,11 +34,20 @@ const Wyseman = {
     this.notify(this.addr = '')
   },
 
-  connect(address) {					//Attempt to connect to backend server
-//console.log("Connect: " + address)
-    if (!address) address = localStorage.siteSocket	//If no address given, default to the last used one
-    if (!address) return				//If still nothing to connect to, give up
-    this.url = 'ws:/' + address				//Build websocket URL
+  connect(authConfig) {					//Attempt to connect to backend server
+    let { proto, host, port } = authConfig
+      , address = (proto || 'wss:') + '/' + host + ':' + port
+      , query = () => {					//Build the URL query
+          let qList = []
+          ;['user','token','pub','sign','date'].forEach(k => {
+            if (k in authConfig) qList.push(k + '=' + authConfig[k])
+          })
+          return qList.join('&')
+        }
+//    if (!address) address = localStorage.siteSocket	//If no address given, default to the last used one
+    if (!host || !port) return				//If still nothing to connect to, give up
+    this.url = address + '/?' + query()			//Build websocket URL with username and token
+console.log("Connect: ", this.url)
     this.socket = new WebSocket(this.url)		//Try to connect
 
     this.socket.addEventListener('error', event => {	//If we get an error connecting
@@ -53,7 +62,7 @@ const Wyseman = {
 
     this.socket.addEventListener('open', event => {	//When socket is open and ready
       this.notify(this.address = address)		//Tell everyone we're connected
-      localStorage.setItem('siteSocket', address)	//Remember where we were connected
+//      localStorage.setItem('siteSocket', address)	//Remember where we were connected
 //console.log("Connected to backend: " + address)
 
       this.socket.addEventListener('message', ev => {	//When we get packets from the backend
@@ -107,7 +116,7 @@ const Wyseman = {
         }
 
         if (this.handlers[id] && this.handlers[id][action] && this.handlers[id][action].cb) {	//If we have a registered handler,
-//console.log("Calling:")
+//console.log("Calling handler:", id, action, "data:", data, "error:", error)
           if (error && error.code && error.code.match(/^!\w*/)) {	//If there is an error that needs translation
             let [ sch, tab, code ] = error.code.slice(1).split('.'),	//Where will we find language info
                 errView = [sch, tab].join('.'),

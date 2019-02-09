@@ -60,7 +60,7 @@ export default {
   inject: ['top'],
   data() { return {
     pr:		require('./prefs'),
-    userValue:	this.mapValue,				//Value, as modified by user
+    userValue:	null,					//Value, as modified by user
     datePicker: null,
     stateTpt:	{style: 'ent', size: null, state: null, template: null, special: {}},
   }},
@@ -150,8 +150,11 @@ export default {
     clear() {return this.set(this.state.initial)}
   },
 
+  created: function() {
+    this.userValue = this.mapValue
+  },
   beforeMount: function() {
-//console.log("Dew state:", this.field, JSON.stringify(this.state))
+//console.log("Dew state:", this.field, this.value, this.userValue, JSON.stringify(this.state))
     Com.stateCheck(this)
     
     if (!('initial' in this.state)) this.state.initial = null

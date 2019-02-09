@@ -72,8 +72,10 @@ module.exports = function topHandler(context) {
   this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
     if (typeof msg == 'string') return msg
     if (typeof msg == 'object') {
-      if (msg.lang && msg.lang.title && msg.lang.help)
-        return msg.lang.title + ':<br>' + msg.lang.help + (msg.detail ? '<br>(' + msg.detail + ')' : '')
+      if (msg && msg.title && msg.help)
+        return msg.title + ';<br>' + msg.help
+      else if (msg.lang && msg.lang.title && msg.lang.help)
+        return msg.lang.title + ';<br>' + msg.lang.help + (msg.detail ? '<br>(' + msg.detail + ')' : '')
       if (msg.message) return msg.message
       else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
       else return this.context.wm.winUnknown
@@ -120,6 +122,12 @@ module.exports = function topHandler(context) {
   }
   this.query = function(msg, dews, data, cb) {
     this.postModal(msg, {reason:'diaQuery', buttons: this.diaButs2, dews, data, cb})
+  }
+  this.input = function(lang, cb, defVal) {		//Ask for one value in an entry
+    let data = {value:defVal}
+      , dews = [{field:'value', lang, styles:{style:'ent', focus:true}}]
+    this.postModal(lang, {reason:'diaQuery', buttons: this.diaButs2, dews, data, cb})
+    return data						//Caller can also get reference to data here, in addition to callback
   }
 
   this.dialog = function(message, dews, data, cb, tag='dialog', buttons=this.diaButs2) {

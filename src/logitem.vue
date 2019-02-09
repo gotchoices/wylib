@@ -5,7 +5,7 @@
 //- 
 <template>
   <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}">
-    <wylib-button class="button lower" :size="12" icon="play3" @click="$emit('lower')" :title="wMsg('litToSub')"/>
+    <wylib-button class="button lower" size="1" icon="play3" @click="$emit('lower')" :title="wMsg('litToSub')"/>
     <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
@@ -19,7 +19,7 @@
     </select>
     <input v-model="state.entry" @keyup.enter="submit" :title="wMsg('litRightVal')" v-show="showEntry">
     </input>
-    <wylib-button class="button close" :size="12" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
+    <wylib-button class="button close" size="1" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
   </div>
 </template>
 

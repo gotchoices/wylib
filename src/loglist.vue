@@ -4,7 +4,6 @@
 //TODO:
 //X- Connector can't be drawn in a computed value--has to be after render
 //X- Compute height of connector SVG reactively
-//X- Use header, wylib-buttons, wylib-menudock
 //X- Standard close button shows up in upper right corner
 //X- Build dbsearch wrapper over loglist
 //- Keyboard navigation:
@@ -35,7 +34,7 @@ import Com from './common.js'
 
 export default {
   name: 'wylib-loglist',
-  components: { 'wylib-logitem': LogItem, 'wylib-button': Button },
+  components: { 'wylib-logitem': LogItem},
   props: {
     state:	{type: Object, default: () => ({})},
     config:	Object,

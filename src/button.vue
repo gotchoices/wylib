@@ -20,11 +20,12 @@ export default {
     color:		String,
     hoverColor:		String,
     activeColor:	String,
+    toggledColor:	String,
     fill:		String,
     stroke:		String,
     toggled:		Boolean,
     disabled:		{type: Boolean, default: false},
-    size:		{type: Number, default: 20},
+    size:		{type: Number, default: 1.2},
   },
   data() { return {
     pr:		require('./prefs'),
@@ -45,8 +46,8 @@ export default {
       stroke:	this.disabled ? this.pr.butDisabledColor : (this.stroke || this.pr.butIconStroke),
     }},
     buttonStyle: function () {return {
-      width:  (this.size || this.pr.butSize) + 'px',
-      height: (this.size || this.pr.butSize) + 'px',
+      width:  (this.size || this.pr.butSize) + 'em',
+      height: (this.size || this.pr.butSize) + 'em',
       padding: parseInt(this.size / 10) + 'px',
       backgroundColor: this.backgroundColor
     }},
@@ -77,6 +78,7 @@ export default {
     display: block;
     height: 100%;
     width: 100%;
+    padding: 1px;
 //    border: 1px solid black;
   }
 </style>

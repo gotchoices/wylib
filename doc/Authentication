@@ -1,0 +1,92 @@
+Design Concepts for Client Authentication
+
+General Approach:
+Most web authorization seems to have evolved around username and password 
+authentication.  There are several problems with this.  Most notable, if you 
+pick a password you think you can remember, it may also be more prone to being
+guessed by others.  If on the other hand, you pick a password that is 
+impossible to guess, it is also probably impossible to remember.  That means
+you are more likely to write it down somewhere.  Hence it becomes more prone
+to being discovered by someone else.
+
+The problem of lost and forgotten passwords leads to the solution of password
+recovery via email, for example.  And that leads to a new set of security
+problems.
+
+MyCHIPs will begin instead with the premise that we will secure devices rather
+than specifically connections.  We will transmit initial connection tokens 
+outside the normal connection pathway, which will authorize an initial
+connection.  Then once that connection has been established, we will establish
+connection keys that will allow the same device to connect in the future.  
+
+If the security of the device is in question, we will have to support further
+options to secure the local storage of keys, such as an encryption password.
+
+Typical Connection Examples:
+
+  - Secure work station
+    The user has his own account on a computer that employs a screen locker and
+    other reasonable security measures to assure that only the correct, 
+    authorized user can connect under his profile.  The main risk here would be
+    from site administrators and the like who may try to access his browser
+    cache and/or local storage to harvest information.  In such cases, the user
+    may still need to protect local keys and/or state data with a password.
+    
+  - Mobile device
+    The user has the device in his possession most of the time.  If it falls
+    into someone elses hands, hopefully it has a secure enough OS that no one
+    else can break into it without erasing any private information it may hold.
+
+  - Insecure browser
+    In some places, people may have to get on a public browser to access a
+    session.  In this case, it is not a great fit for "securing the device."
+    People may have to get the workstation configured for connection, and then
+    somehow de-configure it so others will not be able to access their data.
+    Specifically, we will have to take care that no private keys are stored in 
+    local storage, and that the session state is also erased from local storage 
+    at the end of session.  O, if the user really wants to store session state 
+    and keys, we will at least need a reliable way for him to encrypt it with a 
+    password.
+
+Strategy:
+Even though passwords are potentially still a part of the solution, we are not 
+suggesting passwords that are a part of the server login strategy.  If the user 
+session is in possession of a valid connection key, his session will be 
+automatically authorized.  It will be up to the user to determine if/how to 
+secure his local key (i.e. with a password), depending on how secure his device 
+is.
+
+User Interface:
+Any time there is not a valid connection to the back end, a connection dialog
+should present itself to the user.  The user may opt to then hide that dialog
+but he will have to bring it back in order to initiate a connection.
+
+The connection we are talking about is the websocket connection to the control
+layer and database.  We are assuming the connection to the SPA server has
+already been made, hopefully over https.  Otherwise, the user may be running a
+hacked version of the SPA which could do any number of bad things with their
+private data.
+
+So prior to connecting the web socket, the SPA is loaded.  We may even have
+pulled some kind of state data out of local storage to modify the way the GUI 
+is presenting.  But no transactions have yet taken place to read or write from
+the database, or even the control layer.
+
+The initial websocket connection request transmission, should hopefully
+contain all the data necessary in order to validate the connection.  This will
+either contain a token from a connection ticket, or a timely packet encoded with 
+the user's private key to prove this connection request is coming from the
+authorized user.
+
+The connection GUI should present a list of prior, known connections which may
+be empty.  It will also present buttons/controls as follows:
+
+  - Add new favorite connection
+  - Delete existing connection
+  - Connect now to the selected site
+
+Each connection in the list should give an indication of whether the user has
+the tokens/keys necessary to make the connection or not.  If not, there will be
+a place to drag/drop a connection ticket to allow the connection to be made.
+Also, the connection ticket does not store the user's identity so there will
+have to be a spot to enter that before the connection is initiated.

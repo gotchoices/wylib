@@ -31,7 +31,7 @@ const Preferences = {
   winSubWindowX:		40,
   winSubWindowY:		40,
   
-  butSize:			18,
+  butSize:			1.5,
   butHoverColor:		'#88ff88',
   butActiveColor:		'#55cc55',
   butToggledColor:		'#66aa66',

@@ -4,6 +4,7 @@
 //TODO:
 //X- Implement auto-execute option: execute the current (or first) row on each load/reload
 //X- Should be able to reset to default column specs
+//- If up/down button takes selection off screen, adjust to show highlighted record
 //- An initial load should respect existing sort fields, and the autoexecute flag
 //- Reload should retain sort fields
 //- Display the number of loaded records
@@ -27,7 +28,7 @@
 <template>
   <div class="wylib wylib-dbp">
     <div ref="header" class="header">
-      <wylib-menudock :config="dockConfig" :height="headerHeight" :state="state.dock" :lang="wm.dbpMenu"/>
+      <wylib-menudock :config="dockConfig" :state="state.dock" :lang="wm.dbpMenu"/>
       <div class="headerfill"/>
     </div>
     <div class="subwindows">

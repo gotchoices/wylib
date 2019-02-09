@@ -32,7 +32,7 @@ const StateManager = {
     }
   },
 
-  saveas: function(comp, name, descr, state, errCB, okCB) {
+  saveAs: function(comp, name, descr, state, errCB, okCB) {
     let view = 'wylib.set_data(text, text, text, int, jsonb)'
       , params = [comp, name, descr, null, JSON.stringify(state)]
 //console.log("Save as:", comp, name)
@@ -71,9 +71,8 @@ const StateManager = {
         })
       }
     })
-  },
-  
-}
+  },		//queryData
+}		//StateManager
 
 Wyseman.listen('state_listen', 'wylib', msg =>{
 //console.log("Got async wylib message:", msg)

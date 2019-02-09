@@ -19,8 +19,8 @@
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle">
       <div class="headerbar">
-        <wylib-button v-if="topLevel" :size="headerHeight" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
-        <wylib-button v-if="!topLevel && pinnable" :size="headerHeight" icon="pushpin" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
+        <wylib-button v-if="topLevel" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
+        <wylib-button v-if="!topLevel && pinnable" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
       <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
@@ -30,7 +30,7 @@
       </div>
       <div class="headerbar operations">
         <div ref="childStatus" class="childstatus"></div>
-        <wylib-button class="closebutton" v-if="topLevel || state.pinned" :size="headerHeight" icon="close" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
+        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
       </div>
     </div>
     <div class="subwindows">
@@ -82,7 +82,7 @@ export default {
     pr:			require('./prefs'),
     wm:			{},
     lang:		{title: null, help: null},
-    stateTag:		{type: String, default: 'win'},
+    stateTag:		'win',
     myTopElement:	null,
     top:		null,
     modal:		{posted: false, client:{}},
@@ -101,6 +101,9 @@ export default {
   }},
   computed: {
     id: function() {return 'win_' + this._uid + '_'},
+    buttonSize: function () {
+      return ((this.topLevel || this.fullHeader) ? 1.25 : 0.8)
+    },
     headerHeight: function () {
       return ((this.topLevel || this.fullHeader) ? this.pr.winFullHeader : this.pr.winSmallHeader)
     },
@@ -181,7 +184,7 @@ console.log("Clone to popup:", popId)
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
 //console.log("tag", tag)
-        if (tag == 'diaYes') State.saveas(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{
+        if (tag == 'diaYes') State.saveAs(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{
           this.lastLoadIdx=ruid
           this.lastLoadName=resp.t
         })
@@ -194,13 +197,14 @@ console.log("Clone to popup:", popId)
         this.saveStateAs()
     },
     storeState() {
-console.log("Storing window state:", this.stateTag)
+//console.log("Storing window state:", this.stateTag)
       if (this.topLevel && this.stateTag) Com.saveState(this.stateTag, this.state)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (tag) => {
         if (tag == 'diaYes') {
-          Com.saveState(this.stateTag); this.$emit('close', true)
+          Com.saveState(this.stateTag)
+          this.$emit('close', true)
         }
       })
     },
@@ -238,7 +242,7 @@ console.log("Storing window state:", this.stateTag)
       if (childStatus) cstat.appendChild(childStatus)
     },
 
-    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},
+//    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},	//Obsolete?
     closeDia(idx, reopen) {Com.closeWindow(this.state.dialogs, idx, this, reopen)},
     dialogSubmit(dialogIndex, ev, buttonTag, dialogTag, options) {
 //console.log("Dialog submit", dialogIndex, dialogTag, buttonTag, options, ev)
@@ -310,11 +314,6 @@ console.log("Storing window state:", this.stateTag)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
-    if (this.topLevel) {
-      let savedState = Com.getState(this.stateTag)
-//console.log("Win state template:", this.id, this.stateTag, savedState)
-      if (savedState) Object.assign(this.state, savedState)	//Comment line for debugging from default state
-    }
     Com.stateCheck(this)
 //if (this.topLevel) console.log("Win state:", this.state);
 
@@ -372,6 +371,15 @@ console.log("Storing window state:", this.stateTag)
     }, this.top.error)
     
     this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
+
+    if (this.topLevel) {				//Hopefully runs after customizations below
+      let savedState = Com.getState(this.stateTag)
+//console.log("Win state template:", this.id, this.stateTag, savedState)
+      if (savedState) {
+        delete savedState.x; delete savedState.y	//So window doesn't land right on top of the last one
+        Object.assign(this.state, savedState)		//Comment line for debugging from default state
+      }
+    }
   },
 
   beforeDestroy: function() {

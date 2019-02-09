@@ -7,6 +7,7 @@
 //X- Combine addChild with addSubs?
 //X- What to do with illegally added sections in paragraph 0?
 //X- Launch this component as action from mychips contract dbe
+//- Call new Icons.url
 //- 
 //- Chief contains readonly: title, author, language, version, released, hash
 //- All are displayed, printable in preview mode
@@ -30,7 +31,7 @@
 <template>
   <div class="wylib wylib-strdoc">
     <div ref="header" class="header">
-      <wylib-menudock class="menudock" :config="dockConfig" :height="headerHeight" :state="state.dock" :lang="wm.sdcMenu"/>
+      <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
     <div class="content" draggable='true' v-on:dblclick="togEdit" :style="comStyle"

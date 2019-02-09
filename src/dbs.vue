@@ -12,7 +12,7 @@
 <template>
   <div class="wylib wylib-dbs">
     <div ref="header" class="header">
-      <wylib-menudock :state="state.dock" :config="dockConfig" :height="headerHeight" label="Search" title="Functions relating to stored queries"/>
+      <wylib-menudock :state="state.dock" :config="dockConfig" label="Search" title="Functions relating to stored queries"/>
       <div class="headerfill"/>
     </div>
     <wylib-loglist :state="state.logic" :config="logicConfig" @add="addNew" @geometry="geometry" @submit="search"/>
