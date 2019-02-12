@@ -20,7 +20,7 @@
       <div class="status">
         <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
         <span :title="lang('appServerURL')">{{ siteConnected }}</span>
-        <wylib-connect v-show="conMenuPosted" @site="siteChange"/>
+        <wylib-connect :db="db" v-show="conMenuPosted" @site="siteChange"/>
       </div>
     </div>
     <hr/>
@@ -74,6 +74,7 @@ export default {
     tabs:	{type: Array},
     tag:	{type: String},
     current:	{type: String},
+    db:		null,
   },
   data() { return {
     conMenuPosted:	true,
