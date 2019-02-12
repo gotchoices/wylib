@@ -39,7 +39,7 @@ const Wyseman = {
       , address = (proto || 'wss:') + '/' + host + ':' + port
       , query = () => {					//Build the URL query
           let qList = []
-          ;['user','token','pub','sign','date'].forEach(k => {
+          ;['user','db','token','pub','sign','date'].forEach(k => {
             if (k in authConfig) qList.push(k + '=' + authConfig[k])
           })
           return qList.join('&')
@@ -47,7 +47,7 @@ const Wyseman = {
 //    if (!address) address = localStorage.siteSocket	//If no address given, default to the last used one
     if (!host || !port) return				//If still nothing to connect to, give up
     this.url = address + '/?' + query()			//Build websocket URL with username and token
-console.log("Connect: ", this.url)
+//console.log("Connect: ", this.url)
     this.socket = new WebSocket(this.url)		//Try to connect
 
     this.socket.addEventListener('error', event => {	//If we get an error connecting
