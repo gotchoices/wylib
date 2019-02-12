@@ -81,6 +81,7 @@ export default {
   components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
   props: {
     siteKey:	{type: String, default: 'wylib_sites'},
+    db:		null
   },
   data() { return {
     pr:			require('./prefs'),
@@ -110,7 +111,11 @@ export default {
     ]},
   },
   methods: {
-    bwm(key) {return this.wm[key] || WmDefs[key] || {}},
+    bwm(key, extend) {
+      let theLang =  this.wm[key] || WmDefs[key] || {}
+      if (extend) theLang.help += ` (${extend})`
+      return theLang
+    },
     lang(key, title, defVal='') {
       return this.bwm(key)[title ? 'title' : 'help'] || defVal
     },
@@ -155,8 +160,8 @@ console.log("Toggle Connection:", this.connected, this.lastSelect, this.selected
        this.$nextTick(()=>{this.connectSite()})
     },
     bufferToHex(buffer) {			//Convert ArrayBuffer to hex string
-      var s = '', h = '0123456789ABCDEF';
-      (new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
+      var s = '', h = '0123456789ABCDEF'
+      ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
       return s
     },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
@@ -173,7 +178,7 @@ console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
 console.log("Error:", err.message)
-          this.top().error(this.bwm('conCryptErr'))
+          this.top().error(this.bwm('conCryptErr', err.message))
         })
       } else if (location.protocol == 'http:') {
         site.proto = 'ws:'			//Try to connect insecurely
@@ -183,18 +188,21 @@ console.log("Error:", err.message)
       }
     },
     userCheck(site, cb) {			//Make sure the key has a username
-console.log("User check:", site)
+//console.log("User check:", site, this.db)
+      if (this.db) {				//Pass db config info to connect query
+        site.db = this.bufferToHex(Buffer(JSON.stringify(this.db)))
+      }
       if (site.user) cb()
       else this.top().input(this.bwm('conUsername'), (ans, data)=>{
         if (ans == 'diaYes' && data.value) {
           site.user = data.value
-          cb(site)
+          cb()
         }
       })
     },
     signCheck(site, cb) {			//Add a current signature with the key
-console.log("Sign check:", site)
-      Com.ajax(window.location.origin + '/clientip', (data)=>{
+//console.log("Sign check:", site)
+      Com.ajax(window.location.origin + '/clientinfo', (data)=>{
         let encoder = new TextEncoder()
           , { ip, cookie, userAgent, date } = data
           , message = JSON.stringify({ip, cookie, userAgent, date})	//Rebuild in this same order in backend!
@@ -207,7 +215,7 @@ console.log("Sign check:", site)
             cb()
           }, (err)=>{
 //console.log("Error:", err.message)
-            this.top().error(this.bwm('conCryptErr'))
+            this.top().error(this.bwm('conCryptErr', err.message))
           })
         } else if (site.proto == 'ws:') 
           cb(site)
@@ -230,9 +238,9 @@ console.log("Connecting to:", site, window.location.origin)
     },
     importKeys(ev) {					//Set/get ticket value
       Com.fileReader(ev.target, 1500, (fileData) => {
-console.log("Keys data:", fileData)
+//console.log("Keys data:", fileData)
         let eatObject = (obj) => {			//Import a key object
-console.log("  eat:", obj)
+//console.log("  eat:", obj)
           for (let keyType in obj) {
             let site = obj[keyType]
             if (keyType == 'ticket' || keyType == 'login') {
@@ -244,7 +252,7 @@ console.log("  eat:", obj)
                 site.priv = priv
               }, (err)=>{
 console.log("Error:", err.message)
-                this.top().error(this.bwm('conCryptErr'))
+                this.top().error(this.bwm('conCryptErr', err.message))
               })
             }
           }
@@ -282,7 +290,7 @@ console.log(" key data:", keyData)
           if (expKeys.length <= 0) writeToFile(expData)
         },(err)=>{
 console.log("Error:", err.message)
-          this.top().error(this.bwm('conCryptErr'))
+          this.top().error(this.bwm('conCryptErr', err.message))
         })
       }
     },
@@ -297,7 +305,7 @@ console.log("Erase sites:")
 console.log("Lock sites:")
     },
     saveSites() {
-      localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
+//      localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
     },
     disconnect() {
 console.log("Disconnect:")
