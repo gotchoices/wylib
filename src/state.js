@@ -33,7 +33,7 @@ const StateManager = {
   },
 
   saveAs: function(comp, name, descr, state, errCB, okCB) {
-    let view = 'wylib.set_data(text, text, text, int, jsonb)'
+    let view = 'wylib.set_data(text, text, text, text, jsonb)'
       , params = [comp, name, descr, null, JSON.stringify(state)]
 //console.log("Save as:", comp, name)
     Wyseman.request(this.id+'ss', 'tuple', {view, params}, (res, err)=>{
