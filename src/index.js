@@ -1,4 +1,5 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
+// -----------------------------------------------------------------------------
 
 module.exports = {
   Application:	require('./app.vue').default,

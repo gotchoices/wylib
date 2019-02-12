@@ -1,5 +1,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 //Rectangular, polar 2D vector conversions
+//Copyright WyattERP.org: See LICENSE in the root of this package
+// -----------------------------------------------------------------------------
 
 module.exports = {
   rtop: function(rec) {

@@ -1,4 +1,5 @@
 //Report communication message manager
+//Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //- Reports can submit requests back to the parent
