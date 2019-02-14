@@ -175,7 +175,7 @@ export default {
     editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
       if (this.state.edit.posted) {
-        this.editPosts++
+//        this.editPosts++
         this.executeRows()
       }
     },
@@ -196,7 +196,7 @@ export default {
 //console.log("   row: ", row, keyVal)
       if (row && this.autoEdit) {
         this.state.edit.posted = true
-        this.editPosts++
+//        this.editPosts++
         this.$nextTick(()=>{this.dbeBus.notify('load', keyVal)})
       } else this.$emit('execute', row, this.viewMeta.pkey, keyVal)
     },
@@ -220,7 +220,7 @@ export default {
 
     loadBy() {
       this.state.filter.posted = !this.state.filter.posted
-      if (this.state.filter.posted) this.filtPosts++
+//      if (this.state.filter.posted) this.filtPosts++
     },
 
     colMenuHandler(e, index, x, y) {
@@ -266,7 +266,8 @@ console.log("Not yet implemented")
       if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
-        this.$parent.$emit('customize', {title: this.wm.dbp.title+': '+data.title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
+        let title = (this.wm.dbp ? this.wm.dbp.title : '') + data.title
+        this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },
     followMaster() {		//Register which view we are dealing with
@@ -285,6 +286,12 @@ console.log("Not yet implemented")
   },
 
   watch: {
+    'state.edit.posted': function(newVal, oldVal) {
+      if (!oldVal && newVal) this.editPosts++
+    },
+    'state.file.posted': function(newVal, oldVal) {
+      if (!oldVal && newVal) this.filtPosts++
+    },
     'state.dbView': function(newVal, oldVal) {		//If we change our view, reset data, columns
 //console.log("Dbp dbView changed!")
       this.gridData = []

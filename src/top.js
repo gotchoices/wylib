@@ -69,59 +69,67 @@ module.exports = function topHandler(context) {
     })
   }
 
-  this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
-    if (typeof msg == 'string') return msg
-    if (typeof msg == 'object') {
-      if (msg && msg.title && msg.help)
-        return msg.title + ';<br>' + msg.help
-      else if (msg.lang && msg.lang.title && msg.lang.help)
-        return msg.lang.title + ';<br>' + msg.lang.help + (msg.detail ? '<br>(' + msg.detail + ')' : '')
-      if (msg.message) return msg.message
-      else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
-      else return this.context.wm.winUnknown
-    }
-    return msg
-  }
-    
   this.dewArray = function(arg1, arg2, arg3 = 'ent') {	//Make an array of objects suitable for mdew configuration
     let retArr = []						//Call as: field,lang,style or [[field,lang,style] [field,lang,style]]
-    if (typeof arg1 == 'string' && typeof arg2 == 'object') arg1 = [[arg1, arg2, arg3]]
+    if (typeof arg1 == 'string') arg1 = [[arg1, arg2, arg3]]
     if (Array.isArray(arg1)) {
       let focus = true;
       arg1.forEach((el)=>{
         let [ field, lang, style ] = el
         if (!style) style = arg3
-        retArr.push({field, lang, styles:{style, focus}})
+        retArr.push({field, lang:this.wmCheck(lang), styles:{style, focus}})
         focus = false
       })
     }
 //console.log("retArr:", retArr)
     return retArr
-  }
+  },
 
-  this.postModal = function(msg, conf) {
+  this.wmCheck = function(msg) {		//Is this a shortcut wyseman language code?
+    if (msg[0] == '!' && ('wm' in this.context)) {
+      let tag = msg.slice(1)
+      if (!(tag in this.context.wm))				//Make reactive stub if it doesn't exist yet
+        this.context.$set(this.context.wm, tag, null)		//{title:null, help:null})
+      return this.context.wm[tag]
+    } else return msg
+  },
+
+  this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
+//console.log("makeMessage:", msg, typeof mes, msg[0], this.context.wm)
+    if (typeof msg == 'string') {
+      return this.wmCheck(msg)
+    } else if (typeof msg == 'object') {
+      if (msg.title && msg.help) return msg
+//      else if (msg.lang && msg.lang.title && msg.lang.help)	//When does this happen?
+//        return msg.lang
+      else if (msg.message) return msg.message
+      else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
+      else return this.makeMessage('!winUnknown')
+    } else return msg
+  }
+    
+  this.postModal = function(message, conf) {
     if (this.context.modal) {
-      let client = {message: this.makeMessage(msg)}
-      Object.assign(client, conf)
+      let client = Object.assign({message: this.makeMessage(message)}, conf)
+console.log("Modal:", this.context.modal, client)
       Object.assign(this.context.modal, {posted: true, client})
-//console.log("Modal:", this.context.modal, client.message)
     }
   }
 
   this.diaButs1 = ['diaOK'],
   this.diaButs2 = ['diaCancel','diaYes'],
   this.diaButs3 = ['diaCancel','diaApply','diaYes'],
-  this.error = function(msg, cb) {
-    this.postModal(msg, {reason:'diaError', buttons: this.diaButs1, dews:[], data:{}, cb})
+  this.error = function(lang, cb) {
+    this.postModal(lang, {reason:'diaError', buttons: this.diaButs1, dews:[], data:{}, cb})
   }
-  this.notice = function(msg, cb) {
-    this.postModal(msg, {reason:'diaNotice', buttons: this.diaButs1, dews:[], data:{}, cb})
+  this.notice = function(lang, cb) {
+    this.postModal(lang, {reason:'diaNotice', buttons: this.diaButs1, dews:[], data:{}, cb})
   }
-  this.confirm = function(msg, cb) {
-    this.postModal(msg, {reason:'diaConfirm', buttons: this.diaButs2, dews:[], data:{}, cb})
+  this.confirm = function(lang, cb) {
+    this.postModal(lang, {reason:'diaConfirm', buttons: this.diaButs2, dews:[], data:{}, cb})
   }
-  this.query = function(msg, dews, data, cb) {
-    this.postModal(msg, {reason:'diaQuery', buttons: this.diaButs2, dews, data, cb})
+  this.query = function(lang, dews, data, cb, check) {
+    this.postModal(lang, {reason:'diaQuery', buttons: this.diaButs2, dews, data, cb, check})
   }
   this.input = function(lang, cb, defVal) {		//Ask for one value in an entry
     let data = {value:defVal}

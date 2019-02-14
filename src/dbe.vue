@@ -159,7 +159,7 @@ export default {
         }
       })
       dews[0].focus = true			//Doesn't seem to work
-      this.top().query(this.wm.dbeLoadPrompt.help, dews, resp, (tag) => {
+      this.top().query('!dbeLoadPrompt', dews, resp, (tag) => {
 //console.log("Load record:", yes, resp)
         if (tag == 'diaYes') this.load(resp)
       })
@@ -328,9 +328,9 @@ console.log("Clear", answers)
     Com.stateCheck(this)
     let preloadKey = this.state.key
     this.$nextTick(() => {		//Attempt reload to previous state
-      if (this.state.loaded) {
-        this.load(preloadKey)
+      if (this.state.loaded && Object.keys(preloadKey).length > 0) {
 //console.log("Dbe reload:", this.state.loaded, JSON.stringify(preloadKey))
+        this.load(preloadKey)
       }
     })
   },

@@ -13,7 +13,7 @@
     <iframe ref="iframe" v-if="state.iframe" :src="stateVar('iframe','src')" :name="stateVar('iframe','name')" :height="stateVar('iframe','width','100%')"/>
     <wylib-mdew v-if="state.dews" :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
     <div v-if="buttons" class="buttons">
-      <button v-for="but in buttons" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
+      <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
     </div>
   </div>
 </template>
@@ -33,7 +33,8 @@ export default {
   data() { return {
     pr:		require('./prefs'),
     wm:		{},
-    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null},
+    valid:	true,
+    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
 
   computed: {
@@ -42,6 +43,10 @@ export default {
       if (typeof this.state.message == 'string') return this.state.message
       if (typeof this.state.message == 'object') return this.state.message.title
     },
+    reason: function() {
+      let wmReason = this.wm[this.state.reason]
+      return (wmReason ? wmReason.title : this.state.reason) || 'Notice'
+    },
     help: function() {
       if (typeof this.state.message == 'object') return this.state.message.help
     },
@@ -49,18 +54,15 @@ export default {
       let butArr = []
 //console.log("Buttons:", this.state.buttons)
       if (this.state.buttons) this.state.buttons.forEach((b) => {
+        let rec = b
         if (typeof b == 'string' && this.wm[b])
-          butArr.push({tag: b, lang: this.wm[b]})
-        else if (b.tag && !b.lang && this.wm[b])
-          butArr.push({tag: b.tag, lang: this.wm[b]})
-        else
-          butArr.push(b)
+          rec = {tag: b, lang: this.wm[b]}
+//        else if (b.tag && !b.lang && this.wm[b])	//What is this for?
+//          rec = {tag: b.tag, lang: this.wm[b]}
+        rec.able = (rec.tag == 'diaCancel' || this.valid)
+        butArr.push(rec)
       })
       return butArr
-    },
-    reason: function() {
-      let wmReason = this.wm[this.state.reason]
-      return (wmReason ? wmReason.title : this.state.reason) || 'Notice'
     },
   },
 
@@ -70,13 +72,18 @@ export default {
     },
     submit(ev, butTag = 'diaYes', data = this.state.data) {
 //console.log("Dia submit:", ev, butTag, data)
-      if (this.state.cb)		//Callback for the dialog; Will not be persistent across reloads!
+      if (!this.valid) return
+      if (this.state.cb)			//Callback for the dialog; Will not be persistent across reloads!
         this.state.cb(butTag, data)
       this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
     },
     change(value, field, dirty, valid) {	//When data changed
+      let checked = true
 //console.log("Dialog press:", field, value, dirty, valid, this.state.data[field])
       this.state.data[field] = value
+      if (this.state.check && typeof this.state.check == 'function')
+        checked = this.state.check(this.state.data)
+      this.valid = (checked && valid)
     },
   },
 
@@ -86,7 +93,7 @@ export default {
 
   beforeMount: function() {
     Com.stateCheck(this)
-//console.log("Dialog state:", this.state)
+console.log("Dialog state:", this.state)
     this.$parent.$emit('customize', this.state.report ? this.wm.diaReport : this.wm.diaDialog, 'dia:'+ this.state.tag, this.state.iframe != null)
   },
 

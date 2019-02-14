@@ -273,7 +273,7 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
     },
 
     clear() {				//Empty workspace
-      this.top().confirm(this.wm.sdcClearAsk, (ans) => {
+      this.top().confirm('!sdcClearAsk', (ans) => {
         if (ans == 'diaYes') {
           let tmpState = Com.clone(this.stateTpt)
           this.state = Object.assign(this.state, tmpState)
@@ -286,9 +286,9 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
     export() {
       let resp = {file:'document.json'}
         , dews = [
-            {field:'file', lang:this.wm.sdcExportAsk, styles:{style:'ent', focus:true}},
-            {field:'pretty', lang:this.wm.sdcExportFmt, styles:{style:'chk'}}]
-      this.top().query(this.lang('sdcExportAsk'), dews, resp, (ans) => {
+            {field:'file', lang:'!sdcExportAsk', styles:{style:'ent', focus:true}},
+            {field:'pretty', lang:'!sdcExportFmt', styles:{style:'chk'}}]
+      this.top().query('!sdcExportAsk', dews, resp, (ans) => {
         if (ans == 'diaYes' && resp.file) {
 //console.log("Export file:", resp.file)
           let blob = new Blob([JSON.stringify(this.state,null,resp.pretty?2:null)], {type: "text/plain;charset=utf-8"})
@@ -299,7 +299,7 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
 
     import() {
       let resp = {}, dews = [{field:'files', lang:this.wm.sdcImportAsk, styles:{style:'file', focus:true}}]
-      this.top().query(this.lang('sdcImportAsk'), dews, resp, (ans) => {
+      this.top().query('!sdcImportAsk', dews, resp, (ans) => {
 console.log("Import file:", ans, resp)
         if (ans == 'diaYes' && resp.files && resp.files.length >= 1) {
           let reader = new FileReader(), file = resp.files[0]
