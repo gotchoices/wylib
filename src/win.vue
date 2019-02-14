@@ -57,6 +57,7 @@
 const MenuLayer = 1000
 
 import Com from './common.js'
+import Local from './local.js'
 import Bus from './bus.js'
 import TopHandler from './top.js'
 import Menu from './menu.vue'
@@ -152,7 +153,7 @@ export default {
         this.state.pinned = false
         this.$emit('close')
       }
-      if (this.dirty ? this.dirty() : false) this.top.confirm(this.wm.winModified.help, tag => {
+      if (this.dirty ? this.dirty() : false) this.top.confirm('!winModified', tag => {
         if (tag == 'diaYes') closeIt()
       }); else closeIt()
     },
@@ -182,7 +183,7 @@ console.log("Clone to popup:", popId)
     saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
-      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
+      this.top.query('!appStatePrompt', dewArr, resp, (tag) => {
 //console.log("tag", tag)
         if (tag == 'diaYes') State.saveAs(this.stateTag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{
           this.lastLoadIdx=ruid
@@ -198,12 +199,12 @@ console.log("Clone to popup:", popId)
     },
     storeState() {
 //console.log("Storing window state:", this.stateTag)
-      if (this.topLevel && this.stateTag) Com.saveState(this.stateTag, this.state)
+      if (this.topLevel && this.stateTag) Local.set(this.stateTag, this.state)
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (tag) => {
         if (tag == 'diaYes') {
-          Com.saveState(this.stateTag)
+          Local.set(this.stateTag)
           this.$emit('close', true)
         }
       })
@@ -317,13 +318,28 @@ console.log("Clone to popup:", popId)
     Com.stateCheck(this)
 //if (this.topLevel) console.log("Win state:", this.state);
 
-    this.$on('customize', (lang, tag, print, dirty)=>{		//Allow child to set the window's title and tagging ID
+    if (this.topLevel) this.$on('customize', (lang, tag, print, dirty)=>{	//Allow child to set the window's title and tagging ID
 //console.log("Customize", this.id, lang, tag, print, dirty)
       this.lang = lang
       if (tag) this.stateTag = tag
       this.printable = print
       if (dirty) this.dirty = dirty
+
+      State.listen(this.id+'sl', this.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+        let menuItems = menuData.map(el=>{
+          return Object.assign(el, {call:()=>{
+            Object.assign(this.state, Com.clone(el.data))
+            Com.stateCheck(this)
+            this.lastLoadIdx = el.idx
+            this.lastLoadName = el.lang.title
+          }})
+        })
+        this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+//console.log("WMC:", 1, this.winMenuConfig)
+      }, this.top.error)
     })
+
     this.$on('report', (config)=>{
 //console.log("Win got message to launch report: ", config);
       let { repTag, info } = config
@@ -356,24 +372,10 @@ console.log("Clone to popup:", popId)
     if (this.myTopElement) this.myTopElement.addEventListener('click', this.topClick)
 //console.log("Win components: " + JSON.stringify(this.$options.components))
 
-    if (this.topLevel) State.listen(this.id+'sl', this.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
-//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-      let menuItems = menuData.map(el=>{
-        return Object.assign(el, {call:()=>{
-          Object.assign(this.state, el.data)
-          Com.stateCheck(this)
-          this.lastLoadIdx = el.idx
-          this.lastLoadName = el.lang.title
-        }})
-      })
-      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
-//console.log("WMC:", 1, this.winMenuConfig)
-    }, this.top.error)
-    
     this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
 
     if (this.topLevel) {				//Hopefully runs after customizations below
-      let savedState = Com.getState(this.stateTag)
+      let savedState = Local.get(this.stateTag)
 //console.log("Win state template:", this.id, this.stateTag, savedState)
       if (savedState) {
         delete savedState.x; delete savedState.y	//So window doesn't land right on top of the last one

@@ -9,6 +9,10 @@
 //X- How to enter a username for a new connection (with ticket)
 //X- Kickstart generates a ticket for admin
 //X- Can't connect without ticket
+//- Re-import on launch of any restored keys
+//- Save last-connected site and auto-connect, if possible
+//- 
+//- Do I need bwm() anymore if I use $set(this,'wm',msg)?
 //- Can only store one key at a time with same host, port, user
 //- Can store keys in browser localStorage
 //- Can password-protect keys exported, and/or stored in localStorage
@@ -52,6 +56,7 @@ const SignConfig = {
 const SaltLength = 128		//For signing with RSA-PSS
 
 import Com from './common.js'
+import Local from './local.js'
 import Wyseman from './wyseman.js'
 import FileSaver from 'file-saver'
 import MenuDock from './menudock.vue'
@@ -63,10 +68,6 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conTitle:   {title:'Connection Keys',  help:'A list of servers where you normally connect'},
   conConnect: {title:'Connect',	help:'Connect/disconnect with this server'},
   conDelete:  {title:'Delete', help:'Remove this server from my list'},
-  conZap:     {title:'Forget Sites', help:'Remove this site information from this browser'},
-  conLoad:    {title:'Load Sites', help:'Find site information stored in this browser'},
-  conLock:    {title:'Lock Sites', help:'Encrypt this site information in this browser'},
-  conKey:     {title:'Connect Key', help:'A private key allowing connection to the site'},
   conImport:  {title:'Import Key', help:'Drag/drop file here or click to use a connection key or one-time access ticket'},
   conExport:  {title:'Export Keys', help:'Save connection keys to a file'},
   conRetry:   {title:'Retrying', help:'Attempting to connect again'},
@@ -75,18 +76,19 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
   conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
 }
+const SiteKey = 'connectSites'
+const LastKey = 'lastSite'
 
 export default {
   name: 'wylib-connect',
   components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
   props: {
-    siteKey:	{type: String, default: 'wylib_sites'},
     db:		null
   },
   data() { return {
     pr:			require('./prefs'),
     wm:			WmDefs,		//Language data
-    sites:		[],		//site keys we have in memory
+    sites:		null,		//site keys we have in memory
     lastSelect:		null,		//index of the last one clicked on
     dock:		{},		//State for menu dock
     currentSite:	null,		//URL we are connected to, if any
@@ -105,9 +107,6 @@ export default {
       {idx:'con', lang:this.wm.conConnect, call:this.togConn,   icon:'link',   shortcut:true, toggled:this.connected},
       {idx:'sub', lang:this.wm.conDelete,  call:this.delSites,  icon:'minus',  shortcut:true},
       {idx:'exp', lang:this.wm.conExport,  call:this.exportKeys,icon:'boxout'},
-      {idx:'lod', lang:this.wm.conLoad,    call:this.loadSites, icon:'search'},
-      {idx:'zap', lang:this.wm.conZap,     call:this.zapSites,  icon:'bin'},
-      {idx:'lok', lang:this.wm.conLock,    call:this.lockSites, icon:'lock'},
     ]},
   },
   methods: {
@@ -150,31 +149,31 @@ export default {
         this.sites[idx].selected = true
       }
       this.lastSelect = idx
-console.log("Select:", this.lastSelect, this.sites)
+//console.log("Select:", this.lastSelect, this.sites)
     },
     togConn(ev) {	 			//Connect/disconnect
-console.log("Toggle Connection:", this.connected, this.lastSelect, this.selectedSite)
+//console.log("Toggle Connection:", this.connected, this.lastSelect, this.selectedSite)
       if (this.connected) 
         this.disconnect()	
       if (this.selectedSite && !ev.shiftKey)
        this.$nextTick(()=>{this.connectSite()})
     },
-    bufferToHex(buffer) {			//Convert ArrayBuffer to hex string
-      var s = '', h = '0123456789ABCDEF'
-      ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
-      return s
-    },
+//    buf2ex(buffer) {				//Convert ArrayBuffer to hex string
+//      var s = '', h = '0123456789ABCDEF'
+//      ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
+//      return s
+//    },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
-console.log("Key check:")
+//console.log("Key check:")
       if (site.priv) cb(site)
       else if (Crypto) {			//Crypto API found
-console.log("  generating key:")
+//console.log("  generating key:")
         Crypto.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
           site.priv = keyPair.privateKey
           return Crypto.exportKey('spki', keyPair.publicKey)
         }).then(pubKey => {
-          site.pub = this.bufferToHex(pubKey)
-console.log("  pub:", site.pub)
+          site.pub = Com.buf2hex(pubKey)
+//console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
 console.log("Error:", err.message)
@@ -190,11 +189,14 @@ console.log("Error:", err.message)
     userCheck(site, cb) {			//Make sure the key has a username
 //console.log("User check:", site, this.db)
       if (this.db) {				//Pass db config info to connect query
-        site.db = this.bufferToHex(Buffer(JSON.stringify(this.db)))
+        site.db = Com.buf2hex(Buffer(JSON.stringify(this.db)))
       }
       if (site.user) cb()
       else this.top().input(this.bwm('conUsername'), (ans, data)=>{
         if (ans == 'diaYes' && data.value) {
+          let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == data.value))
+//console.log("Delete old key:", oldIdx)
+          if (oldIdx >= 0) this.sites.splice(oldIdx, 1)		//Delete old key by same name if one exists
           site.user = data.value
           cb()
         }
@@ -202,7 +204,8 @@ console.log("Error:", err.message)
     },
     signCheck(site, cb) {			//Add a current signature with the key
 //console.log("Sign check:", site)
-      Com.ajax(window.location.origin + '/clientinfo', (data)=>{
+      if (site.token) cb()			//Don't need to sign if we have a token
+      else Com.ajax(window.location.origin + '/clientinfo', (data)=>{
         let encoder = new TextEncoder()
           , { ip, cookie, userAgent, date } = data
           , message = JSON.stringify({ip, cookie, userAgent, date})	//Rebuild in this same order in backend!
@@ -210,7 +213,7 @@ console.log("Error:", err.message)
         if (Crypto) {
           Crypto.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
 //console.log("  signed:", sign, date)
-            site.sign = this.bufferToHex(sign)
+            site.sign = Com.buf2hex(sign)
             site.date = date
             cb()
           }, (err)=>{
@@ -222,11 +225,12 @@ console.log("Error:", err.message)
       })
     },
     connectSite(site = this.selectedSite) {		//Make connection to a specified site
-console.log("Connecting to:", site, window.location.origin)
+//console.log("Connecting to:", site, window.location.origin)
       this.keyCheck(site, ()=>this.userCheck(site, ()=>{
         this.signCheck(site, ()=>{
 //        this.tryEvery = CountDown			//Retry if disconnected
           Wyseman.connect(site)
+          Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
         })
       }))
     },
@@ -235,6 +239,7 @@ console.log("Connecting to:", site, window.location.origin)
 //console.log("Remove site", i, this.sites[i].selected)
         if (this.sites[i].selected) this.sites.splice(i, 1)
       }
+      Local.set(SiteKey, this.sites)
     },
     importKeys(ev) {					//Set/get ticket value
       Com.fileReader(ev.target, 1500, (fileData) => {
@@ -244,12 +249,18 @@ console.log("Connecting to:", site, window.location.origin)
           for (let keyType in obj) {
             let site = obj[keyType]
             if (keyType == 'ticket' || keyType == 'login') {
+              let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == site.user))
               if (!site.user) site.user = null		//Empty stubs so user is reactive
               site.priv = null
               site.selected = null
-              this.sites.splice(0, 0, site)
+console.log("Adding:", oldIdx)
+              if (oldIdx >= 0)
+                this.sites.splice(oldIdx, 1, site)	//Replace old key
+              else
+                this.sites.splice(0, 0, site)		//Add in new
               if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
                 site.priv = priv
+                Local.set(SiteKey, this.sites)
               }, (err)=>{
 console.log("Error:", err.message)
                 this.top().error(this.bwm('conCryptErr', err.message))
@@ -295,23 +306,13 @@ console.log("Error:", err.message)
       }
     },
 
-    loadSites() {
-console.log("Load sites:")
-    },
-    zapSites() {
-console.log("Erase sites:")
-    },
-    lockSites() {
-console.log("Lock sites:")
-    },
-    saveSites() {
-//      localStorage.setItem(this.siteKey, JSON.stringify(this.sites))
-    },
     disconnect() {
 console.log("Disconnect:")
       this.tryEvery = null		//And don't retry connect
       Wyseman.close()
     },
+
+//Disabled for now
 //    retryConnect(init) {
 //console.log("Retry connect", this.currentSite, this.tryEvery, this.retryIn)
 //      if (this.currentSite) {			//If we got reconnected
@@ -335,30 +336,27 @@ console.log("Disconnect:")
   },
 
   mounted: function () {
+    let last = Local.get(LastKey)
+    this.sites = Local.get(SiteKey) || []		//Get our list of favorites
+    this.sites.forEach(site=>{
+      if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
+        site.priv = priv
+        if (site.host == last.host && site.port == last.port && site.user == last.user)
+          this.connectSite(site)			//Auto reconnect to last connected site
+      }, (err)=>{
+        this.top().error(this.bwm('conCryptErr', err.message))
+      })
+    })
 //console.log("Connect mounted:", this.sites)
-    if (localStorage[this.siteKey])		//Get our list of favorites
-      this.sites = JSON.parse(localStorage.getItem(this.siteKey))
 
-//if (false)      this.sites = [
-//      {host:'lux2.batemans.org', port:54320, selected:null},
-//      {host:'lux1.batemans.org', port:54320, selected:null},
-//      {host:'sludge', port:80, selected:null},
-//    ]
-this.sites.forEach((el, ix)=>{
-  if (typeof el == 'string') {
-    let [ host, port ] = el.split(':')
-    this.sites.splice(ix, 1, {host, port, user:null, key:null, selected:null})
-  }
-})
-        
-    let suggested = window.location.hostname + ":" + this.port
-    if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
-      this.newSite = suggested			//Offer a resonable default to connect to
+//    let suggested = window.location.hostname + ":" + this.port
+//    if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
+//      this.newSite = suggested			//Offer a resonable default to connect to
 //console.log("newSite:", this.newSite)
 
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
-console.log("Connect callback:", addr, this.retryIn)
-      this.$emit('site', this.currentSite = addr)
+//console.log("Connect callback:", addr, this.retryIn)
+      this.$emit('site', this.currentSite = addr)	//Tell my parent about connection change
 //Disable retrying for now
 //      if (!addr && this.tryEvery && !this.tryTimer) {
 //        this.retryConnect()
@@ -367,9 +365,8 @@ console.log("Connect callback:", addr, this.retryIn)
 //        if (this.timer) {clearTimeout(this.timer); this.timer = null}
 //      }
     })
-//    Wyseman.connect()				//Automatically try last connected site
-  }
-}
+  },	//mounted
+}	//component
 </script>
 
 <style lang='less'>

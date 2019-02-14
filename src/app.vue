@@ -3,28 +3,22 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//X- Has to be independent of database, wylib until connection made
-//X- Add main menu
-//X-   Save state
-//X-   Restore state
-//X-   Edit preferences
-//- Are there more preview windows to add besides just wylib.data_v? (prefs done this way?)
-//- Default language to english, but update to current language once connection made
-//- Move CSS styling to preferences (once connection made)
+//- UI to edit preferences
 //- 
 
 <template>
   <div class="wylib-app">
     <div class="header">
       <div class="title" :title="help">{{ title }}</div>
-      <div class="status">
+      <div v-if="pw.ready" class="status">
         <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
         <span :title="lang('appServerURL')">{{ siteConnected }}</span>
         <wylib-connect :db="db" v-show="conMenuPosted" @site="siteChange"/>
       </div>
     </div>
     <hr/>
-    <div class="application">
+    <label v-if="!pw.ready">{{pw.prompt}}:<input type='password' @keyup.enter="submitPW" autofocus/></label>
+    <div v-if="pw.ready" class="application">
       <div class="tabset">
         <div v-for="tab in tabs" class="tab" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
           {{ tab.title }}
@@ -53,6 +47,7 @@
 
 <script>
 import Com from './common.js'
+import Local from './local.js'
 import TopHandler from './top.js'
 import Connect from './connect.vue'
 import Wyseman from './wyseman.js'
@@ -82,6 +77,7 @@ export default {
     modal:		{posted: false, client: {}},
     currentSite:	null,
     menuTitle:		'',
+    pw:			{ready:false, prompt: 'Password', checked: false},
     persistent:		true,
     top:		new TopHandler(this),
     restoreMenu:	[],
@@ -116,8 +112,10 @@ export default {
       return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
     },
     siteChange(site) {
+//console.log("App site change:", site)
       this.currentSite = site
-//      this.conMenuPosted = !site	//Fixme!
+      this.conMenuPosted = !site
+      if (this.pw.checked) Local.check(site)		//If this is not the first run, check the new site storage situation
     },
     postAppMenu(ev) {
 //console.log("postAppMenu:", ev, this.appMenu.x, this.appMenu.y, this.appMenu)
@@ -138,7 +136,7 @@ export default {
     saveStateAs() {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
-      this.top.query(this.wm.appStatePrompt.help, dewArr, resp, (tag) => {
+      this.top.query('!appStatePrompt', dewArr, resp, (tag) => {
         if (tag == 'diaYes') State.saveAs(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
       })
     },
@@ -149,47 +147,58 @@ export default {
         this.saveStateAs()
     },
     defaultState() {
-      this.top.confirm(this.wm.appDefault.help, (tag) => {
+      this.top.confirm('!appDefault', (tag) => {
         if (tag == 'diaYes') {
           this.persistent = false
-          Com.clearState()
-          location.reload()
+          Local.reset()
         }
       })
     },
     beforeUnload() {
 //console.log("About to unload.  Saving state:", JSON.stringify(this.state))
       if (this.persistent)
-        Com.saveState(this.tagTitle, this.state)
+        Local.set(this.tagTitle, this.state, true)
       else
-        Com.clearState(this.tagTitle)
+        Local.reset(this.tagTitle)
+    },
+    submitPW(ev) {Local.pw(ev)},
+    initApp() {					//Call when app ready to run
+      Wyseman.register(this.id+'wm', 'wylib.data', (data) => {
+        this.$set(this, 'wm', data.msg)		//Does this make wm reactive for all other modules too?
+//        this.wm = data.msg			//Old way
+//console.log("App wm:", this.wm)
+        if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
+      })
+
+      let savedState = Local.get(this.tagTitle)
+//console.log("Restoring state:", JSON.stringify(savedState))
+      if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
+
+      State.listen(this.id+'sl', this.tag, (menuData) => {
+//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
+        let menuItems = menuData.map(el=>{
+          return Object.assign(el, {call:()=>{
+            Object.assign(this.state, el.data)
+            this.lastLoadIdx = el.idx
+          }})
+        })
+        this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+      }, this.top.error)
     },
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+    Local.init(this, this.pw, this.tag, (isReady)=>{
+      if (this.pw.ready = isReady) this.initApp()
+    })
   },
 
   beforeMount: function() {
-    let savedState = Com.getState(this.tagTitle)
-//console.log("Restoring state:", JSON.stringify(savedState))
-    if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
-//    Com.stateCheck(this)
+    if (this.ready) this.initApp()
   },
 
   mounted: function () {
     window.addEventListener('beforeunload', this.beforeUnload)
-
-    State.listen(this.id+'sl', this.tag, (menuData) => {
-//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-      let menuItems = menuData.map(el=>{
-        return Object.assign(el, {call:()=>{
-          Object.assign(this.state, el.data)
-          this.lastLoadIdx = el.idx
-        }})
-      })
-      this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
-    }, this.top.error)
   },
 
   beforeDestroy: function() {

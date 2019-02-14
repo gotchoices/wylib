@@ -17,6 +17,7 @@
 // TODO:
 //- 
 import Prefs from './prefs.js'
+import Local from './local.js'
 
 const Wyseman = {
   address:	'',			//To remember node:port when we are currently connected
@@ -28,6 +29,7 @@ const Wyseman = {
   pending:	{meta: {}, lang:{}},	//Remember details of pending requests
   callbacks:	{},			//Callbacks waiting for meta/language changes
   listens:	{},			//Callbacks waiting for async messages
+  localCache:	{},			//Temporary cache just for calls from localStorage
 
   close() {				//Close server connection from this end
     this.socket.close()
@@ -82,7 +84,7 @@ const Wyseman = {
 
         if (action == 'meta' || action == 'lang') {	//Special handling for meta and language data
           this.procColumns(data)			//Reorganize columns array as object
-          let index = action + '~' + view		//Where we will save in localStorage
+          let index = action + '~' + view		//Where we will save in local storage
           if (action == 'lang') {
 //console.log(" opt.language:", id, this.handlers[id], this.handlers[id].lang.language)
             let language = this.handlers[id].lang.language || 'en'
@@ -109,8 +111,9 @@ const Wyseman = {
 
 //Fixme: also request language for any subordinate views
           }
-//console.log(" localStorage:", index)
-          localStorage[index] = JSON.stringify(data)	//Save also to browser cache
+//console.log("To localStorage:", index)
+          Local.set(index, data)			//Save also to browser cache
+          delete this.localCache[index]			//Free up this cache, not needed now
           this.pending[action][view] = false		//Mark pending as now complete
           setTimeout(() => {this.procQueue()}, 50)	//See if any other meta commands are queued up
         }
@@ -191,19 +194,24 @@ const Wyseman = {
   },			//procColumns
 
   request(id, action, opt, cb) {			//Ask to receive specified information back asynchronously
-    if (typeof opt === 'string') {opt = {view: opt}}	//Shortcut: just give view for options
+    if (typeof opt === 'string') {opt = {view: opt}}	//Shortcut: just give view rather than full options object
 //console.log("Request ID: " + id + " action: " + action + " Opt: " + JSON.stringify(opt))
     let view = (opt ? opt.view : null)
     if (!this.address || this.address == '') {		//If connection not yet open
       this.sendQue.push([id,action,opt,cb])		//Queue the request for later
 
-      let idx = action+'~'+view				//Where saved in localStorage
-      if (localStorage[idx]) {				//Use any historic value from browser for now
-        let data = JSON.parse(localStorage[idx])
-//console.log("From localStorage:", data)
-        if (cb) cb(data)				//Call back with cached (possibly obsolete) data
+      if (action != 'connect') {
+        let data, idx = action + '~' + view		//Where saved in local storage
+        if (this.localCache[idx]) {			//Did we already fetch this from local storage once?
+//console.log("From localCache:", idx, data)
+          data = this.localCache[idx]
+        } else {					//Use any historic value from browser for now
+//console.log("From localStorage?:", idx, data)
+          data = this.localCache[idx] = Local.get(idx)
+        }
+        if (data && cb) cb(data)			//Call back with cached (possibly obsolete) data
       }
-      return
+      return						//Nothing else we can do until connection made
     }
 
 //console.log("  processing: ", action, " View:", view)

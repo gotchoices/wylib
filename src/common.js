@@ -4,8 +4,6 @@
 //- TODO:
 //X- Add a trim option to stateCheck to remove obsolete properties?
 //- 
-const storeKey = 'wylib_'
-
 module.exports = {
 
   langTemplate() {return {title: null, help: null}},
@@ -29,9 +27,9 @@ module.exports = {
   },
 
   clone: function(o) {				//Deep object copy
-    let output = Array.isArray(o) ? [] : {}, v, key
-    for (key in o) {
-      v = o[key]
+    let output = Array.isArray(o) ? [] : (o == null || o == undefined ? o : {})
+    for (let key in o) {
+      let v = o[key]
 //console.log('clone:', key, o[key], v, typeof v)
       output[key] = ((v != null && typeof v === "object") ? this.clone(v) : v)
     }
@@ -49,30 +47,6 @@ module.exports = {
     return clone
   },
 
-  saveState: function(tag, data) {		//Save a component's state in local storage
-    localStorage.setItem(storeKey + tag, JSON.stringify(data))
-console.log("Saving:", storeKey+tag)
-  },
-    
-  getState: function(tag) {			//Retrieve a stored state from local storage
-    let st = localStorage.getItem(storeKey + tag)
-//console.log("Getting:", storeKey+tag)
-    return ((st && st != 'undefined') ? JSON.parse(st) : null)
-  },
-    
-  clearState: function(tag) {			//Delete state data stored in local storage
-    if (tag) {					//Clear a single state item
-      localStorage.removeItem(storeKey + tag)
-    } else {					//Clear all state items
-      let re = new RegExp('^' + storeKey)
-      for (var i = 0, len = localStorage.length; i < len; i++) {
-        let key = localStorage.key(i)
-//console.log("Storage key:", key, typeof key)
-        if (key && key.match(re)) localStorage.removeItem(key)
-      }
-    }
-  },
-  
   addWindow(winObj, template, ctx, placement, clone) {	//Create a new subwindow in an array of config objects
 //console.log("Add Window", template, placement)
     template.x = null; template.y = null
@@ -127,5 +101,52 @@ console.log("Saving:", storeKey+tag)
     xmlhttp.open("GET", url, true)
     xmlhttp.send()
   },
+
+  buf2hex(buffer) {			//Convert ArrayBuffer to hex string
+    var s = '', h = '0123456789ABCDEF'
+    ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
+    return s
+  },
+
+  hex2buf(hexStr) {
+    return Buffer(hexStr, 'hex')
+//    return new Uint8Array(hexStr.match(/.{2}/g).map(h => parseInt(h, 16)));
+  },
+
+  str2buf(str) {
+    return new TextEncoder("utf-8").encode(str);
+  },
+  
+  buf2str(buffer) {
+    return new TextDecoder("utf-8").decode(buffer);
+  },
     
+  deriveKey: function(password, salt) {
+    salt = salt || crypto.getRandomValues(new Uint8Array(8))
+    return crypto.subtle.importKey("raw", this.str2buf(password), "PBKDF2", false, ["deriveKey"])
+      .then(key => crypto.subtle.deriveKey({
+        name: "PBKDF2", 
+        salt, 
+        iterations: 1000, 
+        hash: "SHA-256"
+      }, key, {
+        name: "AES-GCM",
+        length: 256
+      }, false, ["encrypt", "decrypt"])).then(key => [key, salt])
+  },
+  
+  encrypt: function(password, plain) {
+    let iv = crypto.getRandomValues(new Uint8Array(12))
+      , data = this.str2buf(plain);
+    return this.deriveKey(password).then(([key, salt]) =>
+      crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data).then(ciphertext => 
+        this.buf2hex(salt) +':'+ this.buf2hex(iv) +':'+ this.buf2hex(ciphertext)))
+  },
+
+  decrypt: function(password, encrypted) {
+    let [salt, iv, data] = encrypted.split(':').map(this.hex2buf)
+    return this.deriveKey(password, salt).then(([key]) => 
+      crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data)).then(v => 
+        this.buf2str(new Uint8Array(v)))
+  },
 }
