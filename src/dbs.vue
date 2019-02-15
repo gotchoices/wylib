@@ -56,7 +56,7 @@ export default {
       {tag: '>=',	lang: this.wm.dbsMoreEq	},
       {tag: '~',	lang: this.wm.dbsRexExp	},
       {tag: 'in',	lang: this.wm.dbsIn	},
-      {tag: 'null',	lang: this.wm.dbsNull	},
+      {tag: 'isnull',	lang: this.wm.dbsNull	},
       {tag: 'true',	lang: this.wm.dbsTrue	},
       {tag: 'diff',	lang: this.wm.dbsDiff	},
       {tag: 'nop',	lang: this.wm.dbsNop	},
@@ -84,7 +84,9 @@ export default {
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+      if (data.msg) this.wm = data.msg
+    })
   },
 
   beforeMount: function() {

@@ -308,7 +308,9 @@ console.log("Clone to popup:", popId)
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+      if (data.msg) this.wm = data.msg
+    })
     this.$on('swallow', this.swallowMenu)
 
     if (this.topLevel) this.top = new TopHandler(this)

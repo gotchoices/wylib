@@ -27,7 +27,8 @@ module.exports = {
     if (appInfo) {
       pwState.prompt = appInfo
     } else {
-      localCache = this.getLocal(LocalTag+this.appTag)
+      let savedCache = this.getLocal(LocalTag+this.appTag)
+      if (savedCache) localCache = savedCache
       cb(true)
     }
   },
@@ -100,7 +101,7 @@ module.exports = {
   },
     
   get: function(idx) {				//Retrieve information from local storage
-//console.log("Getting local:", idx, localCache[idx])
+//console.log("Getting local:", idx, localCache)
     return Com.clone(localCache[idx])
   },
     

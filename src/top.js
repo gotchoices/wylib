@@ -88,6 +88,7 @@ module.exports = function topHandler(context) {
   this.wmCheck = function(msg) {		//Is this a shortcut wyseman language code?
     if (msg[0] == '!' && ('wm' in this.context)) {
       let tag = msg.slice(1)
+//console.log("wmCheck", this.context, this.context.wm)
       if (!(tag in this.context.wm))				//Make reactive stub if it doesn't exist yet
         this.context.$set(this.context.wm, tag, null)		//{title:null, help:null})
       return this.context.wm[tag]

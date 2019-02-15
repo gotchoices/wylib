@@ -401,7 +401,9 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
   },
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+      if (data.msg) this.wm = data.msg
+    })
   },
   beforeMount: function() {
     Com.stateCheck(this)

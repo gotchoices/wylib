@@ -26,8 +26,6 @@ const Preferences = {
   winHeadColorLow:		'#b8b8c0',
   winFullHeader:		22,
   winSmallHeader:		12,
-//  winInitWidthx:		500,	//Deprecated
-//  winInitHeight:		300,
   winSubWindowX:		40,
   winSubWindowY:		40,
   

@@ -96,7 +96,7 @@ export default {
       return flds
     },
     dockConfig: function() { return [
-      {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download'},
+      {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download',  shortcut: true},
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(), icon: 'spinner',   shortcut: true},
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
@@ -263,10 +263,11 @@ console.log("Not yet implemented")
     metaListen() {		//Register which view we are dealing with
       let zid = this.id+'cv'
       if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register
-      if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
+      if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data, err) => {
+        if (err) {this.top().error(err); return}
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
-        let title = (this.wm.dbp ? this.wm.dbp.title : '') + data.title
+        let title = (this.wm.dbp ? this.wm.dbp.title : '') + ': ' + data.title
         this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },
@@ -310,7 +311,9 @@ console.log("Not yet implemented")
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data) => {this.wm = data.msg})
+    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+      if (data.msg) this.wm = data.msg
+    })
     this.metaListen()
   },
 
