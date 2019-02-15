@@ -1,21 +1,112 @@
+Quick (sort of) Start Notes:
+
+- Launch the process that will serve your SPI (Single Page Application).
+  This is either the stock server, part of the WyCLIF package, or some other
+  custom package you may be using.  This server must be launched in SSL mode
+  (i.e. no -n switch) in order to be reasonably certain you are connected to
+  the correct server.  Otherwise, a bad guy could serve up a modified SPI to
+  an unsupecting user.
+
+- If using a self signed key for the SPI server, distribute it separately.
+  In other words, don't tell your users to "just accept" the key, bypassing
+  their browser's warnings.  Give them a certificate separately by email or
+  in person and show them how to install it in their browser manually.
+
+- Launch a data connection server.
+  This is likely the same process that is serving up SPI's, but it doesn't have 
+  to be.  It will definitely be on a separate port and it must also be secured 
+  by SSL (https), which isn't a problem if you are running on the same process.
+
+- Issue a connection ticket to the user
+  Https has secured the connection in one direction, but the server still
+  doesn't know who to trust for logins without first issuing a ticket.  If you 
+  are an admin, you will have to do this for yourself too the first time you 
+  connect to the system.  There is a script in the wyseman/bin package that
+  will do this from the command line.
+  
+  First parameter is the user ID code (not username) of the user you are
+  issuing the ticket for (typically 'r1' for the admin user).  Then give the
+  hostname and port where the user is to connect.  The domain must match what 
+  is in your (possibly self-signed) certificate, whether this is a domain name
+  or an IP number.  The port must match the port your data server is listening
+  to for connections.  Like so:
+  
+  wyseman/bin/ticket r1 mydomain.com 54320 >ticket.json
+
+- Open a browser connection to the SPI you want to connect to, such as:
+
+  https://mydomain.com/admin.html  
+
+- Input your connection ticket.
+  You should have an open dialog box showing the title Connection Keys.  Drag
+  your connection ticket file over the Import Keys button (or press the button
+  and navigate to your connection ticket file).  You should see a red ticket 
+  icon show up for the connection in the list of keys.
+  
+  Double click the new connection line, or select it and push the link icon.
+  It should ask you for a login username.  This is not necessarily the user ID 
+  (i.e r1) but rather the actual database username, such as 'admin'.  The
+  username is not included in the ticket as an added security measure.  So when 
+  issuing tickets to users, you will have to tell them the username to use for
+  their login.
+  
+  Hopefully after entering the username, the system will show connected, and 
+  the connection dialog will go away.  You can open it again with the Server
+  button and connect to more hosts, or disconnect with a shift-click on the
+  link button.
+  
+  The red ticket should also turn into a gold key.  This indicates that the
+  browser has successfully created a new public/private key pair.  The private
+  key resides inside the credential (formerly a ticket) itself.  The public
+  key is the only thing that has been transmitted over the wire, and is now
+  stored in the backend database to validate future logins.
+  
+  If any of this goes wrong, you may have to reissue a new ticket.  They are
+  only good once.  And they expire very quickly (typically 10 minutes or so).
+
+- Once connected, the UI should ask you if/how you want to save application 
+  state information.  Answering OK means this sensitive information will be
+  stored in your browser (like a very big cookie).  And it can probably be read
+  by savy trouble makers if they have access to your system.  So if this is
+  a problem, choose the option to encrypt your data with a password.
+
+- Save your connection key somewhere.
+  This may not be too big an issue for an admin because you can easily create a
+  new ticket any time you may need one.  But for regular users, it may be a
+  hassle to lose your key.  So use the export option in the connection dialog
+  menu.  This will save it in your regular Downloads area.  Make sure you take
+  it out of there and store it off line (like a thumb drive) if you don't want
+  it to fall into the wrong hands.  You may also want to encrypt it (if/when
+  that feature is available in the package).
+
+- Your UI is now connected to the backend and will maintain a persistent state
+  even between reloads and sessions.
+  
+  For further options for saving state, the application menu (upper right) and
+  each independent top-level window menu, have an option for saving their
+  current state, by a settable tag name, for recall at a future time.  This 
+  allows you to save your favorite configurations of the app, a hierarchy of 
+  windows, or just a single window.
+
+-------------------------------------------------------------------------------
 Design Concepts for Client Authentication
 
 General Approach:
 Most web authorization seems to have evolved around username and password 
-authentication.  There are several problems with this.  Most notable, if you 
+authentication.  There are several problems with this.  Most notably, if you 
 pick a password you think you can remember, it may also be more prone to being
 guessed by others.  If on the other hand, you pick a password that is 
-impossible to guess, it is also probably impossible to remember.  That means
-you are more likely to write it down somewhere.  Hence it becomes more prone
-to being discovered by someone else.
+impossible to guess, it may also be impossible to remember.  That means you may
+be more likely to write it down somewhere.  If so, it becomes more prone to 
+being discovered by someone else.
 
 The problem of lost and forgotten passwords leads to the solution of password
-recovery via email, for example.  And that leads to a new set of security
+recovery via email, for example.  And that leads to another set of security
 problems.
 
-MyCHIPs will begin instead with the premise that we will secure devices rather
-than specifically connections.  We will transmit initial connection tokens 
-outside the normal connection pathway, which will authorize an initial
+Wylib/Wyseman will begin instead with the premise that we will secure devices 
+rather than specifically connections.  We will transmit initial connection 
+tokens outside the normal connection pathway, which will authorize an initial
 connection.  Then once that connection has been established, we will establish
 connection keys that will allow the same device to connect in the future.  
 
@@ -49,7 +140,7 @@ Typical Connection Examples:
     password.
 
 Strategy:
-Even though passwords are potentially still a part of the solution, we are not 
+Even though a password is potentially still a part of the solution, we are not 
 suggesting passwords that are a part of the server login strategy.  If the user 
 session is in possession of a valid connection key, his session will be 
 automatically authorized.  It will be up to the user to determine if/how to 
@@ -79,10 +170,10 @@ the user's private key to prove this connection request is coming from the
 authorized user.
 
 The connection GUI should present a list of prior, known connections which may
-be empty.  It will also present buttons/controls as follows:
+be empty.  It will also present controls as follows:
 
-  - Add new favorite connection
-  - Delete existing connection
+  - Add a new login credential
+  - Delete an existing credential
   - Connect now to the selected site
 
 Each connection in the list should give an indication of whether the user has
