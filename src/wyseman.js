@@ -82,7 +82,7 @@ const Wyseman = {
 
         if (!id || !view || !action) return		//Invalid packet
 
-        if (action == 'meta' || action == 'lang') {	//Special handling for meta and language data
+        if (data && (action == 'meta' || action == 'lang')) {	//Special handling for meta and language data
           this.procColumns(data)			//Reorganize columns array as object
           let index = action + '~' + view		//Where we will save in local storage
           if (action == 'lang') {
@@ -124,7 +124,7 @@ const Wyseman = {
             let [ sch, tab, code ] = error.code.slice(1).split('.'),	//Where will we find language info
                 errView = [sch, tab].join('.'),
                 cache = this.cache.lang[errView]
-//console.log("Error:", error, errView, code, cache)
+if (error) console.log("Error:", error, errView, code, cache)
             if (!cache) {						//If we don't already have it
               this.request('_wm_E_' + id, 'lang', {language: Prefs.language, view: errView}, (d,e) => {
                 let cache = this.cache.lang[errView]			//Get it and cache it
@@ -171,8 +171,8 @@ const Wyseman = {
 
   linkLang(view) {				//Merge in table language data
     let lang = this.cache.lang[view]
-    let meta = this.cache.meta[view]
-    if (!lang) return				//No language data...
+      , meta = this.cache.meta[view]
+    if (!lang || !meta) return			//No language data...
 //console.log("LinkLang\n  lang:", lang, "  meta:", meta)
     if (!meta.msg) meta.msg = {}
     if (lang.msg) Object.assign(meta.msg,lang.msg)
