@@ -9,7 +9,7 @@
 <template>
   <div class="wylib-app">
     <div class="header">
-      <div class="title" :title="help">{{ title }}</div>
+      <div class="title" :title="appLang.help">{{ appLang.title }}</div>
       <div v-if="pw.ready" class="status">
         <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
         <span :title="lang('appServerURL')">{{ siteConnected }}</span>
@@ -18,10 +18,10 @@
     </div>
     <hr/>
     <label v-if="!pw.ready">{{pw.prompt}}:<input type='password' @keyup.enter="submitPW" autofocus/></label>
-    <div v-if="pw.ready" class="application">
+    <div v-if="pw.ready" class="appbody">
       <div class="tabset">
-        <div v-for="tab in tabs" class="tab" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
-          {{ tab.title }}
+        <div v-for="tab in tabs" class="tab" :title="tab.lang?tab.lang.help:null" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
+          {{ (tab.lang ? tab.lang.title : null) || tab.title }}
         </div>
         <div class="tab-filler">
           <wylib-button icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
@@ -53,7 +53,7 @@ import Connect from './connect.vue'
 import Wyseman from './wyseman.js'
 import Button from './button.vue'
 import Menu from './menu.vue'
-import WylibDbp from '../src/dbp.vue'
+import Dbp from '../src/dbp.vue'
 import Modal from './modal.vue'
 import Dialog from './dialog.vue'
 import Win from './win.vue'
@@ -61,11 +61,10 @@ import State from './state.js'
 
 export default {
   name: 'wylib-app',
-  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-dialog': Dialog, 'wylib-modal':Modal, 'wylib-dbp': WylibDbp},
+  components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-dialog': Dialog, 'wylib-modal':Modal, 'wylib-dbp': Dbp},
   props: {
     state:	{type: Object, default: () => ({})},
-    title:	{type: String},
-    help:	{type: String},
+    title:	{default: 'Application'},
     tabs:	{type: Array},
     tag:	{type: String},
     current:	{type: String},
@@ -97,7 +96,9 @@ export default {
     siteConnected: function() {
       return this.currentSite || this.lang('appNoConnect',1,'Not Connected')
     },
-    tagTitle: function () {return this.tag || this.title},
+    appLang: function () {
+      return (this.wm ? this.wm['app.'+this.tag] : null) || (this.title.title ? this.title : {title: this.title})
+    },
     appMenuConfig: function() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.appSave,      icon: 'upload', call: this.saveState},
@@ -163,9 +164,8 @@ export default {
     },
     submitPW(ev) {Local.pw(ev)},
     initApp() {					//Call when app ready to run
-      Wyseman.register(this.id+'wm', 'wylib.data', (data) => {
-        this.$set(this, 'wm', data.msg)		//Does this make wm reactive for all other modules too?
-//        this.wm = data.msg			//Old way
+      Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+        if (data.msg) this.wm = data.msg
 //console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
       })
@@ -195,6 +195,11 @@ export default {
 
   beforeMount: function() {
     if (this.ready) this.initApp()
+    this.$on('customize', (tag, lang)=>{	//Allow child to set the tab title
+//console.log("Customize tab", tag, lang, this.tabs)
+      let tabIdx = this.tabs.findIndex(el=>(el.tag == tag))
+      if (tabIdx >= 0) this.tabs[tabIdx].lang = lang
+    })
   },
 
   mounted: function () {
@@ -211,12 +216,27 @@ export default {
 .wylib-app * {
   box-sizing: border-box;
 }
+.wylib-app {
+  height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+//  border: 1px solid blue;
+}
 .wylib-app > .header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   font-size: 1.1em;
+  flex-grow: 0;
+}
+.wylib-app > hr {
+  width: 100%;
+}
+.wylib-app > .appbody {
+//  border: 1px solid red;
+  width: 100%;
+  flex-grow: 1;
 }
 .wylib-app > .header .title {
   font-size: 1.5em;
@@ -264,7 +284,8 @@ export default {
 .wylib-app .app-content {
   width: 100%;
   min-height: 100px;
-  border-radius: 2px;
+  height: 100%;
+  border-radius: 0 0 6px 6px;
   border: 1px solid #c0c0c0;
   border-top-style: none;
 }
