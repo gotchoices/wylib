@@ -76,7 +76,7 @@ export default {
 
       if (item.menu && theSub) {			//But open any submenu associated with this line
         theSub.posted = true
-        if (theSub.x == null || theSub.y == null) {	//If this is the first time posted
+        if (theSub.x == null || theSub.y == null) this.$nextTick(()=>{	//If this is the first time posted, let it post, then place it
 //console.log("Refs:", this.$refs)
           let itemBBox = ev.target.getBoundingClientRect()
             , menuBBox = ev.target.closest('.wylib-menu').getBoundingClientRect()
@@ -86,10 +86,11 @@ export default {
             , subElem = subComp ? subComp.$el : null
             , subBBox = subElem ? subElem.getBoundingClientRect() : null
             , subWidth = subBBox ? subBBox.width : 200
-//console.log("Posting sub:", theSub.x, theSub.y, "Item:",itemBBox, "Menu:",menuBBox, viewWidth, "Comp:", subComp, "Elem:", subElem)
+//console.log("rightGap:", rightGap, "subWidth:", subWidth, "Menu wid:", menuBBox.width, "sub:", subElem.getBoundingClientRect())
           theSub.y = itemBBox.y - menuBBox.y - itemBBox.height		//Place the menu relevant to the invoking menu item
           theSub.x = (rightGap < subWidth) ? -(menuBBox.width + subWidth) : 0
-        }
+//console.log("Posting sub:", theSub.x, theSub.y, "Item:",itemBBox, "Menu:",menuBBox, viewWidth, "Comp:", subComp, "Elem:", subElem)
+        })
       }
 //console.log("  Posted: ", theSub)
     },
