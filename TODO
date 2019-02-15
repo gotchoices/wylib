@@ -5,32 +5,31 @@ X- Dbp should save/restore state per table/view to wylib.data
 - 
 - Multiview delete doesn't delete entity--just user
 - 
-- Login/validation facility (passport?)
--   Distributed symmetric keys to secure machine
--   Password access to database
+X- Login/validation facility (passport?)
+X-   Distributed symmetric keys to secure machine
+X-   Password access to database
 - 
 - Later Wylib:
-- Fix language text in wylib/app, wylib/connect
-- Generalize menu to work for window state: implement save/restore dialog
-- Dbe grid layout working
-- Preference editor component
-- Save named state from toplevel win
+X- Fix language text in wylib/app, wylib/connect
+X- Generalize menu to work for window state: implement save/restore dialog
+X- Dbe grid layout working
+- Preferences UI editor component
+X- Save named state from toplevel win
 - Implement dbp row menu?
-- Preference save/restore; use local storage, optional propagate to back end (wyseman)
--   Layout: Widget menu/window size/locations, sort order, searches, columns, summaries
--   Language: Widget text/helps, database text/helps
--   Snapshot: Application window layout, language, prefs
-- Port wysegi; can browse and modify wyseman database tables
+X- Preference save/restore; use local storage, optional propagate to back end (wyseman)
+X-   Layout: Widget menu/window size/locations, sort order, searches, columns, summaries
+X-   Language: Widget text/helps, database text/helps
+X-   Snapshot: Application window layout, language, prefs
+X- Port wysegi; can browse and modify wyseman database tables
 - 
 - Port additional widgets:
--   Mdew: grid of dews
--   Calendar selector
+X-   Mdew: grid of dews
+X-   Calendar selector
 -   Time selector
--   Cdew: compound data editor
 -   Spinners: spin integers
--   LoadBy/Loglist: query logic builder
--   SCM Scrolled item selector
--   Dia: Modal data queries using existing data editing widgets
+X-   LoadBy/Loglist: query logic builder
+-   SCM Scrolled item selector with db lookups for data
+X-   Dia: Modal data queries using existing data editing widgets
 -   Edwin: Text editing window
 - 
 - Implement ledgers
