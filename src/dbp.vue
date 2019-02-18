@@ -9,19 +9,13 @@
 //- Reload should retain sort fields
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
+//- Allow calling actions with multiple record keys
 //- 
 //- Sorting:
 //-  Initial sort order comes from wyseman, apply to indicators
-//X-  Maintain an array of fields indicating sort order
-//X-  User can change sort order from mlb buttons
-//X-  Sort order is included in load query sent to backend
-//X- Menu option to restore default column order, and default sort order
 //- 
 //- Make menu module use toggled field correctly (instead of call function)
-//X- Toggle display of columns
 //- Toggle display of footers
-//- 
-//- Can clone another similar window
 //- Can disable reload on sort controls
 //- Implement maximum rows to fetch parameter in menu settings
 //- 

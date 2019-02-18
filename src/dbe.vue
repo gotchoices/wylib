@@ -1,4 +1,4 @@
-//Database record editing component
+[//Database record editing component
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
@@ -14,8 +14,6 @@
 //- See Fixme's below
 //- 
 //- Later:
-//- Move reports to an outside module and allow calling it from dbp (with possibly multiple records)
-//- Keep state of "was loaded" (also table?) and the key value
 //- Should filter nulls out of insert fields?
 //- Optionally, ask for confirmation on:
 //-  delete
