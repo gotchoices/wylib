@@ -150,10 +150,11 @@ proc loglst::add {w args} {
 
     set x [incr v(ccnt$w)]		;#index of this clause
     set n $w.c$x			;#name of widget to hold this clause
+    destroy $n				;#in case it already exists
     frame $n -bd 1 -relief raised	;#frame to hold it all
 
     [set t $w.b] configure -state normal	;#show new widget in text window
-    $t window create end -window $n
+    $t window create {end - 1 chars} -window $n
     $t insert end "\n"
     $t configure -state disabled
 
