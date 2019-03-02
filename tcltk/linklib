@@ -15,14 +15,14 @@ for dir in $TCLLIBPATH; do			#Find first absolute directory in path
 #  echo "dir:$dir"
   if [ "$char1" = '/' ]; then break; fi
 done
-dir='/usr/lib'
+#dir='/usr/lib'					#For testing
 
-echo "dir:$dir"
+#echo "dir:$dir"
 link="$dir/wylib"
 if [ -h link ]; then
   rm $link
 elif [ ! -d link ]; then
-  echo ln -s $libdir $link
+  ln -s $libdir $link
 else
   echo "Unable to find a place to link wylib TCL"
   exit 1
