@@ -13,6 +13,13 @@
     "preversion": "npm-run-all build wysegi && git add -A",
     "lint": "eslint --ext .js src"
   },
+  "bin": {
+    "wylib-info": "info.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gotchoices/wylib.git"
+  },
   "keywords": [
     "ERP",
     "database",
