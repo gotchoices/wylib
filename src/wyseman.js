@@ -49,7 +49,7 @@ const Wyseman = {
 //    if (!address) address = localStorage.siteSocket	//If no address given, default to the last used one
     if (!host || !port) return				//If still nothing to connect to, give up
     this.url = address + '/?' + query()			//Build websocket URL with username and token
-//console.log("Connect: ", this.url)
+console.log("Connect: ", this.url)
     this.socket = new WebSocket(this.url)		//Try to connect
 
     this.socket.addEventListener('error', event => {	//If we get an error connecting

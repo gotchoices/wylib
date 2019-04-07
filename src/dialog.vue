@@ -24,6 +24,12 @@ import Mdew from './mdew.vue'
 import Strdoc from './strdoc.vue'
 import Wyseman from './wyseman.js'
 
+const WmDefs = {		//English defaults, as we may not yet be connected
+  diaQuery:	{title:'Query', help:'Please provide your input'},
+  diaCancel:	{title:'Cancel', help:'Dismiss the query'},
+  diaYes:	{title:'Yes', help:'Answer affirmatively'},
+}
+
 export default {
   name: 'wylib-dialog',
   components: {'wylib-mdew': Mdew, 'wylib-strdoc': Strdoc},
@@ -32,7 +38,7 @@ export default {
   },
   data() { return {
     pr:		require('./prefs'),
-    wm:		{},
+    wm:		WmDefs,
     valid:	true,
     stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
@@ -52,13 +58,13 @@ export default {
     },
     buttons: function() {
       let butArr = []
-//console.log("Buttons:", this.state.buttons)
-      if (this.state.buttons) this.state.buttons.forEach((b) => {
+console.log("Buttons:", this.state.buttons)
+      if (this.state.buttons) this.state.buttons.forEach(b=>{
         let rec = b
-        if (typeof b == 'string' && this.wm[b])
-          rec = {tag: b, lang: this.wm[b]}
-//        else if (b.tag && !b.lang && this.wm[b])	//What is this for?
-//          rec = {tag: b.tag, lang: this.wm[b]}
+        if (typeof b == 'string')
+          rec = {tag: b, lang: this.wm[b] || {title:b}}
+//        else if (rec.tag && !rec.lang && this.wm[rec.tag])	//Not sure we use this case
+//          rec.lang = this.wm[rec.tag]
         rec.able = (rec.tag == 'diaCancel' || this.valid)
         butArr.push(rec)
       })

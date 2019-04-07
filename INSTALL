@@ -1,0 +1,38 @@
+Installation Instructions
+
+If you are only using wylib javascript libraries, you should be fine with a 
+standard npm installation:
+
+  npm install wylib
+
+In many cases, this will be done for you if wylib is required by some other
+package.
+
+-------------------------------------------------------------------------------
+If you plan to use the legacy TCL library, you will need to make it possible
+for tcl to find the library.  The usual way is to put wylib somewhere in the
+search path used at load time ($auto_load), or to set the environment variable
+TCLLIBPATH to include the directory that contains the wylib root directory.
+
+There is a utility called wylib-info included in the distribution that should
+help you do this.  If you installed wylib globally, as in:
+
+  npm install -g wylib
+
+then wylib should be in some public area such as /usr/lib/node_modules/wylib
+and there should be a link to the executable wylib-info someplace like /bin,
+/usr/bin or /usr/local/bin.  Wylib will print out its parent directory, the
+library name, and its version string.  So you should be able to put something
+like the following in your .bash_profile or some other initialization file:
+
+if command -v wylib-info >/dev/null; then
+  read libdir libname version <<<$(wylib-info)
+  export TCLLIBPATH="$libdir $TCLLIBPATH"
+fi
+
+If you intend to connect to postgresql using legacy TCL libraries, you will
+also have to install support for that with something like (on fedora):
+
+  dnf install postgresql-tcl
+
+-------------------------------------------------------------------------------

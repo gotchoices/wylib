@@ -6,4 +6,4 @@ const Path = require("path")
 var package = require('../package.json')
 var parent = Path.normalize(Path.join(__dirname, '../..'))
 
-console.log('wylib', package.version, parent)
+console.log(parent, 'wylib', package.version)

@@ -2283,6 +2283,12 @@ var _wyseman2 = _interopRequireDefault(_wyseman);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var WmDefs = { //English defaults, as we may not yet be connected
+  diaQuery: { title: 'Query', help: 'Please provide your input' },
+  diaCancel: { title: 'Cancel', help: 'Dismiss the query' },
+  diaYes: { title: 'Yes', help: 'Answer affirmatively' }
+};
+
 exports.default = {
   name: 'wylib-dialog',
   components: { 'wylib-mdew': _mdew2.default, 'wylib-strdoc': _strdoc2.default },
@@ -2294,7 +2300,7 @@ exports.default = {
   data: function data() {
     return {
       pr: __webpack_require__(/*! ./prefs */ "./src/prefs.js"),
-      wm: {},
+      wm: WmDefs,
       valid: true,
       stateTpt: { message: _common2.default.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag: 'dialog', iframe: null, component: null, check: null }
     };
@@ -2320,12 +2326,12 @@ exports.default = {
       var _this = this;
 
       var butArr = [];
-      //console.log("Buttons:", this.state.buttons)
+      console.log("Buttons:", this.state.buttons);
       if (this.state.buttons) this.state.buttons.forEach(function (b) {
         var rec = b;
-        if (typeof b == 'string' && _this.wm[b]) rec = { tag: b, lang: _this.wm[b]
-          //        else if (b.tag && !b.lang && this.wm[b])	//What is this for?
-          //          rec = {tag: b.tag, lang: this.wm[b]}
+        if (typeof b == 'string') rec = { tag: b, lang: _this.wm[b] || { title: b }
+          //        else if (rec.tag && !rec.lang && this.wm[rec.tag])	//Not sure we use this case
+          //          rec.lang = this.wm[rec.tag]
         };rec.able = rec.tag == 'diaCancel' || _this.valid;
         butArr.push(rec);
       });
@@ -7519,7 +7525,7 @@ exports.push([module.i, ".flatpickr-calendar {\n  background: transparent;\n  op
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app {\n  height: calc(100vh - 40px);\n  display: flex;\n  flex-direction: column;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n  flex-grow: 0;\n}\n.wylib-app > hr {\n  width: 100%;\n}\n.wylib-app > .appbody {\n  width: 100%;\n  flex-grow: 1;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 100000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  display: flex;\n  flex-flow: row nowrap;\n  justify-content: flex-end;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  height: 100%;\n  border-radius: 0 0 6px 6px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", ""]);
+exports.push([module.i, ".wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-app {\n  height: calc(100vh - 40px);\n  display: flex;\n  flex-direction: column;\n}\n.wylib-app > .header {\n  width: 100%;\n  display: flex;\n  justify-content: space-between;\n  align-items: baseline;\n  font-size: 1.1em;\n  flex-grow: 0;\n}\n.wylib-app > hr {\n  width: 100%;\n}\n.wylib-app > .appbody {\n  width: 100%;\n  flex-grow: 1;\n}\n.wylib-app > .header .title {\n  font-size: 1.5em;\n  text-shadow: 1px 1px 2px #aaaacc;\n}\n.wylib-app .header .status {\n  position: relative;\n}\n.wylib-app .header .status .wylib-connect {\n  position: absolute;\n  right: 0;\n  top: 1.25em;\n  z-index: 100000;\n}\n.wylib-app .tabset {\n  width: 100%;\n  display: flex;\n}\n.wylib-app .tabset .tab {\n  min-height: 20px;\n  display: inline;\n  border: 1px solid #c0c0c0;\n  border-radius: 6px 6px 0 0;\n  padding: 0.25em 0.5em 0 0.5em;\n  margins: 0;\n  user-select: none;\n  background-color: #e0e0e0;\n  flex: 0 0 auto;\n}\n.wylib-app .tabset .tab-filler {\n  flex: 1 1 auto;\n  display: flex;\n  flex-flow: row nowrap;\n  justify-content: flex-end;\n  border-bottom: 1px solid #c0c0c0;\n}\n.wylib-app .tabset .tab.active {\n  border-bottom-style: none;\n  background-color: #ffffff;\n}\n.wylib-app .tabset .tab:hover {\n  background-color: #fafaff;\n}\n.wylib-app .app-content {\n  width: 100%;\n  min-height: 100px;\n  height: 100%;\n  border-radius: 0 0 6px 6px;\n  border: 1px solid #c0c0c0;\n  border-top-style: none;\n}\n", ""]);
 
 
 
@@ -7534,7 +7540,7 @@ exports.push([module.i, "\n.wylib-app * {\n  box-sizing: border-box;\n}\n.wylib-
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n  padding: 1px;\n}\n", ""]);
+exports.push([module.i, ".wylib-button {\n  display: inline-block;\n  border-width: 1px;\n  border-radius: 4px;\n  margin: 0 1px 0 1px;\n}\n.wylib-button .icon {\n  display: block;\n  height: 100%;\n  width: 100%;\n  padding: 1px;\n}\n", ""]);
 
 
 
@@ -7549,7 +7555,7 @@ exports.push([module.i, "\n.wylib-button {\n  display: inline-block;\n  border-w
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-connect {\n  border: 1px solid blue;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  display: flex;\n  flex-flow: row nowrap;\n  justify-content: space-between;\n}\n.wylib-connect input {\n  width: 100%;\n}\n.wylib-connect .label {\n  padding: 0.4em 0 0 0.1em;\n}\n.wylib-connect .sitelist {\n  border: 1px solid #cccccc;\n  border-radius: 4px;\n  padding: 4px;\n  font-family: Helvetica;\n  font-size: 0.8em;\n  min-height: 6em;\n  max-height: 12em;\n  max-width: 30em;\n  min-width: 15em;\n  overflow-y: scroll;\n}\n", ""]);
+exports.push([module.i, ".wylib-connect {\n  border: 1px solid blue;\n  border-radius: 4px;\n  background: white;\n  padding: 4px;\n}\n.wylib-connect .header {\n  display: flex;\n  flex-flow: row nowrap;\n  justify-content: space-between;\n}\n.wylib-connect input {\n  width: 100%;\n}\n.wylib-connect .label {\n  padding: 0.4em 0 0 0.1em;\n}\n.wylib-connect .sitelist {\n  border: 1px solid #cccccc;\n  border-radius: 4px;\n  padding: 4px;\n  font-family: Helvetica;\n  font-size: 0.8em;\n  min-height: 6em;\n  max-height: 12em;\n  max-width: 30em;\n  min-width: 15em;\n  overflow-y: scroll;\n}\n", ""]);
 
 
 
@@ -7564,7 +7570,7 @@ exports.push([module.i, "\n.wylib-connect {\n  border: 1px solid blue;\n  border
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n", ""]);
+exports.push([module.i, ".wylib-dbe .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  display: flex;\n}\n.wylib-dbe .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbe .header .headerfill {\n  flex: 1 1 auto;\n}\n.wylib-dbe.headstatus {\n  flex: 0 0 auto;\n  white-space: nowrap;\n  display: flex;\n  align-items: flex-end;\n}\n", ""]);
 
 
 
@@ -7579,7 +7585,7 @@ exports.push([module.i, "\n.wylib-dbe .header {\n  background: linear-gradient(t
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n", ""]);
+exports.push([module.i, ".wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbp .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbp .header .headerfill {\n  flex: 1 1 auto;\n}\n", ""]);
 
 
 
@@ -7594,7 +7600,7 @@ exports.push([module.i, "\n.wylib-dbp {\n  height: 100%;\n}\n.wylib-dbp > .heade
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n", ""]);
+exports.push([module.i, ".wylib-dbs > .header {\n  background: linear-gradient(to top, #c0c0c0, #e0e0e0);\n  width: 100%;\n  height: 1.4em;\n  display: flex;\n}\n.wylib-dbs .header wylib-menudock {\n  flex: 0 0 auto;\n}\n.wylib-dbs .header .headerfill {\n  flex: 1 1 auto;\n}\n", ""]);
 
 
 
@@ -7609,7 +7615,7 @@ exports.push([module.i, "\n.wylib-dbs > .header {\n  background: linear-gradient
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n", ""]);
+exports.push([module.i, ".wylib-dew input.text,\n.wylib-dew div.check {\n  border-style: solid;\n  border-bottom-width: 1px;\n  border-top-width: 0;\n  border-radius: 3px;\n}\n.wylib-dew input.text {\n  width: 100%;\n}\n.wylib-dew div.check {\n  width: 1.7em;\n}\n.wylib-dew input.checkbox {\n  margin: 0 0 2px 4px;\n}\n", ""]);
 
 
 
@@ -7624,7 +7630,7 @@ exports.push([module.i, "\n.wylib-dew input.text,\n.wylib-dew div.check {\n  bor
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-dialog {\n  height: 100%;\n}\n.wylib-dialog .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-dialog .title {\n  padding: 10px 10px 10px 4px;\n}\n.wylib-dialog iframe {\n  width: 100%;\n  height: 100%;\n  border: 0;\n}\n.wylib-dialog .buttons button {\n  margin: 0 2px 0 2px;\n}\n", ""]);
+exports.push([module.i, ".wylib-dialog {\n  height: 100%;\n}\n.wylib-dialog .buttons {\n  padding: 5px;\n  width: 100%;\n  text-align: right;\n}\n.wylib-dialog .title {\n  padding: 10px 10px 10px 4px;\n}\n.wylib-dialog iframe {\n  width: 100%;\n  height: 100%;\n  border: 0;\n}\n.wylib-dialog .buttons button {\n  margin: 0 2px 0 2px;\n}\n", ""]);
 
 
 
@@ -7639,7 +7645,7 @@ exports.push([module.i, "\n.wylib-dialog {\n  height: 100%;\n}\n.wylib-dialog .b
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-launch > .header {\n  font-size: 1.25em;\n  display: flex;\n  justify-content: space-between;\n}\n.wylib-launch .header > .controls {\n  display: flex;\n  flex-direction: column;\n  font-size: 0.75em;\n}\n", ""]);
+exports.push([module.i, ".wylib-launch > .header {\n  font-size: 1.25em;\n  display: flex;\n  justify-content: space-between;\n}\n.wylib-launch .header > .controls {\n  display: flex;\n  flex-direction: column;\n  font-size: 0.75em;\n}\n", ""]);
 
 
 
@@ -7654,7 +7660,7 @@ exports.push([module.i, "\n.wylib-launch > .header {\n  font-size: 1.25em;\n  di
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n.wylib-loglist .button.isnot.not {\n  background: #ffdddd;\n}\n.wylib-loglist .button.isnot {\n  background: #f0f0f0;\n}\n", ""]);
+exports.push([module.i, ".wylib-logitem {\n  cursor: move;\n  padding: 3px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n}\n.wylib-logitem select {\n  margin: 0 4px 0 4px;\n}\n.wylib-logitem .right.inactive {\n  max-width: 2em;\n}\n.wylib-logitem .button.close:hover {\n  background: #ffcccc;\n}\n.wylib-logitem .button.lower:hover {\n  background: #ccffcc;\n}\n.wylib-loglist .button.isnot.not {\n  background: #ffdddd;\n}\n.wylib-loglist .button.isnot {\n  background: #f0f0f0;\n}\n", ""]);
 
 
 
@@ -7669,7 +7675,7 @@ exports.push([module.i, "\n.wylib-logitem {\n  cursor: move;\n  padding: 3px;\n 
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n", ""]);
+exports.push([module.i, ".wylib-loglist {\n  padding: 2px;\n  border: 2px solid #cc9900;\n  border-radius: 8px;\n  background: #f8f8f8;\n  /*    width: 100%; */\n}\n.wylib-loglist .connector {\n  position: absolute;\n}\n.wylib-loglist .subdivision {\n  padding: 3px;\n  margin: 0 0 0 15px;\n  display: flex;\n  /* border: 1px solid orange; */\n}\n.wylib-loglist .header {\n  cursor: move;\n  position: relative;\n  background: #e0e0e0;\n}\n.wylib-loglist .connector {\n  position: absolute;\n  left: 8px;\n  top: 18px;\n  width: 16px;\n  height: auto;\n  fill: none;\n  stroke: #999999;\n  stroke-width: 2;\n}\n.wylib-loglist .spacer .lower {\n  position: absolute;\n  left: 6px;\n  top: 20px;\n  height: 12px;\n}\n.wylib-loglist .button {\n  border-radius: 4px;\n}\n.wylib-loglist .button .icon {\n  height: 12px;\n  width: 12px;\n}\n.wylib-loglist .button:hover {\n  background: #bbeebb;\n}\n.wylib-loglist .button.andor.and {\n  background: #aaaaee;\n}\n.wylib-loglist .button.andor {\n  background: #eeee88;\n}\n", ""]);
 
 
 
@@ -7684,7 +7690,7 @@ exports.push([module.i, "\n.wylib-loglist {\n  padding: 2px;\n  border: 2px soli
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n  padding-left: 4px;\n  padding-right: 4px;\n  border: 1px solid #f2f2f2;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n", ""]);
+exports.push([module.i, ".wylib-menu {\n  min-height: 3em;\n  display: flex;\n}\n.wylib-menu .menu,\n.wylib-menu .submenus {\n  display: inline;\n}\n.wylib-menu > .menu {\n  width: calc(100% - 6px);\n  position: relative;\n}\n.wylib-menu .menu tr:hover {\n  background: lightblue;\n}\n.wylib-menu .menu table {\n  border-collapse: collapse;\n  background: #f6f6f6;\n  user-select: none;\n}\n.wylib-menu .menu td {\n  white-space: nowrap;\n  padding-left: 4px;\n  padding-right: 4px;\n  border: 1px solid #f2f2f2;\n}\n.wylib-menu .icon {\n  display: block;\n  fill: #2482a4;\n  stroke: #222222;\n}\n", ""]);
 
 
 
@@ -7699,7 +7705,7 @@ exports.push([module.i, "\n.wylib-menu {\n  min-height: 3em;\n  display: flex;\n
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-menudock {\n  border: 1px solid #666688;\n  border-bottom: 0;\n  border-radius: 4px 4px 0 0;\n  padding: 0;\n}\n.wylib-menudock .buttons {\n  display: flex;\n}\n.wylib-menudock wylib-button {\n  flex: 0 0 auto;\n}\n.wylib-menudock > .wylib-win {\n  position: relative;\n  top: 1em;\n}\n", ""]);
+exports.push([module.i, ".wylib-menudock {\n  border: 1px solid #666688;\n  border-bottom: 0;\n  border-radius: 4px 4px 0 0;\n  padding: 0;\n}\n.wylib-menudock .buttons {\n  display: flex;\n}\n.wylib-menudock wylib-button {\n  flex: 0 0 auto;\n}\n.wylib-menudock > .wylib-win {\n  position: relative;\n  top: 1em;\n}\n", ""]);
 
 
 
@@ -7714,7 +7720,7 @@ exports.push([module.i, "\n.wylib-menudock {\n  border: 1px solid #666688;\n  bo
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 1000;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n", ""]);
+exports.push([module.i, ".wylib-modal {\n  position: absolute;\n  justify-content: center;\n  align-items: center;\n  min-width: 100%;\n  min-height: 100%;\n  left: 0;\n  top: 0;\n  background: rgba(230, 230, 230, 0.5);\n  z-index: 1000;\n}\n.wylib-modal .dialog {\n  position: relative;\n  flex: 0 0 auto;\n  min-width: 50%;\n  max-width: 90%;\n  padding: 5px;\n  border-radius: 6px;\n  border-style: solid;\n}\n", ""]);
 
 
 
@@ -7729,7 +7735,7 @@ exports.push([module.i, "\n.wylib-modal {\n  position: absolute;\n  justify-cont
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-pop * {\n  box-sizing: border-box;\n}\n.wylib-pop > .header {\n  width: 100%;\n}\n", ""]);
+exports.push([module.i, ".wylib-pop * {\n  box-sizing: border-box;\n}\n.wylib-pop > .header {\n  width: 100%;\n}\n", ""]);
 
 
 
@@ -7744,7 +7750,7 @@ exports.push([module.i, "\n.wylib-pop * {\n  box-sizing: border-box;\n}\n.wylib-
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-rep {\n  width: 100%;\n  min-height: 100%;\n  border: 1px solid #c0c0c0;\n}\n", ""]);
+exports.push([module.i, ".wylib-rep {\n  width: 100%;\n  min-height: 100%;\n  border: 1px solid #c0c0c0;\n}\n", ""]);
 
 
 
@@ -7759,7 +7765,7 @@ exports.push([module.i, "\n.wylib-rep {\n  width: 100%;\n  min-height: 100%;\n  
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-strdoc .header {\n  position: fixed;\n  top: 0;\n  left: 0;\n  opacity: 0.2;\n}\n.wylib-strdoc .header:hover {\n  opacity: 0.94;\n}\n.wylib-strdoc .header .menudock {\n  border: 0;\n}\n@media print {\n.wylib-strdoc .header {\n    display: none;\n}\n}\n.wylib-strdoc .preview .title {\n  font-size: 120%;\n  text-align: center;\n  width: 100%;\n  padding-bottom: 0.5em;\n}\n.wylib-strdoc .edit .title {\n  width: 30%;\n}\n.wylib-strdoc div .text.input {\n  margin: 0px 1em 4px 0px;\n}\n.wylib-strdoc .content {\n  cursor: move;\n}\n.wylib-strdoc .content .input {\n  cursor: text;\n}\n.wylib-strdoc textarea {\n  width: 100%;\n}\n", ""]);
+exports.push([module.i, ".wylib-strdoc .header {\n  position: fixed;\n  top: 0;\n  left: 0;\n  opacity: 0.2;\n}\n.wylib-strdoc .header:hover {\n  opacity: 0.94;\n}\n.wylib-strdoc .header .menudock {\n  border: 0;\n}\n@media print {\n.wylib-strdoc .header {\n    display: none;\n}\n}\n.wylib-strdoc .preview .title {\n  font-size: 120%;\n  text-align: center;\n  width: 100%;\n  padding-bottom: 0.5em;\n}\n.wylib-strdoc .edit .title {\n  width: 30%;\n}\n.wylib-strdoc div .text.input {\n  margin: 0px 1em 4px 0px;\n}\n.wylib-strdoc .content {\n  cursor: move;\n}\n.wylib-strdoc .content .input {\n  cursor: text;\n}\n.wylib-strdoc textarea {\n  width: 100%;\n}\n", ""]);
 
 
 
@@ -7789,7 +7795,7 @@ exports.push([module.i, "", ""]);
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-svg .tools {\n  position: absolute;\n  right: 10px;\n}\n.wylib-svg button {\n  width: 100%;\n  padding: 4px;\n  background: #bbddff;\n}\n.wylib-svg .sliders input {\n  display: block;\n}\n.wylib-svg .menu {\n  position: absolute;\n  right: 0.25em;\n  top: 0.25em;\n}\n.wylib-svg .menu .icon {\n  height: 1em;\n  width: 1em;\n}\n.wylib-svg .toolbox {\n  opacity: 0.2;\n  display: none;\n  border: 1px solid blue;\n  border-radius: 4px;\n  padding: 4px;\n  transition: all 500ms ease-in-out;\n}\n.menu:hover + .toolbox {\n  display: block;\n  opacity: 1;\n}\n.wylib-svg .toolbox:hover {\n  opacity: 1;\n  display: block;\n}\n.wylib-svg .graph {\n  position: absolute;\n}\n", ""]);
+exports.push([module.i, ".wylib-svg .tools {\n  position: absolute;\n  right: 10px;\n}\n.wylib-svg button {\n  width: 100%;\n  padding: 4px;\n  background: #bbddff;\n}\n.wylib-svg .sliders input {\n  display: block;\n}\n.wylib-svg .menu {\n  position: absolute;\n  right: 0.25em;\n  top: 0.25em;\n}\n.wylib-svg .menu .icon {\n  height: 1em;\n  width: 1em;\n}\n.wylib-svg .toolbox {\n  opacity: 0.2;\n  display: none;\n  border: 1px solid blue;\n  border-radius: 4px;\n  padding: 4px;\n  transition: all 500ms ease-in-out;\n}\n.menu:hover + .toolbox {\n  display: block;\n  opacity: 1;\n}\n.wylib-svg .toolbox:hover {\n  opacity: 1;\n  display: block;\n}\n.wylib-svg .graph {\n  position: absolute;\n}\n", ""]);
 
 
 
@@ -7804,7 +7810,7 @@ exports.push([module.i, "\n.wylib-svg .tools {\n  position: absolute;\n  right: 
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-win {\n  touch-action: none;\n  position: absolute;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 14px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  margin: 0px 2px 1px 2px;\n  overflow-x: auto;\n  overflow-y: auto;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n", ""]);
+exports.push([module.i, ".wylib-win {\n  touch-action: none;\n  position: absolute;\n  border-style: solid;\n}\n.wylib-win.toplevel {\n  z-index: 1;\n  min-width: 120px;\n  min-height: 14px;\n}\n.wylib-win > .header {\n  margin: 1px 1px 0 1px;\n  display: flex;\n  flex-flow: row nowrap;\n}\n.wylib-win > .menus,\n.wylib-win > operations {\n  flex: 0 0 auto;\n}\n.wylib-win .header > .handle {\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n}\n.wylib-win .header .handle .label {\n  padding: 0 0 0 0.3em;\n  position: relative;\n  display: inline-block;\n  align-self: flex-end;\n  white-space: nowrap;\n}\n.wylib-win .headerbar {\n  display: flex;\n}\n.wylib-win .childmenu {\n  display: flex;\n  align-items: flex-end;\n}\n.wylib-win .content {\n  margin: 0px 2px 1px 2px;\n  overflow-x: auto;\n  overflow-y: auto;\n  z-index: 1;\n}\n.wylib-win .wylib-menu {\n  z-index: 2;\n}\n", ""]);
 
 
 
@@ -7819,7 +7825,7 @@ exports.push([module.i, "\n.wylib-win {\n  touch-action: none;\n  position: abso
 
 exports = module.exports = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js")(false);
 // Module
-exports.push([module.i, "\n.wylib-mdew table {\n  border-collapse: collapse;\n  width: 100%;\n}\n.wylib-mdew table .label {\n  text-align: right;\n}\n.wylib-mdew table tr:nth-child(even) .label {\n  background: #f0f0f0;\n}\n.wylib-mdew .wylib-mdew-hide {\n  display: none;\n  background: #ff8080;\n}\n.wylib-mdew td {\n  border: 1px solid #e8e8e8;\n  white-space: nowrap;\n}\n", ""]);
+exports.push([module.i, ".wylib-mdew table {\n  border-collapse: collapse;\n  width: 100%;\n}\n.wylib-mdew table .label {\n  text-align: right;\n}\n.wylib-mdew table tr:nth-child(even) .label {\n  background: #f0f0f0;\n}\n.wylib-mdew .wylib-mdew-hide {\n  display: none;\n  background: #ff8080;\n}\n.wylib-mdew td {\n  border: 1px solid #e8e8e8;\n  white-space: nowrap;\n}\n", ""]);
 
 
 
@@ -9146,7 +9152,7 @@ var render = function() {
             on: {
               keyup: function($event) {
                 if (
-                  !("button" in $event) &&
+                  !$event.type.indexOf("key") &&
                   _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
                 ) {
                   return null
@@ -9173,7 +9179,7 @@ var render = function() {
                     attrs: { title: tab.lang ? tab.lang.help : null },
                     on: {
                       click: function($event) {
-                        _vm.tabSelect(tab.tag)
+                        return _vm.tabSelect(tab.tag)
                       }
                     }
                   },
@@ -9201,7 +9207,7 @@ var render = function() {
                     },
                     on: {
                       click: function($event) {
-                        _vm.postAppMenu($event)
+                        return _vm.postAppMenu($event)
                       }
                     }
                   }),
@@ -9245,16 +9251,21 @@ var render = function() {
               _vm.modal.posted
                 ? _c("wylib-modal", {
                     attrs: { state: _vm.modal },
-                    scopedSlots: _vm._u([
-                      {
-                        key: "default",
-                        fn: function(ws) {
-                          return _c("wylib-dialog", {
-                            attrs: { state: ws.state }
-                          })
+                    scopedSlots: _vm._u(
+                      [
+                        {
+                          key: "default",
+                          fn: function(ws) {
+                            return _c("wylib-dialog", {
+                              attrs: { state: ws.state }
+                            })
+                          }
                         }
-                      }
-                    ])
+                      ],
+                      null,
+                      false,
+                      750108199
+                    )
                   })
                 : _vm._e(),
               _vm._v(" "),
@@ -9393,7 +9404,7 @@ var render = function() {
                 style: _vm.rowStyle(site.selected),
                 on: {
                   click: function($event) {
-                    _vm.selectSite($event, idx)
+                    return _vm.selectSite($event, idx)
                   },
                   dblclick: function() {
                     _vm.connectSite()
@@ -9776,90 +9787,90 @@ var render = function() {
               domProps: { checked: _vm.userValue },
               on: {
                 change: function($event) {
-                  _vm.input($event, $event.target.checked)
+                  return _vm.input($event, $event.target.checked)
                 }
               }
             })
           ])
         : _vm.state.style == "mle"
-          ? _c("textarea", {
+        ? _c("textarea", {
+            ref: "input",
+            style: _vm.genStyle,
+            attrs: {
+              rows: _vm.height,
+              cols: _vm.width,
+              autofocus: _vm.state.focus,
+              disabled: _vm.disabled
+            },
+            domProps: { value: _vm.userValue },
+            on: { input: _vm.input }
+          })
+        : _vm.state.style == "pdm"
+        ? _c(
+            "select",
+            {
               ref: "input",
               style: _vm.genStyle,
-              attrs: {
-                rows: _vm.height,
-                cols: _vm.width,
-                autofocus: _vm.state.focus,
-                disabled: _vm.disabled
-              },
+              attrs: { autofocus: _vm.state.focus, disabled: _vm.disabled },
               domProps: { value: _vm.userValue },
               on: { input: _vm.input }
-            })
-          : _vm.state.style == "pdm"
-            ? _c(
-                "select",
-                {
-                  ref: "input",
-                  style: _vm.genStyle,
-                  attrs: { autofocus: _vm.state.focus, disabled: _vm.disabled },
-                  domProps: { value: _vm.userValue },
-                  on: { input: _vm.input }
-                },
-                _vm._l(_vm.values, function(val) {
-                  return _c("option", {
-                    attrs: { label: val.title, title: val.help },
-                    domProps: { value: val.value }
-                  })
-                }),
-                0
-              )
-            : _vm.state.style == "ent"
-              ? _c("input", {
-                  ref: "input",
-                  staticClass: "text",
-                  style: _vm.genStyle,
-                  attrs: {
-                    type: "text",
-                    autofocus: _vm.state.focus,
-                    placeholder: _vm.hint,
-                    disabled: _vm.disabled
-                  },
-                  domProps: { value: _vm.userValue },
-                  on: {
-                    input: _vm.input,
-                    keyup: function($event) {
-                      if (
-                        !("button" in $event) &&
-                        _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
-                      ) {
-                        return null
-                      }
-                      return _vm.submit($event)
-                    }
-                  }
-                })
-              : _c("input", {
-                  ref: "input",
-                  style: _vm.genStyle,
-                  attrs: {
-                    type: _vm.state.style,
-                    autofocus: _vm.state.focus,
-                    placeholder: _vm.hint,
-                    disabled: _vm.disabled
-                  },
-                  domProps: { value: _vm.userValue },
-                  on: {
-                    input: _vm.input,
-                    keyup: function($event) {
-                      if (
-                        !("button" in $event) &&
-                        _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
-                      ) {
-                        return null
-                      }
-                      return _vm.submit($event)
-                    }
-                  }
-                })
+            },
+            _vm._l(_vm.values, function(val) {
+              return _c("option", {
+                attrs: { label: val.title, title: val.help },
+                domProps: { value: val.value }
+              })
+            }),
+            0
+          )
+        : _vm.state.style == "ent"
+        ? _c("input", {
+            ref: "input",
+            staticClass: "text",
+            style: _vm.genStyle,
+            attrs: {
+              type: "text",
+              autofocus: _vm.state.focus,
+              placeholder: _vm.hint,
+              disabled: _vm.disabled
+            },
+            domProps: { value: _vm.userValue },
+            on: {
+              input: _vm.input,
+              keyup: function($event) {
+                if (
+                  !$event.type.indexOf("key") &&
+                  _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                ) {
+                  return null
+                }
+                return _vm.submit($event)
+              }
+            }
+          })
+        : _c("input", {
+            ref: "input",
+            style: _vm.genStyle,
+            attrs: {
+              type: _vm.state.style,
+              autofocus: _vm.state.focus,
+              placeholder: _vm.hint,
+              disabled: _vm.disabled
+            },
+            domProps: { value: _vm.userValue },
+            on: {
+              input: _vm.input,
+              keyup: function($event) {
+                if (
+                  !$event.type.indexOf("key") &&
+                  _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                ) {
+                  return null
+                }
+                return _vm.submit($event)
+              }
+            }
+          })
     ]
   )
 }
@@ -9940,7 +9951,7 @@ var render = function() {
                 },
                 on: {
                   click: function($event) {
-                    _vm.submit($event, but.tag)
+                    return _vm.submit($event, but.tag)
                   }
                 }
               })
@@ -10104,7 +10115,7 @@ var render = function() {
         attrs: { size: "1", icon: "play3", title: _vm.wMsg("litToSub") },
         on: {
           click: function($event) {
-            _vm.$emit("lower")
+            return _vm.$emit("lower")
           }
         }
       }),
@@ -10295,7 +10306,7 @@ var render = function() {
         on: {
           keyup: function($event) {
             if (
-              !("button" in $event) &&
+              !$event.type.indexOf("key") &&
               _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
             ) {
               return null
@@ -10316,7 +10327,7 @@ var render = function() {
         attrs: { size: "1", icon: "close", title: _vm.wMsg("litRemove") },
         on: {
           click: function($event) {
-            _vm.$emit("close")
+            return _vm.$emit("close")
           }
         }
       })
@@ -10387,7 +10398,7 @@ var render = function() {
             attrs: { title: _vm.wMsg("lstRemove") },
             on: {
               click: function($event) {
-                _vm.$emit("close")
+                return _vm.$emit("close")
               }
             }
           },
@@ -10409,7 +10420,7 @@ var render = function() {
                       item = val
                     },
                     close: function($event) {
-                      _vm.closeChild(index)
+                      return _vm.closeChild(index)
                     },
                     geometry: _vm.childGeometry
                   }
@@ -10423,10 +10434,10 @@ var render = function() {
                     },
                     submit: _vm.submit,
                     lower: function($event) {
-                      _vm.lower(index)
+                      return _vm.lower(index)
                     },
                     close: function($event) {
-                      _vm.closeChild(index)
+                      return _vm.closeChild(index)
                     },
                     insert: _vm.insert,
                     geometry: _vm.childGeometry
@@ -10474,10 +10485,10 @@ var render = function() {
               attrs: { title: item.lang ? item.lang.help : null },
               on: {
                 click: function($event) {
-                  _vm.execute(item.call, $event)
+                  return _vm.execute(item.call, $event)
                 },
                 mouseenter: function($event) {
-                  _vm.enterItem($event, item)
+                  return _vm.enterItem($event, item)
                 }
               }
             },
@@ -10491,53 +10502,51 @@ var render = function() {
                       domProps: { innerHTML: _vm._s(_vm.iconSvg(item.icon)) }
                     })
                   : fld == "lang"
-                    ? _c("div", [
-                        _vm._v(
-                          _vm._s(
-                            (item.lang ? item.lang.title : null) || item.idx
-                          )
-                        )
-                      ])
-                    : fld == "input" && item.menu
-                      ? _c("svg", {
-                          staticClass: "icon",
-                          staticStyle: { height: "1em", width: "1em" },
-                          domProps: { innerHTML: _vm._s(_vm.iconSvg("play3")) }
-                        })
-                      : fld == "input" &&
-                        item.input != undefined &&
-                        item.type == "checkbox"
-                        ? _c("input", {
-                            attrs: { type: "checkbox" },
-                            domProps: { checked: item.input() },
-                            on: {
-                              input: function($event) {
-                                item.input($event.target.checked)
-                              }
-                            }
-                          })
-                        : fld == "input" &&
-                          item.input != undefined &&
-                          item.type == "file"
-                          ? _c("input", {
-                              attrs: { type: "file" },
-                              on: {
-                                input: function($event) {
-                                  item.input($event.target.checked)
-                                }
-                              }
-                            })
-                          : fld == "input" && item.input != undefined
-                            ? _c("input", {
-                                attrs: { type: item.type },
-                                domProps: { value: item.input() },
-                                on: {
-                                  input: function($event) {
-                                    item.input($event.target.value)
-                                  }
-                                }
-                              })
-                            : _c("div", [_vm._v(_vm._s(item[fld]))])
+                  ? _c("div", [
+                      _vm._v(
+                        _vm._s((item.lang ? item.lang.title : null) || item.idx)
+                      )
+                    ])
+                  : fld == "input" && item.menu
+                  ? _c("svg", {
+                      staticClass: "icon",
+                      staticStyle: { height: "1em", width: "1em" },
+                      domProps: { innerHTML: _vm._s(_vm.iconSvg("play3")) }
+                    })
+                  : fld == "input" &&
+                    item.input != undefined &&
+                    item.type == "checkbox"
+                  ? _c("input", {
+                      attrs: { type: "checkbox" },
+                      domProps: { checked: item.input() },
+                      on: {
+                        input: function($event) {
+                          return item.input($event.target.checked)
+                        }
+                      }
+                    })
+                  : fld == "input" &&
+                    item.input != undefined &&
+                    item.type == "file"
+                  ? _c("input", {
+                      attrs: { type: "file" },
+                      on: {
+                        input: function($event) {
+                          return item.input($event.target.checked)
+                        }
+                      }
+                    })
+                  : fld == "input" && item.input != undefined
+                  ? _c("input", {
+                      attrs: { type: item.type },
+                      domProps: { value: item.input() },
+                      on: {
+                        input: function($event) {
+                          return item.input($event.target.value)
+                        }
+                      }
+                    })
+                  : _c("div", [_vm._v(_vm._s(item[fld]))])
               ])
             }),
             0
@@ -10790,14 +10799,19 @@ var render = function() {
         _vm.modal.posted
           ? _c("wylib-modal", {
               attrs: { state: _vm.modal },
-              scopedSlots: _vm._u([
-                {
-                  key: "default",
-                  fn: function(ws) {
-                    return _c("wylib-dialog", { attrs: { state: ws.state } })
+              scopedSlots: _vm._u(
+                [
+                  {
+                    key: "default",
+                    fn: function(ws) {
+                      return _c("wylib-dialog", { attrs: { state: ws.state } })
+                    }
                   }
-                }
-              ])
+                ],
+                null,
+                false,
+                750108199
+              )
             })
           : _vm._e()
       ],
@@ -11028,7 +11042,7 @@ var render = function() {
                       staticClass: "input",
                       on: {
                         click: function($event) {
-                          _vm.$emit("delete", _vm.index)
+                          return _vm.$emit("delete", _vm.index)
                         }
                       }
                     },
@@ -11119,7 +11133,7 @@ var render = function() {
                 },
                 on: {
                   delete: function($event) {
-                    _vm.deleteSub(idx)
+                    return _vm.deleteSub(idx)
                   },
                   add: function(arr, skip) {
                     _vm.addSubs(idx, arr, skip)
@@ -11297,7 +11311,7 @@ var render = function() {
             attrs: { title: "Reload chart from its source data" },
             on: {
               click: function($event) {
-                _vm.$emit("refresh")
+                return _vm.$emit("refresh")
               }
             }
           },
@@ -11311,7 +11325,7 @@ var render = function() {
             attrs: { title: "Reload chart and reinitialize arrangement" },
             on: {
               click: function($event) {
-                _vm.$emit("reset")
+                return _vm.$emit("reset")
               }
             }
           },
@@ -11338,7 +11352,7 @@ var render = function() {
             domProps: { value: _vm.state.pushForce },
             on: {
               __r: function($event) {
-                _vm.$set(_vm.state, "pushForce", $event.target.value)
+                return _vm.$set(_vm.state, "pushForce", $event.target.value)
               }
             }
           }),
@@ -11363,7 +11377,7 @@ var render = function() {
             domProps: { value: _vm.state.pullForce },
             on: {
               __r: function($event) {
-                _vm.$set(_vm.state, "pullForce", $event.target.value)
+                return _vm.$set(_vm.state, "pullForce", $event.target.value)
               }
             }
           }),
@@ -11388,7 +11402,7 @@ var render = function() {
             domProps: { value: _vm.state.randForce },
             on: {
               __r: function($event) {
-                _vm.$set(_vm.state, "randForce", $event.target.value)
+                return _vm.$set(_vm.state, "randForce", $event.target.value)
               }
             }
           }),
@@ -11628,14 +11642,21 @@ var render = function() {
           _vm.topLevel && _vm.modal.posted
             ? _c("wylib-modal", {
                 attrs: { state: _vm.modal },
-                scopedSlots: _vm._u([
-                  {
-                    key: "default",
-                    fn: function(ws) {
-                      return _c("wylib-dialog", { attrs: { state: ws.state } })
+                scopedSlots: _vm._u(
+                  [
+                    {
+                      key: "default",
+                      fn: function(ws) {
+                        return _c("wylib-dialog", {
+                          attrs: { state: ws.state }
+                        })
+                      }
                     }
-                  }
-                ])
+                  ],
+                  null,
+                  false,
+                  750108199
+                )
               })
             : _vm._e()
         ],
@@ -15564,7 +15585,7 @@ var Wyseman = {
 
     if (!host || !port) return; //If still nothing to connect to, give up
     this.url = address + '/?' + query(); //Build websocket URL with username and token
-    //console.log("Connect: ", this.url)
+    console.log("Connect: ", this.url);
     this.socket = new WebSocket(this.url); //Try to connect
 
     this.socket.addEventListener('error', function (event) {
