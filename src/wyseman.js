@@ -53,7 +53,7 @@ console.log("Connect: ", this.url)
     this.socket = new WebSocket(this.url)		//Try to connect
 
     this.socket.addEventListener('error', event => {	//If we get an error connecting
-//console.log("Error connecting to site:", address)
+//console.log("Error connecting to site:", address, event)
       this.notify(this.address = '')
     })
 
@@ -245,7 +245,7 @@ if (error) console.log("Error:", error, errView, code, cache)
       return
     }
     let msg = Object.assign({id, action}, opt)		//Construct message packet
-//console.log("Write to backend:" + this.url + " Data:" + JSON.stringify(msg))
+//console.log("Write to backend:","Data:" + JSON.stringify(msg))
     this.socket.send(JSON.stringify(msg))		//send it to the back end
   },			//request
 
@@ -265,6 +265,7 @@ if (error) console.log("Error:", error, errView, code, cache)
       delete this.callbacks[view][id]
       return
     }
+//console.log("Register:", id, view)
     if (!this.callbacks[view]) this.callbacks[view] = {}
     this.callbacks[view][id] = cb
     this.request(id + '~' + view, 'meta', view, cb)
