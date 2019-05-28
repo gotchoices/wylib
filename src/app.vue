@@ -59,6 +59,17 @@ import Dialog from './dialog.vue'
 import Win from './win.vue'
 import State from './state.js'
 
+const WmDefs = {		//English defaults, as we may not yet be connected
+  appServer:	{title:'Server',	help:'Toggle menu for connecting to various servers'},
+  appServerURL:	{title:'Server URL',	help:'The domain and port of the server you are currently connected to'},
+  appNoConnect:	{title:'Not Connected',	help:'The application is not connected to a backend server'},
+  appSave:	{title:'Save State',	help:'Save application state to the backend'},
+  appSaveAs:	{title:'Save State As',	help:'Save application state to the backend using a named configuration'},
+  appRestore:	{title:'Load State',	help:'Load application from a previously saved state'},
+  appDefault:	{title:'Default State',	help:'Initialize the application to a default state'},
+  appEditState:	{title:'Edit State',	help:'Preview a list of saved states for this application'},
+}
+
 export default {
   name: 'wylib-app',
   components: {'wylib-connect': Connect, 'wylib-button': Button, 'wylib-menu': Menu, 'wylib-win': Win, 'wylib-dialog': Dialog, 'wylib-modal':Modal, 'wylib-dbp': Dbp},
@@ -82,11 +93,7 @@ export default {
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
-    wm:			{			//English defaults
-      appServer:	{title:'Server',	help:'Toggle menu for connecting to various servers'},
-      appServerURL:	{title:'Server URL',	help:'The domain and port of the server you are currently connected to'},
-      appNoConnect:	{title:'Not Connected',	help:'The application is not connected to a backend server'},
-    },
+    wm:			WmDefs,
   }},
   provide() { return {
     top: () => {return this.top}
@@ -157,13 +164,18 @@ export default {
       })
     },
     beforeUnload() {
-//console.log("About to unload.  Saving state:", JSON.stringify(this.state))
+console.log("About to unload.  Saving state:", this.state)
       if (this.persistent)
         Local.set(this.tagTitle, this.state, true)
       else
         Local.reset(this.tagTitle)
     },
-    submitPW(ev) {Local.pw(ev)},
+    submitPW(ev) {
+      if (!Local.pw(ev)) {			//If the user signaled a reset?
+        this.persistent = false
+        location.reload()
+      }
+    },
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
         if (data.msg) this.wm = data.msg
