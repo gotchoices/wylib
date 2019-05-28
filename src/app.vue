@@ -96,6 +96,7 @@ export default {
     siteConnected: function() {
       return this.currentSite || this.lang('appNoConnect',1,'Not Connected')
     },
+    tagTitle: function () {return this.tag || this.title},
     appLang: function () {
       return (this.wm ? this.wm['app.'+this.tag] : null) || (this.title.title ? this.title : {title: this.title})
     },
