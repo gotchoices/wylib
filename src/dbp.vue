@@ -214,7 +214,6 @@ export default {
 
     loadBy() {
       this.state.filter.posted = !this.state.filter.posted
-//      if (this.state.filter.posted) this.filtPosts++
     },
 
     colMenuHandler(e, index, x, y) {
@@ -284,7 +283,7 @@ console.log("Not yet implemented")
     'state.edit.posted': function(newVal, oldVal) {
       if (!oldVal && newVal) this.editPosts++
     },
-    'state.file.posted': function(newVal, oldVal) {
+    'state.filter.posted': function(newVal, oldVal) {
       if (!oldVal && newVal) this.filtPosts++
     },
     'state.dbView': function(newVal, oldVal) {		//If we change our view, reset data, columns
