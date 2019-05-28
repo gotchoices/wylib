@@ -34,7 +34,7 @@ import Win from './win.vue'
 import Dbp from '../src/dbp.vue'
 
 export default {
-  name: 'wylib-prelaunch',
+  name: 'wylib-launch',
   components: {'wylib-win': Win, 'wylib-dbp': Dbp},
   props: {
     state:	{type: Object, default: ()=>({})},
@@ -83,8 +83,8 @@ export default {
     }
   },
 
-  created: function() {
-
+  beforeMount: function() {
+    Com.stateCheck(this)
     Wyseman.register(this.id+'vm', this.view, (data, err) => {
       if (err) {console.log(err.msg); return}
       this.viewMeta = data
@@ -94,7 +94,6 @@ export default {
       let launchLang = this.viewMeta.msg['launch.title'] || {title:this.viewMeta.title, help:this.viewMeta.help}
       if (this.viewMeta.title)
         this.$parent.$emit('customize', this.tag, launchLang)
-
       if (this.launchNum > 0 && Object.keys(this.state.windows).length <= 0)
         for (let i = 0; i < this.launchNum; i++) this.addWin()
     })
@@ -102,11 +101,8 @@ export default {
       if (data.msg) this.wm = data.msg
     })
   },
-  
-  beforeMount: function() {
-    Com.stateCheck(this)
-  },
 }
+
 </script>
 <style lang='less'>
 .wylib-launch > .header {
