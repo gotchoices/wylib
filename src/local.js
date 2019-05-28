@@ -6,7 +6,9 @@
 // null (don't store), '' (stored unencrypted), <prompt> (stored with a password).
 // The app data itself is stored, if enabled, under the key: wylib_<appTag>
 //- TODO:
-//- Optionally encrypt/decrypt data stored in localStorage
+//X- Optionally encrypt/decrypt data stored in localStorage
+//- Erase local storage after N bad password attempts
+//- 
 //- 
 const Com = require('./common')
 
@@ -19,16 +21,15 @@ module.exports = {
     this.context = context
     this.appTag = appTag
     this.readyCB = cb
-    let wylibInfo = this.getLocal(LocalInfo)
-      , appInfo = this.appInfo = (wylibInfo ? wylibInfo[appTag] : undefined)
+    let wylibInfo = this.getLocal(LocalInfo)		//Stored passphrase prompts for any/all apps
+      , appInfo = this.appInfo = (wylibInfo ? wylibInfo[appTag] : undefined)	//Prompt for this app
       , appIdx = LocalTag + appTag
-      , appData = this.getLocal(appIdx)
 //console.log("Init local:", pwState, appTag, "info:", appInfo)
-    if (appInfo) {
+    if (appInfo) {					//Is there a prompt specified
       pwState.prompt = appInfo
-    } else {
-      let savedCache = this.getLocal(LocalTag+this.appTag)
-      if (savedCache) localCache = savedCache
+    } else {						//No password is enabled
+      let savedCache = this.getLocal(appIdx)
+      if (savedCache) localCache = savedCache	//Initialize our cache from what was last saved
       cb(true)
     }
   },
@@ -38,17 +39,17 @@ module.exports = {
       , wm = this.context ? this.context.wm : {}
 //console.log("Local check mode for site", site, this.context)
 
-    if (this.appInfo == undefined) {
+    if (this.appInfo == undefined) {		//This is a first-time run; no stored info yet
       let dewDat = {q: 'Passphrase'}
         , p = 'password'
         , dews = top.dewArray([['q','!appLocalPrompt'], ['p1','!appLocalP1',p], ['p2','!appLocalP2',p]])
-      top.query('!appLocalAsk', dews, dewDat, (ans) => {
+      top.query('!appLocalAsk', dews, dewDat, (ans) => {	//Ask if user wants storage password protected
         if (ans != 'diaYes') this.appInfo = null
         else this.appInfo = dewDat.p1 ? dewDat.q : ''
         this.passPhrase = dewDat.p1
         let wylibInfo = this.setInfo(this.appInfo)
         this.flush()
-      }, (dat)=>{
+      }, (dat)=>{				//Validity check callback
         return (dat.q && (dat.p1 == dat.p2)) || (!dat.p1 && !dat.p2)	//Passwords must match
       })
     }
@@ -72,26 +73,40 @@ module.exports = {
     
   getLocal: function(idx) {		//Retrieve information from local storage
     let strVal = localStorage.getItem(idx)
-      , val = (strVal && strVal != 'undefined') ? JSON.parse(strVal) : null
-    return val
+    return (strVal && strVal != 'undefined') ? JSON.parse(strVal) : null
   },
     
   flush: function() {			//Optionaly write local cache to local storage
-    let idx = LocalTag+this.appTag
+    let idx = LocalTag + this.appTag
 //console.log("Write local storage:", this.appInfo, "pass:", this.passPhrase, localCache)
-    if (this.appInfo != null)
+    if (this.appInfo) {
+      let strVal = JSON.stringify(localCache)
+      Com.encrypt(this.passPhrase, strVal).then(v=>{
+        localStorage.setItem(idx, v)
+      })
+    } else {
       localStorage.setItem(idx, JSON.stringify(localCache))
+    }
   },
     
-  pw: function(ev) {		//Handle submission of user's password
+  pw: function(ev) {				//Handle submission of user's password
     this.passPhrase = ev.target.value
-//console.log("Got pw:", ev, this.passPhrase)
+console.log("Got pw:", ev, this.passPhrase)
     ev.target.value = null
     if (this.passPhrase == 'reset' && ev.shiftKey)
-      this.reset()
-    localCache = this.getLocal(LocalTag+this.appTag)
-//console.log("Got app data:", localCache)
-    if (this.readyCB) this.readyCB(true)
+      return false
+    let idx = LocalTag + this.appTag
+      , strVal = localStorage.getItem(idx)
+    if (strVal && strVal != 'undefined') {
+      Com.decrypt(this.passPhrase, strVal).then(v=>{
+        localCache = JSON.parse(v)
+console.log("Got app data:", localCache)
+        if (this.readyCB) this.readyCB(true)
+      }).catch(err=>{
+console.log("Incorrect password:", err)
+      })
+    }
+    return true
   },
 
   set: function(idx, data, flush) {		//Save information in local storage
@@ -112,9 +127,9 @@ module.exports = {
   reset: function() {				//Delete all app information stored in local storage and reload
     let re = new RegExp('^' + LocalTag)
       , idx = LocalTag + this.appTag
-    this.setInfo()				//Delete our app setting
-    if (localStorage[idx]) localStorage.removeItem(idx)		//Delete any state data
-    location.reload()
+console.log("Resetting localStorage:", idx)
+    localStorage.removeItem(idx)		//Delete any state data
+    this.setInfo()				//Delete passphrase prompt for this app
   },
 
 }
