@@ -25,7 +25,7 @@ export default {
     stroke:		String,
     toggled:		Boolean,
     disabled:		{type: Boolean, default: false},
-    size:		{type: Number, default: 1.2},
+    size:		{default: 1.2},
   },
   data() { return {
     pr:		require('./prefs'),
