@@ -9,14 +9,14 @@
 //X- How to enter a username for a new connection (with ticket)
 //X- Kickstart generates a ticket for admin
 //X- Can't connect without ticket
-//- Re-import on launch of any restored keys
-//- Save last-connected site and auto-connect, if possible
+//X- Re-import on launch of any restored keys
+//X- Save last-connected site and auto-connect, if possible
+//X- Can store keys in browser localStorage
 //- 
 //- Do I need bwm() anymore if I use $set(this,'wm',msg)?
-//- Can only store one key at a time with same host, port, user
-//- Can store keys in browser localStorage
-//- Can password-protect keys exported, and/or stored in localStorage
-//- Get automatic reconnect working again
+//- Should only be able to store one key at a time with same host, port, user
+//- Can password-protect keys exported to a file
+//- Get automatic connect retry working again? (for example, after killing backend)
 //- 
 
 <template>
@@ -76,7 +76,7 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
   conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
 }
-const SiteKey = 'connectSites'
+const SiteKey = 'connectSites'		//Hard-coded keys for localStorage
 const LastKey = 'lastSite'
 
 export default {
@@ -93,16 +93,16 @@ export default {
     dock:		{},		//State for menu dock
     currentSite:	null,		//URL we are connected to, if any
     status:		null,		//Name of a language key to display in status area
-    tryEvery:		CountDown,
-    retryIn:		2,
-    tryTimer:		null,
+//    tryEvery:		CountDown,	//Fixme: reimplement auto retry
+//    retryIn:		2,
+//    tryTimer:		null,
   }},
   inject: ['top'],
   computed: {
     id() {return 'con_' + this._uid + '_'},
     selectedSite()  {return (this.lastSelect == null) ? null : this.sites[this.lastSelect]},
     connected() {return !!this.currentSite},
-    tryView() {return this.tryTimer ? this.retryIn : null},
+//    tryView() {return this.tryTimer ? this.retryIn : null},
     dockConfig: function() { return [
       {idx:'con', lang:this.wm.conConnect, call:this.togConn,   icon:'link',   shortcut:true, toggled:this.connected},
       {idx:'sub', lang:this.wm.conDelete,  call:this.delSites,  icon:'minus',  shortcut:true},
@@ -110,7 +110,7 @@ export default {
     ]},
   },
   methods: {
-    bwm(key, extend) {
+    bwm(key, extend) {		//Get a string from hardcoded language, or from data dictionary if possible
       let theLang =  this.wm[key] || WmDefs[key] || {}
       if (extend) theLang.help += ` (${extend})`
       return theLang
@@ -118,11 +118,11 @@ export default {
     lang(key, title, defVal='') {
       return this.bwm(key)[title ? 'title' : 'help'] || defVal
     },
-    keyIcon(site) {
+    keyIcon(site) {		//What icon to display in the site list
       let icon = site.priv ? 'key' : (site.token ? 'ticket' : 'exclaim')
       return Icons(icon)
     },
-    keyStyle(site) {
+    keyStyle(site) {		//How the key/ticket icon displays in the site list
       let color = site.priv ? 'gold' : (site.token && site.user) ? 'green' : 'red'
       return {
         height: '1.1em', width: '1.1em',
@@ -134,17 +134,17 @@ export default {
       backgroundColor: sel ? this.pr.highlightBackground : this.pr.dataBackground,
       userSelect:'none'
     }},
-    selectSite(ev, idx) {			//Select, deselect a site
-      if (ev.shiftKey) {
+    selectSite(ev, idx) {			//Select, deselect a site from the list
+      if (ev.shiftKey) {			//Range select
         if (this.lastSelect != null) {
           let min = Math.min(this.lastSelect, idx), max = Math.max(this.lastSelect, idx)
           for(let i = min; i <= max; i++) this.sites[i].selected = true
         } else {
           this.sites[idx].selected = true
         }
-      } else if (ev.ctrlKey || ev.metaKey) {
+      } else if (ev.ctrlKey || ev.metaKey) {	//Multiple sselect
         this.sites[idx].selected = !this.sites[idx].selected
-      } else {
+      } else {					//Single select
         this.sites.forEach(el=>{el.selected = false})
         this.sites[idx].selected = true
       }
@@ -158,14 +158,13 @@ export default {
       if (this.selectedSite && !ev.shiftKey)
        this.$nextTick(()=>{this.connectSite()})
     },
-//    buf2ex(buffer) {				//Convert ArrayBuffer to hex string
-//      var s = '', h = '0123456789ABCDEF'
-//      ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
-//      return s
-//    },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
 //console.log("Key check:")
-      if (site.priv) cb(site)
+      if (location.protocol == 'http:') {
+        site.proto = 'ws:'			//Try to connect insecurely
+        cb(site)
+      } else if (site.priv)			//We already have a private key
+        cb(site)
       else if (Crypto) {			//Crypto API found
 //console.log("  generating key:")
         Crypto.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
@@ -173,15 +172,12 @@ export default {
           return Crypto.exportKey('spki', keyPair.publicKey)
         }).then(pubKey => {
           site.pub = Com.buf2hex(pubKey)
-//console.log("  pub:", site.pub)
+console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
-console.log("Error:", err.message)
+console.log("Error in keyCheck:", err.message)
           this.top().error(this.bwm('conCryptErr', err.message))
         })
-      } else if (location.protocol == 'http:') {
-        site.proto = 'ws:'			//Try to connect insecurely
-        cb(site)
       } else {
         this.top().error(this.bwm('conNoCrypto')) 
       }
@@ -191,8 +187,9 @@ console.log("Error:", err.message)
       if (this.db) {				//Pass db config info to connect query
         site.db = Com.buf2hex(Buffer(JSON.stringify(this.db)))
       }
-      if (site.user) cb()
-      else this.top().input(this.bwm('conUsername'), (ans, data)=>{
+      if (site.user)
+        cb()
+      else this.top().input(this.bwm('conUsername'), (ans, data)=>{	//Prompt for username
         if (ans == 'diaYes' && data.value) {
           let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == data.value))
 //console.log("Delete old key:", oldIdx)
@@ -204,24 +201,25 @@ console.log("Error:", err.message)
     },
     signCheck(site, cb) {			//Add a current signature with the key
 //console.log("Sign check:", site)
-      if (site.token) cb()			//Don't need to sign if we have a token
+      if (site.token) cb()			//Don't need to sign if our credential is a connection token
       else Com.ajax(window.location.origin + '/clientinfo', (data)=>{
         let encoder = new TextEncoder()
           , { ip, cookie, userAgent, date } = data
-          , message = JSON.stringify({ip, cookie, userAgent, date})	//Rebuild in this same order in backend!
+          , message = JSON.stringify({ip, cookie, userAgent, date})	//Must rebuild in this same order in the backend!
 //console.log("  Client data:", data, date, site.priv)
-        if (Crypto) {
+        if (site.proto == 'ws:') {
+          cb(site)
+        } else if (Crypto) {
           Crypto.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
 //console.log("  signed:", sign, date)
             site.sign = Com.buf2hex(sign)
             site.date = date
             cb()
           }, (err)=>{
-//console.log("Error:", err.message)
+console.log("Error in signCheck:", err.message)
             this.top().error(this.bwm('conCryptErr', err.message))
           })
-        } else if (site.proto == 'ws:') 
-          cb(site)
+        }
       })
     },
     connectSite(site = this.selectedSite) {		//Make connection to a specified site
@@ -230,7 +228,11 @@ console.log("Error:", err.message)
         this.signCheck(site, ()=>{
 //        this.tryEvery = CountDown			//Retry if disconnected
           Wyseman.connect(site)
+//          delete site.token				//No longer a connection token, now a credential
           Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
+          this.exportList(this.sites, (keyData)=>{	//Save keys locally in exportable format
+            Local.set(SiteKey, keyData)
+          })
         })
       }))
     },
@@ -241,6 +243,43 @@ console.log("Error:", err.message)
       }
       Local.set(SiteKey, this.sites)
     },
+
+    exportList(sites, cb) {				//Create exportable array of sites/keys
+      let expData = [], expKeys = sites.slice()		//Make local copy
+//console.log(" keys:", this.sites, expKeys)
+      for (let i = expKeys.length-1; i >= 0; i--) {
+        Crypto.exportKey('jwk', expKeys[i].priv).then(keyData=>{
+//console.log(" key data:", keyData)
+          let k = expKeys[i]
+          expData.unshift({host:k.host, port:k.port, user:k.user, jwk:keyData})
+          expKeys.splice(i,1)				//remove this key from our list
+          if (expKeys.length <= 0) cb(expData)		//when last one done, run callback
+        },(err)=>{
+//console.log("Error in exportSites:", err.message)
+          this.top().error(this.bwm('conCryptErr', err.message))
+        })
+      }
+    },
+
+    exportKeys(ev) {					//Write selected keys to a file
+//console.log("Export:", ev)
+      let expKeys = []					//Make local copy of the keys
+      for (let i = this.sites.length-1; i >= 0; i--) {		//Get just the selected ones, in reverse order
+        if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
+      }
+      this.exportList(expKeys, (keyData)=>{
+        if (keyData.length > 0) this.top().input(this.bwm('conExpFile'), (ans, file) => {	//Prompt for a filename
+          if (ans == 'diaYes' && file.value) {
+console.log("Export file:", file.value, keyData.length, keyData)
+            keyData = keyData.map(el=>{return {login: el}})	//Prefix each element with a descriptor
+            if (keyData.length == 1) keyData = keyData[0]	//Write 1 element long array as a single object rather than an array
+            let blob = new Blob([JSON.stringify(keyData)], {type: "text/plain;charset=utf-8"})
+            FileSaver.saveAs(blob, file.value)		//File saved as a browser download
+          }
+        }, 'keys.json')
+      })
+    },
+
     importKeys(ev) {					//Set/get ticket value
       Com.fileReader(ev.target, 1500, (fileData) => {
 //console.log("Keys data:", fileData)
@@ -262,7 +301,7 @@ console.log("Adding:", oldIdx)
                 site.priv = priv
                 Local.set(SiteKey, this.sites)
               }, (err)=>{
-console.log("Error:", err.message)
+console.log("Error in importKeys:", err.message)
                 this.top().error(this.bwm('conCryptErr', err.message))
               })
             }
@@ -275,40 +314,9 @@ console.log("Error:", err.message)
       })
     },
 
-    exportKeys(v) {					//Write selected keys to a file
-console.log("Export:")
-      let expData = [], expKeys = []			//Make local copy of the keys
-        , writeToFile = (keyData) => {
-            if (keyData.length > 0) this.top().input(this.bwm('conExpFile'), (ans, file) => {
-              if (ans == 'diaYes' && file.value) {
-console.log("Export file:", file.value)
-                if (keyData.length == 1) keyData = keyData[0]	//Write a single object rather than an array
-                let blob = new Blob([JSON.stringify(keyData)], {type: "text/plain;charset=utf-8"})
-                FileSaver.saveAs(blob, file.value)
-              }
-            }, 'keys.json')
-          }
-      for (let i = this.sites.length-1; i >= 0; i--) {		//Get just the selected ones, in reverse order
-        if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
-      }
-console.log(" keys:", this.sites, expKeys)
-      for (let i = 0; i < expKeys.length; i++) {	//Get just the selected ones
-        Crypto.exportKey('jwk', expKeys[i].priv).then(keyData=>{
-console.log(" key data:", keyData)
-          let k = expKeys[i]
-          expData.push({login: {host:k.host, port:k.port, user:k.user, jwk:keyData}})
-          expKeys.splice(i,1)
-          if (expKeys.length <= 0) writeToFile(expData)
-        },(err)=>{
-console.log("Error:", err.message)
-          this.top().error(this.bwm('conCryptErr', err.message))
-        })
-      }
-    },
-
     disconnect() {
 console.log("Disconnect:")
-      this.tryEvery = null		//And don't retry connect
+//      this.tryEvery = null		//And don't retry connect
       Wyseman.close()
     },
 
@@ -339,8 +347,9 @@ console.log("Disconnect:")
 
   mounted: function () {
     let last = Local.get(LastKey)
-    this.sites = Local.get(SiteKey) || []		//Get our list of favorites
-    this.sites.forEach(site=>{
+    this.sites = Local.get(SiteKey) || []		//Get our saved list of credentials
+    this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
+//console.log("Processing saved key:", site)
       if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
         if (site.host == last.host && site.port == last.port && site.user == last.user)
