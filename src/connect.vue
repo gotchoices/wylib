@@ -75,6 +75,8 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conNoCrypto: {title:'No Crypto', help:'No crypto library found in browser.  Make sure you are connected by https.'},
   conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
   conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
+  conConErr: {title:'Connection Error', help:'Your connection credentials may be invalid'},
+  conDiscon: {title:'Server Disconnected', help:'The backend server disconnected unexpectedly'},
 }
 const SiteKey = 'connectSites'		//Hard-coded keys for localStorage
 const LastKey = 'lastSite'
@@ -227,7 +229,9 @@ console.log("Error in signCheck:", err.message)
       this.keyCheck(site, ()=>this.userCheck(site, ()=>{
         this.signCheck(site, ()=>{
 //        this.tryEvery = CountDown			//Retry if disconnected
-          Wyseman.connect(site)
+          Wyseman.connect(site, (errCode)=>{
+            this.top().error(this.bwm(errCode))
+          })
 //          delete site.token				//No longer a connection token, now a credential
           Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
           this.exportList(this.sites, (keyData)=>{	//Save keys locally in exportable format
