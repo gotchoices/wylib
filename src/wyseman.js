@@ -36,7 +36,7 @@ const Wyseman = {
     this.notify(this.addr = '')
   },
 
-  connect(authConfig) {					//Attempt to connect to backend server
+  connect(authConfig, errorCB) {			//Attempt to connect to backend server
     let { proto, host, port } = authConfig
       , address = (proto || 'wss:') + '/' + host + ':' + port
       , query = () => {					//Build the URL query
@@ -53,13 +53,15 @@ console.log("Connect: ", this.url)
     this.socket = new WebSocket(this.url)		//Try to connect
 
     this.socket.addEventListener('error', event => {	//If we get an error connecting
-//console.log("Error connecting to site:", address, event)
+console.log("Error connecting to site:", address, event, event.error)
       this.notify(this.address = '')
+      errorCB('conConErr')
     })
 
     this.socket.addEventListener('close', event => {	//If the socket gets closed
-//console.log("Connection closed to:", address)
+console.log("Connection closed to:", address, event)
       this.notify(this.address = '')
+//      errorCB('conDiscon')
     })
 
     this.socket.addEventListener('open', event => {	//When socket is open and ready
@@ -277,7 +279,7 @@ if (error) console.log("Error:", error, errView, code, cache)
       return
     }
     if (!this.listens[chan]) this.listens[chan] = {}
-//console.log("Listening for:", chan)
+//console.log("Listening for:", id, chan)
     this.listens[chan][id] = cb
   },
 }
