@@ -23,7 +23,7 @@
   <div class="wylib-connect">
     <div class="header">
       <wylib-menudock :config="dockConfig" :state="dock" :lang="wm.conMenu"/>
-      <div>{{lang(status)}}</div>
+      <div>{{status}}</div>
     </div>
     <div class="label" :title="lang('conTitle')">{{lang('conTitle', 1)}}:</div>
     <div class="sitelist" :title="lang('conTitle')">
@@ -41,7 +41,8 @@
 </template>
 
 <script>
-const CountDown = 5
+const CountDown = 3
+//const FirstRetry = 3
 const Crypto = window.crypto.subtle
 const KeyConfig = {
   name: 'RSA-PSS',
@@ -70,14 +71,14 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conDelete:  {title:'Delete', help:'Remove this server from my list'},
   conImport:  {title:'Import Key', help:'Drag/drop file here or click to use a connection key or one-time access ticket'},
   conExport:  {title:'Export Keys', help:'Save connection keys to a file'},
-  conRetry:   {title:'Retrying', help:'Attempting to connect again'},
+  conRetry:   {title:'Retrying in', help:'Will attempt to connect again in this many seconds'},
   conUsername: {title:'Username', help:'Input the authorized username you will connect by'},
   conNoCrypto: {title:'No Crypto', help:'No crypto library found in browser.  Make sure you are connected by https.'},
   conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
   conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
   conConErr: {title:'Connection Error', help:'Your connection credentials may be invalid'},
-  conDiscon: {title:'Server Disconnected', help:'The backend server disconnected unexpectedly'},
 }
+//  conDiscon: {title:'Server Disconnected', help:'The backend server disconnected unexpectedly'},	Not used?
 const SiteKey = 'connectSites'		//Hard-coded keys for localStorage
 const LastKey = 'lastSite'
 
@@ -92,12 +93,13 @@ export default {
     wm:			WmDefs,		//Language data
     sites:		null,		//site keys we have in memory
     lastSelect:		null,		//index of the last one clicked on
+    lastConnected:	null,		//site object we were last connected to
     dock:		{},		//State for menu dock
     currentSite:	null,		//URL we are connected to, if any
-    status:		null,		//Name of a language key to display in status area
-//    tryEvery:		CountDown,	//Fixme: reimplement auto retry
-//    retryIn:		2,
-//    tryTimer:		null,
+    status:		null,		//Status message to display in window
+    tryEvery:		CountDown,	//Fixme: reimplement auto retry
+    retryIn:		CountDown,
+    tryTimer:		null,
   }},
   inject: ['top'],
   computed: {
@@ -144,7 +146,7 @@ export default {
         } else {
           this.sites[idx].selected = true
         }
-      } else if (ev.ctrlKey || ev.metaKey) {	//Multiple sselect
+      } else if (ev.ctrlKey || ev.metaKey) {	//Multiple select
         this.sites[idx].selected = !this.sites[idx].selected
       } else {					//Single select
         this.sites.forEach(el=>{el.selected = false})
@@ -228,7 +230,8 @@ console.log("Error in signCheck:", err.message)
 //console.log("Connecting to:", site, window.location.origin)
       this.keyCheck(site, ()=>this.userCheck(site, ()=>{
         this.signCheck(site, ()=>{
-//        this.tryEvery = CountDown			//Retry if disconnected
+          this.tryEvery = CountDown			//Retry if disconnected
+          this.lastConnected = site			//Remember where we last connected to
           Wyseman.connect(site, (errCode)=>{
             this.top().error(this.bwm(errCode))
           })
@@ -320,27 +323,23 @@ console.log("Error in importKeys:", err.message)
 
     disconnect() {
 console.log("Disconnect:")
-//      this.tryEvery = null		//And don't retry connect
+      this.tryEvery = null		//And don't retry connect
       Wyseman.close()
     },
 
-//Disabled for now
-//    retryConnect(init) {
-//console.log("Retry connect", this.currentSite, this.tryEvery, this.retryIn)
-//      if (this.currentSite) {			//If we got reconnected
-//        this.retryIn = this.tryEvery = CountDown
-//        this.tryTimer = null
-//      } else if (this.retryIn <= 0) {		//If we counted down to zero
-//console.log("  try connect", this.currentSite, this.retryIn)
-//        Wyseman.connect()			//Try a reconnect, next time we'll wait longer
-//        this.retryIn = this.tryEvery++
-//        this.tryTimer = null
-//      } else {
-//        this.retryIn--				//Else keep counting down
+    retryConnect() {
+//console.log("Retry connect", this.lastConnected, this.tryEvery, this.retryIn, this.currentSite)
+      if (this.retryIn <= 0) {			//If we counted down to zero
+//console.log("  try connect:", this.lastConnected, "retryIn:", this.retryIn)
+        if (this.lastConnected) this.connectSite(this.lastConnected)	//Try a reconnect
+        this.retryIn = this.tryEvery++		//next time we'll wait longer
+      } else {
+        this.retryIn--				//Else keep counting down
 //console.log("  decrement", this.retryIn)
-//        this.timer = setTimeout(this.retryConnect, 1000)
-//      }
-//    },
+      }
+      this.status = this.lang('conRetry', true) + ' (' + this.retryIn + ')'	//Update status message
+      this.timer = setTimeout(this.retryConnect, 1000)
+    },
   },
 
   created: function() {
@@ -353,6 +352,7 @@ console.log("Disconnect:")
     let last = Local.get(LastKey)
     this.sites = Local.get(SiteKey) || []		//Get our saved list of credentials
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
+      this.$set(site, 'selected', null)			//GUI needs to react to this
 //console.log("Processing saved key:", site)
       if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
@@ -370,15 +370,16 @@ console.log("Disconnect:")
 //console.log("newSite:", this.newSite)
 
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
-//console.log("Connect callback:", addr, this.retryIn)
+//console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
       this.$emit('site', this.currentSite = addr)	//Tell my parent about connection change
-//Disable retrying for now
-//      if (!addr && this.tryEvery && !this.tryTimer) {
-//        this.retryConnect()
-//      } else if (addr) {
-//        this.tryEvery = CountDown		//Retry if disconnected
-//        if (this.timer) {clearTimeout(this.timer); this.timer = null}
-//      }
+
+      if (!addr && this.tryEvery && !this.tryTimer) {
+        this.retryConnect()
+      } else if (addr) {
+        this.status = null
+        this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
+        if (this.timer) {clearTimeout(this.timer); this.timer = null}
+      }
     })
   },	//mounted
 }	//component
