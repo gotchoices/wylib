@@ -254,6 +254,7 @@ console.log("Error in signCheck:", err.message)
     exportList(sites, cb) {				//Create exportable array of sites/keys
       let expData = [], expKeys = sites.slice()		//Make local copy
 //console.log(" keys:", this.sites, expKeys)
+      if (!Crypto) return				//Can't do this for insecure connections?
       for (let i = expKeys.length-1; i >= 0; i--) {
         Crypto.exportKey('jwk', expKeys[i].priv).then(keyData=>{
 //console.log(" key data:", keyData)
