@@ -202,7 +202,7 @@ export default {
         if (err) this.top().error(err); else this.gridData = data
         if (this.state.edit.posted && this.state.autoLoad) this.executeRows()
       })
-      this.lastSpec = spec
+      if (spec) this.lastSpec = spec
     },
     reload(spec) {this.load(Object.assign(this.lastSpec, spec))},
     loadAll(ev) {this.load({where: null})},
