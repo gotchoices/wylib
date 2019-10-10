@@ -59,7 +59,7 @@ export default {
     wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
     submit(ev) {this.$emit('submit', ev)},
     addNew() {
-      this.state.items.push({left: null, not:false, oper: this.defOper})
+      this.state.items.push({left: null, not: false, oper: this.defOper})
       this.$emit('geometry', this, true)
     },
     closeChild(idx) {
@@ -121,11 +121,11 @@ console.log("Insert:" + idx + " State:" + state)
     this.$options.components['wylib-loglist'] = require('./loglist.vue').default
   },
 
-  watch: {
-    state: function() {
+//  watch: {
+//    state: function() {
 //console.log("LogList state: ", JSON.stringify(this.state))
-    }
-  },
+//    }
+//  },
 
   beforeUpdated: function() {
     this.conPath = "M 0 0"		//Start to build connector pathway
@@ -143,6 +143,7 @@ console.log("Insert:" + idx + " State:" + state)
   },
   beforeMount: function() {
     Com.stateCheck(this)
+//console.log("Loglist stateCheck:", this.state)
   },
   mounted: function() {
     this.$nextTick(() => {this.$emit('geometry', this, true)})

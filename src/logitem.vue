@@ -2,6 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
+//- Use local language preference to display Is/Not button
 //- 
 <template>
   <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}">
@@ -9,7 +10,7 @@
     <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
-    <button class="button isnot" :class="{not: state.not}" @click="state.not = !state.not" :title="wMsg('lstNot')">{{notFunction}}</button>
+    <button class="button isnot" :class="{not: state.not}" @click="notMe" :title="wMsg('lstNot')">{{notFunction}}</button>
     <select class="operator" v-model="state.oper" :title="wMsg('litCompare')">
       <option v-for="opt in config.oper" :value="opt.tag" :label="title(opt)" :title="help(opt)">{{title(opt)}}</option>
     </select>
@@ -81,6 +82,10 @@ export default {
       this.dragOver = false
       dragTarget = null
 //console.log("Leave: " + JSON.stringify(this.state))
+    },
+    notMe(ev) {
+//console.log("Notting:", ev, this.state.not)
+      this.state.not = !this.state.not
     },
   },
   watch: {
