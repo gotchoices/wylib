@@ -37,20 +37,14 @@ export default {
     config:	Array,
   },
   data() { return {
-    stateTpt:	{menu: {client: {}}},
+    stateTpt:	{menu: {client: {}, posted: false}},
   }},
 
-//  mounted: function() {
-//console.log("Menu components: " + JSON.stringify(this.$options.components))
-//    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
-//    this.$parent.$emit('customize', this.lang)
-//  },
   beforeMount: function() {
+//console.log("Menudock state: ", JSON.stringify(this.state, null, 2))
     Com.stateCheck(this)
     this.$parent.$emit('customize', this.lang)
   },
-  mounted: function() {
-  }
 }
 </script>
 
