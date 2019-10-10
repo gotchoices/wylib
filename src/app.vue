@@ -159,16 +159,16 @@ export default {
       this.top.confirm('!appDefault', (tag) => {
         if (tag == 'diaYes') {
           this.persistent = false
-          Local.reset()
+          location.reload()
         }
       })
     },
     beforeUnload() {
-console.log("About to unload.  Saving state:", this.state)
+console.log("About to unload.  Saving state:", JSON.stringify(this.state, null, 2))
       if (this.persistent)
-        Local.set(this.tagTitle, this.state, true)
+        Local.set(this.tagTitle, this.state, true)	//Save state
       else
-        Local.reset(this.tagTitle)
+        Local.reset(this.tagTitle)			//Clear any saved state
     },
     submitPW(ev) {
       if (!Local.pw(ev)) {			//If the user signaled a reset?
@@ -179,12 +179,12 @@ console.log("About to unload.  Saving state:", this.state)
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
         if (data.msg) this.wm = data.msg
-//console.log("App wm:", this.wm)
+console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
       })
 
       let savedState = Local.get(this.tagTitle)
-//console.log("Restoring state:", JSON.stringify(savedState))
+//console.log("Restoring state:", JSON.stringify(savedState, null, 2))
       if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
 
       State.listen(this.id+'sl', this.tag, (menuData) => {
