@@ -39,7 +39,7 @@ export default {
 //    viewMeta:	null,
 //    viewLang:	null,
     dbData:	[],
-    stateTpt:	{logic: {and: true, items: [{left: null, oper: '='}]}, dock: {}},
+    stateTpt:	{logic: {and: true, items: [{left: null, not: false, oper: '='}]}, dock: {}},
   }},
 
   computed: {			//Fixme: get langauge from wyseman/db
@@ -91,6 +91,7 @@ export default {
 
   beforeMount: function() {
     Com.stateCheck(this)
+//console.log("Dbs beforeMount state: ", this.state)
   },
 
   mounted: function() {
