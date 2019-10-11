@@ -35,7 +35,9 @@ X-   Dia: Modal data queries using existing data editing widgets
 - Implement ledgers
 -   Can view ledger in dbp?
 -   Can expand to split editor
+-   Gnucash import working
 - ERP GUI
+-   Standalone generic ERP works out of the box
 -   User editor
 -   System parameters
 -   Chart of Accounts editor

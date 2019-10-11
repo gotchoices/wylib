@@ -112,7 +112,7 @@ module.exports = function topHandler(context) {
   this.postModal = function(message, conf) {
     if (this.context.modal) {
       let client = Object.assign({message: this.makeMessage(message)}, conf)
-console.log("Modal:", this.context.modal, client)
+//console.log("Modal:", this.context.modal, client)
       Object.assign(this.context.modal, {posted: true, client})
     }
   }

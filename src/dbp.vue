@@ -284,6 +284,7 @@ console.log("Not yet implemented")
       if (!oldVal && newVal) this.editPosts++
     },
     'state.filter.posted': function(newVal, oldVal) {
+//console.log("filter (de)posted:", newVal)
       if (!oldVal && newVal) this.filtPosts++
     },
     'state.dbView': function(newVal, oldVal) {		//If we change our view, reset data, columns
@@ -311,7 +312,7 @@ console.log("Not yet implemented")
   },
 
   beforeMount: function() {
-//console.log("Dbp before, state: ", JSON.stringify(this.state))
+//console.log("Dbp before, state: ", JSON.stringify(this.state, null, 2))
     if (this.bus) this.bus.register(this.id, (msg) => {		//Respond to commands from a master dbe
       if (msg == 'clear') {
         this.clear()
@@ -320,11 +321,12 @@ console.log("Not yet implemented")
       }
     })
     Com.stateCheck(this)
+//console.log("Dbp after, state: ", this.state)
   },
 
   mounted: function() {
     this.$parent.$emit('swallow', this.$refs['header'])
-//console.log('State:', this.id, this.state.loaded)
+//console.log('Dbp mounted state:', this.id, this.state)
     this.$nextTick(() => {
       if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
       if (this.state.filter && this.state.filter.posted) this.filtPosts = 1

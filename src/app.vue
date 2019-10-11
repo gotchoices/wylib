@@ -179,7 +179,7 @@ console.log("About to unload.  Saving state:", JSON.stringify(this.state, null, 
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
         if (data.msg) this.wm = data.msg
-console.log("App wm:", this.wm)
+//console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
       })
 

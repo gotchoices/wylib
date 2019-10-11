@@ -87,6 +87,7 @@ module.exports = {
   ajax(url, cb) {			//Read JSON data from a URL
     let data, xmlhttp = new XMLHttpRequest()
     xmlhttp.onreadystatechange = () => {
+//console.log('ajax back:' + xmlhttp.status, xmlhttp.readyState, xmlhttp.responseText)
       if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 //console.log('responseText:' + xmlhttp.responseText)
         try {

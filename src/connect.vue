@@ -210,7 +210,7 @@ console.log("Error in keyCheck:", err.message)
         let encoder = new TextEncoder()
           , { ip, cookie, userAgent, date } = data
           , message = JSON.stringify({ip, cookie, userAgent, date})	//Must rebuild in this same order in the backend!
-//console.log("  Client data:", data, date, site.priv)
+//console.log("  Client data:", data, date, site.priv, Crypto)
         if (site.proto == 'ws:') {
           cb(site)
         } else if (Crypto) {
