@@ -66,7 +66,6 @@ export default {
     lastMenu:	null,
     mlbBus:	new Bus.messageBus(this),
     dbeBus:	new Bus.messageBus(this),
-    lastSpec:	{},
     lastView:	null,
     editPosts:	0,			//Don't instantiate until we've posted once
     filtPosts:	0,
@@ -202,14 +201,21 @@ export default {
         if (err) this.top().error(err); else this.gridData = data
         if (this.state.edit.posted && this.state.autoLoad) this.executeRows()
       })
-      if (spec) this.lastSpec = spec
+      if (spec) this.state.lastLoad = spec
     },
-    reload(spec) {this.load(Object.assign(this.lastSpec, spec))},
-    loadAll(ev) {this.load({where: null})},
+    reload(spec) {
+      this.load(Object.assign(this.state.lastLoad, spec))
+    },
+    loadAll(ev) {
+      this.load({where: null})
+    },
     clear() {this.gridData = []},
     
     modified(data) {this.reload()},		//On signal from dbe
-    sort(cols) {this.reload({order: cols.reverse()})},
+    sort(cols) {
+console.log("Dbp sort:", cols)
+      this.reload({order: cols.reverse()})
+    },
     search(where) {this.reload({where})},
 
     loadBy() {
@@ -330,7 +336,7 @@ console.log("Not yet implemented")
     this.$nextTick(() => {
       if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
       if (this.state.filter && this.state.filter.posted) this.filtPosts = 1
-//console.log('Was loaded, reload?', this.id, this.state.loaded)
+//console.log('Was loaded, reload?', this.id, this.state.loaded, this.state.lastLoad)
       if (this.state.loaded > 0)		//If state says we had data loaded before, reload now
         this.reload()
       else if (this.bus)

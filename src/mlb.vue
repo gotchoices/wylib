@@ -148,10 +148,10 @@ console.log("Context Menu: " + e.target)
     
     sortHandler(e, args) {			//Called when we re-sort
       let { multiColumnSort, sortCols, grid } = args
-//console.log("Sort columns: ", multiColumnSort, sortCols)
+//console.log("Mlb sortHandler: ", multiColumnSort, sortCols)
       this.state.sortColumns = grid.getSortColumns()
-      this.updateSortNumbers()
-      this.$emit('sort', this.state.sortColumns)
+//      this.updateSortNumbers()		//Will catch from watch state.sortColumns
+//      this.$emit('sort', this.state.sortColumns)
     },
 
     resizeHandler(e, args) {			//Handle a column resize
@@ -224,6 +224,16 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
 
   watch: {
     'state.see': function (val) {this.see()},
+    'state.sortColumns': function (newVal, oldVal) {	//In case change came from state update
+      let newStr = JSON.stringify(newVal)
+        , oldStr = JSON.stringify(oldVal)
+//console.log("Watched sortColumns changed:", newStr==oldStr, newVal, oldVal)
+      if (newStr != oldStr) {
+        this.gridInstance.setSortColumns(this.state.sortColumns)
+        this.updateSortNumbers
+        this.$emit('sort', this.state.sortColumns)
+      }
+    },
     'slickColumns': function (val) {
 //console.log("Watched slickColumns changed")
       this.gridInstance.setColumns(this.slickColumns)
@@ -278,10 +288,11 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
     gi.onColumnsResized.subscribe(this.resizeHandler)
     gi.onColumnsReordered.subscribe(this.reorderHandler)
     gi.onHeaderContextMenu.subscribe(this.headerMenuHandler)	//Prevent annoying right-click behavior on header fields
-    if (this.state.sortColumns) {
+    if (this.state.sortColumns) {				//Initialize sort column display
       gi.setSortColumns(this.state.sortColumns)
       this.updateSortNumbers
     }
+console.log("Mlb sorting:", this.state.sortColumns)
   },
 
   beforeDestroy: function() {
