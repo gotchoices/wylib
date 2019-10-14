@@ -8,10 +8,9 @@
 //X- Row labels alternate colors
 //X- CSS to make optional fields hide/show
 //X- How to make class reactive?
-//- Make clean/dirty work correctly
+//X- Make clean/dirty work correctly
 //- Implement built-in template codes (date, time, etc)
 //- Arrange remaining fields for mychips.users_v
-//- 
 //- Change dew state to config? (probably not--just trim state at this level)
 //- 
 //- Later:
@@ -39,7 +38,7 @@ export default {
     height:	{type: Number, default: 300},		//Fixme: used?
     },
   data() { return {
-    valid:	null,
+    valids:	{},
     dirtys:	{},
     userData:	{},
     dewBus:	new Bus.messageBus(this),
@@ -50,7 +49,10 @@ export default {
   computed: {
     id: function() {return 'mdew_' + this._uid + '_'},
     dirty: function() {
-      return Object.values(this.dirtys).every(v=>(v))
+      return Object.values(this.dirtys).some(v=>(v))
+    },
+    valid: function() {
+      return Object.values(this.valids).every(v=>(v))
     },
     hideOpts: function() {return !this.state.optional},
     gridConfig: function() {				//Build a 2D grid from flat configuration data
@@ -96,10 +98,10 @@ export default {
     submit(ev) {this.$emit('submit', ev)},
     input(value, field, dirty, valid) {			//An input has been changed
       this.$set(this.dirtys, field, dirty)
-      this.valid = valid
+      this.$set(this.valids, field, valid)
       this.userData[field] = value
-//console.log("Mdew input:", field, value, dirty, valid, this.dirty)
-      this.$emit('input', value, field, this.dirty, valid)
+console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid)
+      this.$emit('input', value, field, this.dirty, this.valid)
     },
   },
 
@@ -114,8 +116,16 @@ export default {
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'userData') {
         return this.userData
-      } else {
-        return this.dewBus.notify(msg, data)		//Pass down to children
+      } else {						//set or clear
+        let answers = this.dewBus.notify(msg, data)	//Pass down to children
+//console.log("Mdew bus: ", msg, answers)
+        answers.forEach(el => {				//These don't generate input events, so grab values now
+          let { value, field, dirty, valid } = el
+          this.userData[field] = value
+          this.$set(this.dirtys, field, dirty)
+          this.$set(this.valids, field, valid)
+        })
+        return answers
       }
     })
 //console.log("Mdew before:", this.config, this.data)

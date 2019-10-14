@@ -121,16 +121,9 @@ export default {
     },
   },
 
-//  watch: {			//Using set now
-//    value: function(val) {
-//      this.userValue = (val != null && (typeof val == 'object')) ? JSON.stringify(val) : val
-//console.log("Watched value:", this.field, val, this.userValue)
-//    },
-//  },
-
   methods: {
     input(ev, value = ev.target.value) {
-//console.log("Dew input:", ev.target, value)
+//console.log("Dew input:", ev, this.nonull, value)
       if (this.state.style == 'file' && ev.target.files) {	//Special handler for file selectors
         value = ev.target.files
       } else {
@@ -145,9 +138,11 @@ export default {
       this.$refs.input.focus()
     },
     set(val) {
-      return([this.userValue = val, this.field, this.dirty, this.valid])
+      return({value: this.userValue = val, field: this.field, dirty: this.dirty, valid: this.valid})
     },
-    clear() {return this.set(this.state.initial)}
+    clear() {
+      return this.set(this.state.initial)
+    }
   },
 
   created: function() {
@@ -162,8 +157,10 @@ export default {
 
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
-      if (msg == 'clear') return this.clear()
-      else if (msg == 'set') return this.set(this.mapValue)
+      if (msg == 'clear')			//Set to default value
+        return this.clear()
+      else if (msg == 'set')			//User value = current top-down value
+        return this.set(this.mapValue)
     })
   },
 

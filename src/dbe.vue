@@ -2,13 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Can launch subordinate previews
-//X- Review for reactivity
-//X- Split state.dews.fields into state and config
-//X- Communicate reload with sub-views
-//X- Present records in a grid layout
-//X- Added records prefill foreign key data
-//X- After a relaod, action dialog's lose their call-back (can it be restored by relaunching the dialog?)
 //X- If window closed/reopened, we lose dirty status
 //X- Option to open reports in popup or wylib-win
 //- See Fixme's below
@@ -95,7 +88,7 @@ export default {
       {idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu, icon: 'wand'},
       {idx: 'sub', lang: this.wm.dbeSubords, menu: this.subMenu, icon: 'table'},
       {idx: 'adr', lang: this.wm.dbeInsert,  call: this.insert,  icon: 'upload', shortcut: true, disabled: !this.valid},
-      {idx: 'upd', lang: this.wm.dbeUpdate,  call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty || !this.valid},
+      {idx: 'upd', lang: this.wm.dbeUpdate,  call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty || !this.valid || !this.keyValues},
       {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.keyValues},
       {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
@@ -163,10 +156,9 @@ export default {
       })
     },
 
-//Fixme: change to access keyMaster
     keyWhere(key = this.keyValues) {		//Return a 'where' object identifying this record
       let whereObj = {}
-      this.viewMeta.pkey.forEach((fld,i) => {whereObj[fld] = key[i]})
+      this.keyMaster.keys.forEach((fld,i) => {whereObj[fld] = key[i]})
 //console.log("Where:", whereObj)
       return whereObj
     },
@@ -188,7 +180,7 @@ export default {
         if (keyLink) keyLink.columns.forEach((key, idx)=>{fields[key] = values[idx]})
       }
 
-      Object.assign(fields, this.dbData, this.$refs.mdew.userData)	//Fixme: fetch over mdewBus
+      fields = this.mdewBus.notify('userData')[0]
 //console.log("Insert:", fields)
       this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
 //console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
@@ -203,7 +195,7 @@ export default {
 
     update() {
       let fields = this.mdewBus.notify('userData')[0]
-console.log("Update data:", fields)
+//console.log("Update data:", fields)
       this.dataRequest('update', {fields, where: this.keyWhere()}, true)
     },
 
@@ -214,13 +206,14 @@ console.log("Update data:", fields)
 
     clear() {
       let answers = this.mdewBus.notify('clear')[0]
-console.log("Clear", answers)
-      answers.forEach((el,ix) => {
-        let value, field
-        [ value, field, this.dirty, this.valid ] = el
-//console.log("Dbe clear:", field, value, this.dirty, this.valid)
+//console.log("Dbe Clear", answers)
+      answers.forEach(el => {			//Update data pushed into mdew
+        let { value, field, dirty, valid } = el
+//console.log("  field:", field, value, this.dirty, this.valid)
         this.dbData[field] = value
       })
+      this.dirty = false
+      this.valid = false
       this.top().posted()			//Act like we just posted
       Object.keys(this.pKey).forEach(fld => {this.dbData[fld] = null})	//Force PK fields, even if they don't display
       this.state.loaded = false
@@ -228,7 +221,7 @@ console.log("Clear", answers)
     },
 
     change(value, field, dirty, valid) {	//Respond to changes on the data inputs
-      this.dirty = dirty
+      this.dirty = dirty			//dirty, valid state of whole mdew
       this.valid = valid
 //console.log("Dbe input:", field, value, dirty, valid)
     },
