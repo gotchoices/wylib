@@ -95,7 +95,7 @@ export default {
     printable:		false,
     repBus:		new Bus.eventBus(this),
     winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
-    stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null},
+    stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null, fresh: true},
   }},
   provide() { return {
     top: () => {return this.top}
@@ -197,8 +197,8 @@ console.log("Clone to popup:", popId)
       else
         this.saveStateAs()
     },
-    storeState() {
-//console.log("Storing window state:", this.stateTag)
+    storeState() {		//Redundant with stored app state?
+console.log("Storing window state:", this.stateTag)
       if (this.topLevel && this.stateTag) Local.set(this.stateTag, this.state)
     },
     defaultState() {
@@ -376,9 +376,10 @@ console.log("Clone to popup:", popId)
 
     this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
 
-    if (this.topLevel) {				//Hopefully runs after customizations below
+    if (this.topLevel && this.state.fresh) {		//This is a brand new window--not one restored from saved state
+      this.state.fresh = false				//Mark so we don't overwrite stored state next time
       let savedState = Local.get(this.stateTag)
-//console.log("Win state template:", this.id, this.stateTag, savedState)
+//console.log("Win state template:", this.id, this.stateTag, this.state.fresh, savedState)
       if (savedState) {
         delete savedState.x; delete savedState.y	//So window doesn't land right on top of the last one
         Object.assign(this.state, savedState)		//Comment line for debugging from default state

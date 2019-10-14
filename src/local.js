@@ -78,7 +78,6 @@ module.exports = {
     
   flush: function() {			//Optionaly write local cache to local storage
     let idx = LocalTag + this.appTag
-//console.log("Write local storage:", this.appInfo, "pass:", this.passPhrase, localCache)
     if (this.appInfo) {
       let strVal = JSON.stringify(localCache)
       Com.encrypt(this.passPhrase, strVal).then(v=>{
@@ -87,11 +86,12 @@ module.exports = {
     } else {
       localStorage.setItem(idx, JSON.stringify(localCache))
     }
+//console.log("Write local storage:", this.appInfo, "pass:", this.passPhrase, JSON.stringify(localCache,null,2))
   },
     
   pw: function(ev) {				//Handle submission of user's password
     this.passPhrase = ev.target.value
-console.log("Got pw:", ev, this.passPhrase)
+//console.log("Got pw:", ev, this.passPhrase)
     ev.target.value = null
     if (this.passPhrase == 'reset' && ev.shiftKey)
       return false
@@ -100,17 +100,17 @@ console.log("Got pw:", ev, this.passPhrase)
     if (strVal && strVal != 'undefined') {
       Com.decrypt(this.passPhrase, strVal).then(v=>{
         localCache = JSON.parse(v)
-console.log("Got app data:", localCache)
+//console.log("Got app data:", localCache)
         if (this.readyCB) this.readyCB(true)
       }).catch(err=>{
-console.log("Incorrect password:", err)
+//console.log("Incorrect password:", err)
       })
     }
     return true
   },
 
   set: function(idx, data, flush) {		//Save information in local storage
-//console.log("Saving local:", idx, data)
+//console.log("Saving local:", idx, data, flush)
     localCache[idx] = Com.clone(data)
     if (flush) this.flush()
   },

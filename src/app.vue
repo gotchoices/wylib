@@ -164,7 +164,7 @@ export default {
       })
     },
     beforeUnload() {
-console.log("About to unload.  Saving state:", JSON.stringify(this.state, null, 2))
+//console.log("About to unload.  Saving state:", JSON.stringify(this.state, null, 2))
       if (this.persistent)
         Local.set(this.tagTitle, this.state, true)	//Save state
       else
