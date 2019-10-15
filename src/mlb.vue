@@ -148,8 +148,9 @@ console.log("Context Menu: " + e.target)
     
     sortHandler(e, args) {			//Called when we re-sort
       let { multiColumnSort, sortCols, grid } = args
-//console.log("Mlb sortHandler: ", multiColumnSort, sortCols)
-      this.state.sortColumns = grid.getSortColumns()
+//console.log("Mlb sortHandler: ", multiColumnSort, JSON.stringify(this.state.sortColumns))
+      this.state.sortColumns = Com.clone(grid.getSortColumns())
+//console.log("  sortHandler: ", JSON.stringify(this.state.sortColumns))
 //      this.updateSortNumbers()		//Will catch from watch state.sortColumns
 //      this.$emit('sort', this.state.sortColumns)
     },
@@ -211,13 +212,13 @@ console.log("Context Menu: " + e.target)
         , maxLen = 2
         , aCell = this.$el.querySelector('.slick-cell')
         , fontSize = aCell ? parseFloat(window.getComputedStyle(aCell, null).getPropertyValue('font-size')) : 16
-console.log("Mlb autosize:", field, idx, fontSize)
+//console.log("Mlb autosize:", field, idx, fontSize)
       for (let dat of this.data) {
         let content = dat[field]
           , len = content ? content.toString().length : 0
         if (len > maxLen) maxLen = len
       }
-console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
+//console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
       this.state.columns[idx].width = Math.min((maxLen+1) * fontSize * 0.48, this.pr.mlbMaxWidth)	//Estimate of width/font size
     },
   },
@@ -227,10 +228,10 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
     'state.sortColumns': function (newVal, oldVal) {	//In case change came from state update
       let newStr = JSON.stringify(newVal)
         , oldStr = JSON.stringify(oldVal)
-//console.log("Watched sortColumns changed:", newStr==oldStr, newVal, oldVal)
-      if (newStr != oldStr) {
-        this.gridInstance.setSortColumns(this.state.sortColumns)
-        this.updateSortNumbers
+//console.log("Watched sortColumns changed:", newStr != oldStr, oldStr, newStr)
+      this.updateSortNumbers
+      if (newVal && newStr != oldStr) {
+        this.gridInstance.setSortColumns(Com.clone(this.state.sortColumns))
         this.$emit('sort', this.state.sortColumns)
       }
     },
@@ -289,10 +290,10 @@ console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
     gi.onColumnsReordered.subscribe(this.reorderHandler)
     gi.onHeaderContextMenu.subscribe(this.headerMenuHandler)	//Prevent annoying right-click behavior on header fields
     if (this.state.sortColumns) {				//Initialize sort column display
-      gi.setSortColumns(this.state.sortColumns)
+      gi.setSortColumns(Com.clone(this.state.sortColumns))
       this.updateSortNumbers
     }
-console.log("Mlb sorting:", this.state.sortColumns)
+//console.log("Mlb sorting:", this.state.sortColumns)
   },
 
   beforeDestroy: function() {
