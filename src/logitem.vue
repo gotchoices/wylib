@@ -46,7 +46,7 @@ export default {
   computed: {
     id: function() {return 'lit_' + this._uid + '_'},
     notFunction: function() {return (this.state.not ? 'Not' : 'Is')},
-    isBinary: function() {return (this.state.oper != 'null' && this.state.oper != 'true')},
+    isBinary: function() {return (this.state.oper != 'isnull' && this.state.oper != 'true')},
     selRight: function() {return (this.state.right && this.state.right != '')},
     showEntry: function() {return (this.isBinary && !this.selRight)},
     rhValue: function() {return (this.state.right == "_")},
