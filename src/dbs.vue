@@ -21,6 +21,7 @@
 
 <script>
 import Com from './common.js'
+import Bus from './bus.js'
 import Logic from './loglist.vue'
 import Wyseman from './wyseman.js'
 import MenuDock from './menudock.vue'
@@ -30,6 +31,7 @@ export default {
   components: {'wylib-loglist': Logic, 'wylib-menudock': MenuDock},
   props: {
     state:	{type: Object, default: () => ({})},
+    bus:	null,			//Commands from my parent dbp
     fields:	{type: Array}
   },
 
@@ -38,12 +40,11 @@ export default {
     wm:		{},
 //    viewMeta:	null,
 //    viewLang:	null,
-    dbData:	[],
     stateTpt:	{logic: {and: true, items: [{left: null, not: false, oper: '='}]}, dock: {}},
   }},
 
   computed: {			//Fixme: get langauge from wyseman/db
-    id: function() {return 'dbp_' + this._uid + '_'},
+    id: function() {return 'dbs_' + this._uid + '_'},
     logicConfig:function() {
 //console.log("logicConf:", this.fields)
       return {left: this.fields, oper: this.operators, right: this.fields}
@@ -63,6 +64,8 @@ export default {
     ]},
     dockConfig: function() { return [
       {idx: 'sch', lang: this.wm.dbsSearch, call: this.search, icon: 'wand', shortcut: true},
+      {idx: 'clr', lang: this.wm.dbsClear, call: this.clear, icon: 'sun', shortcut: true},
+      {idx: 'def', lang: this.wm.dbsDefault, call: this.default, icon: 'download'},
     ]},
     headerHeight: function() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
@@ -77,6 +80,12 @@ export default {
     },
     search() {
       this.$emit('search', this.state.logic)
+    },
+    default() {
+      this.$emit('default')	//Request default load logic from dbp
+    },
+    clear() {
+      this.state.logic = this.stateTpt.logic
     },
     geometry() {		//Fixme: auto adjust parent geometry?
 //console.log("Dbs check geometry", vm.$el.getBoundingClientRect())
@@ -97,6 +106,11 @@ export default {
   mounted: function() {
     this.$parent.$emit('swallow', this.$refs['header'])
     this.$parent.$emit('customize', this.wm.dbs)
+
+    if (this.bus) this.bus.register(this.id, (msg, data) => {	//Commands from my parent dbp
+//console.log("Dbs bus message: ", msg, data);
+      if (msg == 'load') this.state.logic = data
+    })
   },
 }
 </script>
