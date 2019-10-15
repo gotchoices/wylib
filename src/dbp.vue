@@ -4,15 +4,14 @@
 //TODO:
 //X- Implement auto-execute option: execute the current (or first) row on each load/reload
 //X- Should be able to reset to default column specs
+//X- Reload should retain sort fields
+//X- An initial load should respect existing sort fields, and the autoexecute flag
+//- Initial sort order comes from wyseman, apply to indicators
 //- If up/down button takes selection off screen, adjust to show highlighted record
-//- An initial load should respect existing sort fields, and the autoexecute flag
-//- Reload should retain sort fields
 //- Display the number of loaded records
 //- Retain previous scroll position after reload
 //- Allow calling actions with multiple record keys
 //- 
-//- Sorting:
-//-  Initial sort order comes from wyseman, apply to indicators
 //- 
 //- Make menu module use toggled field correctly (instead of call function)
 //- Toggle display of footers
@@ -76,7 +75,7 @@ export default {
   computed: {
     id: function() {return 'dbp_' + this._uid + '_'},
     stateTpt:	function() {return {
-      dock: {}, loaded: 0, autoLoad:true, lastLoad: {}, colMenu: {x: 100, y:0},
+      dock: {}, loaded: 0, autoLoad:false, lastLoad: {}, colMenu: {x: 100, y:0},
       edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
       filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
       grid: {footerOn: false, sorting: {}, columns: []}
