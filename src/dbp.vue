@@ -33,7 +33,7 @@
         <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
       </wylib-win>
       <wylib-win v-if="this.filtPosts" :state="state.filter" topLevel=true @close="state.filter.posted=false">
-        <wylib-dbs :fields="logicFields" :state="state.filter.client" @search="search"/>
+        <wylib-dbs :fields="logicFields" :state="state.filter.client" :bus="dbsBus" @search="search" @default="dbsDefault"/>
       </wylib-win>
     </div>
     <wylib-mlb ref="mlb" :state="state.grid" :data="gridData" :config="mlbConfig" @execute="executeRows" @headerMenu="colMenuHandler" @sort="sort" @geometry="geometry" :bus="mlbBus"/>
@@ -66,6 +66,7 @@ export default {
     lastMenu:	null,
     mlbBus:	new Bus.messageBus(this),
     dbeBus:	new Bus.messageBus(this),
+    dbsBus:	new Bus.messageBus(this),
     lastView:	null,
     editPosts:	0,			//Don't instantiate until we've posted once
     filtPosts:	0,
@@ -84,14 +85,15 @@ export default {
       let flds = []
       for (let key in this.mlbConfig) {
         let conf = this.mlbConfig[key]
-        flds.push({tag: key, title: conf.title, help: conf.help})
+        flds.push({tag: key, title: conf.title, help: key+"\n"+conf.help})
       }
-      return flds
+      return flds.sort((a,b) => {return (a.title > b.title) ? 1 : -1})
     },
     dockConfig: function() { return [
       {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download',  shortcut: true},
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(), icon: 'spinner',   shortcut: true},
+      {idx: 'clr', lang: this.wm.dbpClear,    call: ev=>this.clear(),  icon: 'sun'},
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
       {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
@@ -128,7 +130,6 @@ export default {
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
         let defWidth
           , key = meta.col
-          , col = this.state.grid.columns.find(e => (e.field == key))
         if (meta.styles && ('size' in meta.styles) && meta.styles.size) {
           defWidth = meta.styles.size.split(' ')[0] * this.pr.mlbCharWidth
         }
@@ -195,7 +196,11 @@ export default {
     },
 
     load(spec) {
-//console.log("Dbp load:", this.state.dbView, spec, this.state.edit)
+      if (!spec) {
+        if (this.viewMeta.styles && this.viewMeta.styles.where)
+          spec = {where: this.viewMeta.styles.where}
+      }
+console.log("Dbp load:", this.state.dbView, spec, this.viewMeta)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
@@ -204,19 +209,29 @@ export default {
       if (spec) this.state.lastLoad = spec
     },
     reload(spec) {
+console.log("Dbp reload:", this.state.dbView, this.state.lastLoad, spec)
       this.load(Object.assign(this.state.lastLoad, spec))
     },
     loadAll(ev) {
       this.load({where: null})
     },
-    clear() {this.gridData = []},
+    clear() {
+      this.gridData = []
+    },
     
     modified(data) {this.reload()},		//On signal from dbe
     sort(cols) {
-console.log("Dbp sort:", cols)
-      this.reload({order: cols.reverse()})
+//console.log("Dbp sort:", cols)
+      this.reload(cols ? {order: cols.reverse()} : null)
     },
-    search(where) {this.reload({where})},
+    search(where) {
+      this.reload({where})
+    },
+    dbsDefault() {
+//console.log("Dbp default logic:")
+      if (this.viewMeta.styles && this.viewMeta.styles.where)
+        this.dbsBus.notify('load', Com.clone(this.viewMeta.styles.where))
+    },
 
     loadBy() {
       this.state.filter.posted = !this.state.filter.posted
@@ -247,7 +262,14 @@ console.log("Dbp sort:", cols)
       if (col) col.visible = false
     },
     defColumns(ev) {
-console.log("Not yet implemented")
+      for (let key in this.mlbConfig) {
+        let conf = this.mlbConfig[key]
+          , col = this.state.grid.columns.find(e => (e.field == key))
+console.log("Dbp defColumns:", key, col)
+        col.visible = conf.visible
+        col.order = conf.order
+        col.width = conf.width
+      }
     },
     geometry(ev) {
 //console.log("Geometry changed:", top, ev)
