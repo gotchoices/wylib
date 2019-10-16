@@ -199,7 +199,7 @@ export default {
         if (this.viewMeta.styles && this.viewMeta.styles.where)
           spec = {where: this.viewMeta.styles.where}
       }
-console.log("Dbp load:", this.state.dbView, spec, this.viewMeta)
+//console.log("Dbp load:", this.state.dbView, spec, this.viewMeta)
       Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
@@ -208,7 +208,7 @@ console.log("Dbp load:", this.state.dbView, spec, this.viewMeta)
       if (spec) this.state.lastLoad = spec
     },
     reload(spec) {
-console.log("Dbp reload:", this.state.dbView, this.state.lastLoad, spec)
+//console.log("Dbp reload:", this.state.dbView, this.state.lastLoad, spec)
       this.load(Object.assign(this.state.lastLoad, spec))
     },
     loadAll(ev) {
@@ -264,7 +264,7 @@ console.log("Dbp reload:", this.state.dbView, this.state.lastLoad, spec)
       for (let key in this.mlbConfig) {
         let conf = this.mlbConfig[key]
           , col = this.state.grid.columns.find(e => (e.field == key))
-console.log("Dbp defColumns:", key, col)
+//console.log("Dbp defColumns:", key, col)
         col.visible = conf.visible
         col.order = conf.order
         col.width = conf.width
@@ -291,15 +291,23 @@ console.log("Dbp defColumns:", key, col)
         this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },
-    followMaster() {		//Register which view we are dealing with
+    followMaster() {		//Handle a load request from a master dbe
       let { view, values, keys } = this.master
-        , hisCols = keys.join(',')
-        , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
-//console.log("Got command from master dbe:", view, hisCols, this.master, keyLink)
-//    this.viewMeta.fkeys.forEach(el=>{if (el.table == 'mychips.users_v') console.log("  el:", el.table, el.foreign.join(','))})
-      if (keyLink) {
+        , hisPKey = keys.join(',')
+        , fKeyLinks = this.viewMeta.fkeys.filter(el => (el.table == view))
+        , fKeyLink = (fKeyLinks && fKeyLinks.length == 1) ? fKeyLinks[0] :
+          fKeyLinks.find(el => (el.foreign.join('.') == hisPKey))
+//console.log("Got load from master dbe:", this.state.dbView, "h:", hisPKey, "m:", this.master, "fks:", fKeyLinks, "l:", JSON.stringify(fKeyLink))
+//this.viewMeta.fkeys.forEach(el=>{if (el.table == view) console.log("  el:", el.table, el.foreign.join(','))})
+
+      if (fKeyLink) {
         let where = {}
-        keyLink.columns.forEach((key,idx)=>{where[key] = values[idx]})
+        fKeyLink.columns.forEach((key,idx) => {
+          let fKeyField = fKeyLink.foreign[idx]
+            , fValue = this.master.get(fKeyField)
+//console.log("  w:", key, fKeyField, fValue)
+          where[key] = fValue
+        })
 //console.log("  where:", where)
         this.load({where})
       }
@@ -341,6 +349,7 @@ console.log("Dbp defColumns:", key, col)
   beforeMount: function() {
 //console.log("Dbp before, state: ", JSON.stringify(this.state, null, 2))
     if (this.bus) this.bus.register(this.id, (msg) => {		//Respond to commands from a master dbe
+//console.log("Dbp got from master: ", msg)
       if (msg == 'clear') {
         this.clear()
       } else if (msg == 'load') {
@@ -360,8 +369,8 @@ console.log("Dbp defColumns:", key, col)
 //console.log('Was loaded, reload?', this.id, this.state.loaded, this.state.lastLoad)
       if (this.state.loaded > 0)		//If state says we had data loaded before, reload now
         this.reload()
-      else if (this.bus)
-        this.followMaster()
+//      else if (this.bus)			//Too early, master not yet loaded
+//        this.followMaster()
     })
   },
 

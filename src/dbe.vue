@@ -136,6 +136,8 @@ export default {
       pKey: this.pKey,
       keys: this.viewMeta.pkey,
       values: this.keyValues,
+      get: (field)=>{return this.dbData[field]},
+//      fields: this.dbData
     }},
   },
 
@@ -229,9 +231,10 @@ export default {
     dataRequest(action, options, modifies = true, cb) {
 //console.log("Dbe dataRequest:", action, options)
       Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
-//console.log("  data received:", err, data)
-        if (err) this.top().error(err)
-        else {
+//console.log("Dbe data received:", err, data)
+        if (err) {
+          this.top().error(err)
+        } else {
           if (data) {
             this.dbData = data
             this.$nextTick(()=>{this.mdewBus.notify('set')})
@@ -240,7 +243,7 @@ export default {
           if (cb) cb(data)
           this.state.loaded = true
 //console.log("Loaded:", this.viewMeta.pkey)
-          this.$nextTick(()=>{this.subBus.notify('load')})
+          this.$nextTick(()=>{this.subBus.notify('load')})	//Tell child dbp to update itself
         }
       })
     },
