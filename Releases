@@ -1,6 +1,9 @@
 Change Log:
 
-1.0.14	2019-Oct
+1.0.15	2019-Oct
+	- Follow relational links correctly on master/slave windows
+	- Obey default load criteria
+	- Restore saved ordering of preview tables
 	- Reimplement auto-reconnect
 
 1.0.13	2019-May

@@ -100,7 +100,7 @@ export default {
       this.$set(this.dirtys, field, dirty)
       this.$set(this.valids, field, valid)
       this.userData[field] = value
-console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid)
+//console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid)
       this.$emit('input', value, field, this.dirty, this.valid)
     },
   },

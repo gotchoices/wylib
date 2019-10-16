@@ -101,7 +101,7 @@ console.log("Buttons:", this.state.buttons)
 
   beforeMount: function() {
     Com.stateCheck(this)
-console.log("Dialog state:", this.state)
+//console.log("Dialog state:", this.state)
     this.$parent.$emit('customize', this.state.report ? this.wm.diaReport : this.wm.diaDialog, 'dia:'+ this.state.tag, this.state.iframe != null)
   },
 
