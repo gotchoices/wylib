@@ -292,11 +292,10 @@ export default {
       })
     },
     followMaster() {		//Handle a load request from a master dbe
-      let { view, values, keys } = this.master
+      let { view, keys } = this.master
         , hisPKey = keys.join(',')
         , fKeyLinks = this.viewMeta.fkeys.filter(el => (el.table == view))
-        , fKeyLink = (fKeyLinks && fKeyLinks.length == 1) ? fKeyLinks[0] :
-          fKeyLinks.find(el => (el.foreign.join('.') == hisPKey))
+        , fKeyLink = (fKeyLinks && fKeyLinks.length == 1) ? fKeyLinks[0] : fKeyLinks.find(el => (el.foreign.join('.') == hisPKey))
 //console.log("Got load from master dbe:", this.state.dbView, "h:", hisPKey, "m:", this.master, "fks:", fKeyLinks, "l:", JSON.stringify(fKeyLink))
 //this.viewMeta.fkeys.forEach(el=>{if (el.table == view) console.log("  el:", el.table, el.foreign.join(','))})
 

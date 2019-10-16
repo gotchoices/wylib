@@ -173,16 +173,22 @@ export default {
     },
 
     insert() {
-      let fields = {}
+      let fields = this.mdewBus.notify('userData')[0]
+
       if (this.master) {
-        let { view, values, keys } = this.master			//Populate foreign key fields
-          , hisCols = keys.join(',')
-          , keyLink = this.viewMeta.fkeys.find(el=>(el.table == view && el.foreign.join(',') == hisCols))
-//console.log("insert:", fields, "keyMaster:", this.master, hisCols, "keyLink:", keyLink)
-        if (keyLink) keyLink.columns.forEach((key, idx)=>{fields[key] = values[idx]})
+        let { view, keys } = this.master			//Populate foreign key fields from my master dbe, if any
+          , hisPKey = keys.join(',')
+          , fKeyLinks = this.viewMeta.fkeys.filter(el => (el.table == view))
+          , fKeyLink = (fKeyLinks && fKeyLinks.length == 1) ? fKeyLinks[0] : fKeyLinks.find(el => (el.foreign.join('.') == hisPKey))
+//console.log("insert:", fields, "keyMaster:", this.master, "k:", hisPKey, "fKeyLink:", fKeyLink)
+        if (fKeyLink) fKeyLink.columns.forEach((key, idx)=>{
+          let fKeyField = fKeyLink.foreign[idx]
+            , fValue = this.master.get(fKeyField)
+//console.log("  field:", key, "=", fValue)
+          fields[key] = fValue
+        })
       }
 
-      fields = this.mdewBus.notify('userData')[0]
 //console.log("Insert:", fields)
       this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
 //console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
