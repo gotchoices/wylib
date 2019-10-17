@@ -180,6 +180,7 @@ export default {
       if (!selection) selection = this.$refs.mlb.getSelection()
 //console.log("Dbp execute rows: ", selection, this.viewMeta.pkey)
       if (selection.length <= 0) return
+      if (!this.viewMeta || !this.viewMeta.pkey) {this.top().error(this.wm.dbpNoPkey); return}
       let idx = selection[0]
         , row = this.gridData[idx]
         , keyVal = []
