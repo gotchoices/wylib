@@ -115,7 +115,12 @@ export default {
     Com.stateCheck(this)
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'userData') {
-        return this.userData
+        if (!data) return this.userData			//Get all records
+        let retData = {}				//Otherwise, get only dirty records
+        for (const [key, val] of Object.entries(this.userData)) {
+          if (this.dirtys[key]) retData[key] = val
+        }
+        return retData
       } else {						//set or clear
         let answers = this.dewBus.notify(msg, data)	//Pass down to children
 //console.log("Mdew bus: ", msg, answers)

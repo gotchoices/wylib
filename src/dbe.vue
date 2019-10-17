@@ -1,17 +1,15 @@
-[//Database record editing component
+//Database record editing component
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
 //X- If window closed/reopened, we lose dirty status
 //X- Option to open reports in popup or wylib-win
-//- See Fixme's below
-//- 
-//- Later:
-//- Should filter nulls out of insert fields?
+//X- Only update field if it is dirty
+//- Should we filter nulls out of insert fields?
 //- Optionally, ask for confirmation on:
 //-  delete
 //-  clear, overwrite dirty record
-//- Only update if record dirty
+//- See Fixme's below
 //- 
 
 <template>
@@ -202,7 +200,7 @@ export default {
     },
 
     update() {
-      let fields = this.mdewBus.notify('userData')[0]
+      let fields = this.mdewBus.notify('userData',true)[0]
 //console.log("Update data:", fields)
       this.dataRequest('update', {fields, where: this.keyWhere()}, true)
     },
