@@ -41,8 +41,7 @@
 </template>
 
 <script>
-const CountDown = 3
-//const FirstRetry = 3
+const CountDown = 7
 const Crypto = window.crypto.subtle
 const KeyConfig = {
   name: 'RSA-PSS',
@@ -106,7 +105,6 @@ export default {
     id() {return 'con_' + this._uid + '_'},
     selectedSite()  {return (this.lastSelect == null) ? null : this.sites[this.lastSelect]},
     connected() {return !!this.currentSite},
-//    tryView() {return this.tryTimer ? this.retryIn : null},
     dockConfig: function() { return [
       {idx:'con', lang:this.wm.conConnect, call:this.togConn,   icon:'link',   shortcut:true, toggled:this.connected},
       {idx:'sub', lang:this.wm.conDelete,  call:this.delSites,  icon:'minus',  shortcut:true},
@@ -159,7 +157,7 @@ export default {
 //console.log("Toggle Connection:", this.connected, this.lastSelect, this.selectedSite)
       if (this.connected) 
         this.disconnect()	
-      if (this.selectedSite && !ev.shiftKey)
+      else if (this.selectedSite)
        this.$nextTick(()=>{this.connectSite()})
     },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
@@ -323,7 +321,7 @@ console.log("Error in importKeys:", err.message)
     },
 
     disconnect() {
-console.log("Disconnect:")
+//console.log("Disconnect:")
       this.tryEvery = null		//And don't retry connect
       Wyseman.close()
     },
@@ -333,13 +331,14 @@ console.log("Disconnect:")
       if (this.retryIn <= 0) {			//If we counted down to zero
 //console.log("  try connect:", this.lastConnected, "retryIn:", this.retryIn)
         if (this.lastConnected) this.connectSite(this.lastConnected)	//Try a reconnect
-        this.retryIn = this.tryEvery++		//next time we'll wait longer
+        this.retryIn = this.tryEvery + CountDown	//next time we'll wait longer
       } else {
         this.retryIn--				//Else keep counting down
 //console.log("  decrement", this.retryIn)
       }
       this.status = this.lang('conRetry', true) + ' (' + this.retryIn + ')'	//Update status message
-      this.timer = setTimeout(this.retryConnect, 1000)
+      if (this.tryTimer) clearTimeout(this.tryTimer)
+      this.tryTimer = setTimeout(this.retryConnect, 1000)
     },
   },
 
@@ -379,7 +378,7 @@ console.log("Disconnect:")
       } else if (addr) {
         this.status = null
         this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
-        if (this.timer) {clearTimeout(this.timer); this.timer = null}
+        if (this.tryTimer) {clearTimeout(this.tryTimer); this.tryTimer = null}
       }
     })
   },	//mounted
