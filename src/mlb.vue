@@ -30,7 +30,7 @@ var options = {
   multiColumnSort: true,
   syncColumnCellResize: true,
   createFooterRow: true,
-  showFooterRow: false,		//Fixme: https://github.com/6pac/SlickGrid/blob/master/examples/example-footer-totals.html
+  showFooterRow: true,		//Fixme: https://github.com/6pac/SlickGrid/blob/master/examples/example-footer-totals.html
   explicitInitialization: true,		//Init after plugins registered
 //  autoHeight: true			//Disables scrolling
 //  enableTextSelectionOnCells: true,	//Undesirable side effects (select all on right click?)
@@ -50,7 +50,7 @@ export default {
     pr:		require('./prefs'),
     orderBoxes:		{},		//Div elements that show sort order in header field
     gridInstance:	null,		//Keep pointer to our grid
-    stateTpt:		{FooterOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null},
+    stateTpt:		{footerOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null},
   }},
 
   computed: {
@@ -225,11 +225,17 @@ console.log("Context Menu: " + e.target)
 
   watch: {
     'state.see': function (val) {this.see()},
+    'state.footerOn': function (val) {
+console.log("Footer:", this.state.footerOn, val)
+      this.gridInstance.setOptions({showFooterRow: val})
+//      this.gridInstance.setOptions({showFooterRow: val, createFooterRow: true})
+      this.gridInstance.resizeCanvas()
+    },
     'state.sortColumns': function (newVal, oldVal) {	//In case change came from state update
       let newStr = JSON.stringify(newVal)
         , oldStr = JSON.stringify(oldVal)
 //console.log("Watched sortColumns changed:", newStr != oldStr, oldStr, newStr)
-      this.updateSortNumbers
+      this.updateSortNumbers()
       if (newVal && newStr != oldStr) {
         this.gridInstance.setSortColumns(Com.clone(this.state.sortColumns))
         this.$emit('sort', this.state.sortColumns)
@@ -280,6 +286,7 @@ console.log("Context Menu: " + e.target)
     let gi = this.gridInstance = new Grid(this.$refs.gridTable, this.data, this.slickColumns, options)
     gi.setSelectionModel(new Plugins.RowSelectionModel())
     gi.registerPlugin(new Plugins.HeaderButtons())		//For showing sort order
+    gi.setOptions({showFooterRow: this.state.footerOn})
     gi.init()
 
     gi.onContextMenu.subscribe(this.menuHandler)
