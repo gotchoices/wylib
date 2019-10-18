@@ -6,23 +6,24 @@
 //X- Should be able to reset to default column specs
 //X- Reload should retain sort fields
 //X- An initial load should respect existing sort fields, and the autoexecute flag
+//X- Toggle display of footers
+//X- Display the number of loaded records
 //- Initial sort order comes from wyseman, apply to indicators
 //- If up/down button takes selection off screen, adjust to show highlighted record
-//- Display the number of loaded records
 //- Retain previous scroll position after reload
-//- Allow calling actions with multiple record keys
-//- 
+//- Allow calling view actions with multiple record keys
 //- 
 //- Make menu module use toggled field correctly (instead of call function)
-//- Toggle display of footers
+//- Display summaries in footer
 //- Can disable reload on sort controls
 //- Implement maximum rows to fetch parameter in menu settings
 //- 
 <template>
   <div class="wylib wylib-dbp">
-    <div ref="header" class="header">
-      <wylib-menudock :config="dockConfig" :state="state.dock" :lang="wm.dbpMenu"/>
+    <div class="header">
+      <wylib-menudock ref="headMenu" :config="dockConfig" :state="state.dock" :lang="wm.dbpMenu"/>
       <div class="headerfill"/>
+      <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.dbpLoaded?wm.dbpLoaded.help:null">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
     </div>
     <div class="subwindows">
       <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false">
@@ -88,6 +89,11 @@ export default {
       }
       return flds.sort((a,b) => {return (a.title > b.title) ? 1 : -1})
     },
+    loadedSize() {
+      let len = 3
+      if (this.loaded) len = this.loaded.length > 8 ? 8 : this.loaded.length
+      return len
+    },
     dockConfig: function() { return [
       {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download',  shortcut: true},
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
@@ -96,6 +102,7 @@ export default {
       {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
       {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
+      {idx: 'sum', lang: this.wm.dbpShowSum,  call: this.sumTog,       icon: 'circle',	  type: 'checkbox', toggled: this.state.showSum, input: this.showSumValue},
       {idx: 'prv', lang: this.wm.dbpPrev,     call: this.prev,         icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext,     call: this.next,         icon: 'arrowdown', shortcut: true},
       {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns,   icon: 'sun'},
@@ -164,6 +171,13 @@ export default {
     autoLoadValue(v) {				//Set/get autoload value
       if (v != null) this.state.autoLoad = v
       return this.state.autoLoad
+    },
+    sumTog(ev) {				//Toggle column summaries
+      this.state.showSum = !this.state.showSum
+    },
+    showSumValue(v) {				//Set/get showSumm value
+      if (v != null) this.state.grid.footerOn = this.state.showSum = v
+      return this.state.showSum
     },
     editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
@@ -361,7 +375,7 @@ export default {
   },
 
   mounted: function() {
-    this.$parent.$emit('swallow', this.$refs['header'])
+    this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
 //console.log('Dbp mounted state:', this.id, this.state)
     this.$nextTick(() => {
       if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
@@ -387,8 +401,8 @@ export default {
   }
   .wylib-dbp > .header {
     background: linear-gradient(to top, #c0c0c0, #e0e0e0);	//Fixme: prefs
-    width: 100%;	//Fixme: prefs
-    height: 1.4em;	//Fixme: prefs
+    width: 100%;
+//    height: 1.4em;	//Fixme: prefs
     display: flex;
 //    border: 1px solid green;
   }
@@ -397,5 +411,11 @@ export default {
   }
   .wylib-dbp .header .headerfill {
     flex: 1 1 auto;
+  }
+  .wylib-dbp.headstatus {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    display: flex;
+    align-items: flex-end;
   }
 </style>
