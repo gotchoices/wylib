@@ -155,10 +155,14 @@ export default {
     },
     togConn(ev) {	 			//Connect/disconnect
 //console.log("Toggle Connection:", this.connected, this.lastSelect, this.selectedSite)
-      if (this.connected) 
+      if (this.connected) {
         this.disconnect()	
-      else if (this.selectedSite)
-       this.$nextTick(()=>{this.connectSite()})
+      } else {
+        if (this.selectedSite) this.$nextTick(()=>{this.connectSite()})
+        if (this.tryTimer) clearTimeout(this.tryTimer)
+        this.status = null
+        this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
+      }
     },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
 //console.log("Key check:")
