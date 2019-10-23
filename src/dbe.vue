@@ -165,9 +165,7 @@ export default {
     load(where) {				//Fetch a record from the database, by its primary key
 //console.log("Dbe load:", where)
       if (Array.isArray(where)) where = this.keyWhere(where)	//if only key values passed in
-      this.dirty = false
-      this.valid = true
-      this.dataRequest('tuple', {where, fields: '*'}, false)
+      this.dataRequest('tuple', {where, fields: '*'}, false, ()=>{this.dirty = false})
     },
 
     insert() {
@@ -196,13 +194,13 @@ export default {
         }
       })
 
-      this.dataRequest('insert', {fields})
+      this.dataRequest('insert', {fields}, null, ()=> {this.dirty = false})
     },
 
     update() {
       let fields = this.mdewBus.notify('userData',true)[0]
 //console.log("Update data:", fields)
-      this.dataRequest('update', {fields, where: this.keyWhere()}, true)
+      this.dataRequest('update', {fields, where: this.keyWhere()}, true, ()=>{this.dirty = false})
     },
 
     delete() {
