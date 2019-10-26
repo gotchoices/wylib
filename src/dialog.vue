@@ -58,7 +58,7 @@ export default {
     },
     buttons: function() {
       let butArr = []
-console.log("Buttons:", this.state.buttons)
+//console.log("Buttons:", this.state.buttons)
       if (this.state.buttons) this.state.buttons.forEach(b=>{
         let rec = b
         if (typeof b == 'string')

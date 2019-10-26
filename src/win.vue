@@ -198,7 +198,7 @@ console.log("Clone to popup:", popId)
         this.saveStateAs()
     },
     storeState() {		//Redundant with stored app state?
-console.log("Storing window state:", this.stateTag)
+//console.log("Storing window state:", this.stateTag)
       if (this.topLevel && this.stateTag) Local.set(this.stateTag, this.state)
     },
     defaultState() {
