@@ -9,10 +9,10 @@
     <g :transform="transform">
       <g v-html="state.body" :style="objStyle"/>
       <g class="hubs">
-        <g v-for="link in state.links" v-html="hubs[hubIndex(link)]"></g>
+        <g v-for="link in state.links" v-html="hubs[linkIndex(link)]"></g>
       </g>
       <g class="connectors" v-for="link in state.links">
-        <path :d="connectors[linkName(link)]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="1" fill="none"/>
+        <path :d="connectors[linkIndex(link)]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="1" fill="none"/>
       </g>
     </g>
 </template>
@@ -49,33 +49,40 @@ export default {
     connectors: function () {				//Generate SVG code for connector lines to other objects
       var paths = {}
       this.state.links.forEach(lk => {			//For each node I point to
-        let link = lk, draw = true, ends = this.state.ends, center = this.cent, index, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
-        if (typeof lk == 'object') {({ index, link, draw, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
+        let link = lk, noDraw = false, reverse = false, ends = this.state.ends, center = this.cent, index, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
+        if (typeof lk == 'object') {({ index, link, noDraw, reverse, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
+        if (!index && typeof(link) == 'string') index = link		//If no separate index specified, use link value
+//console.log("Link:", link, typeof(link), "Index:", index)
         
-        if (draw) {					//Draw a link line, in addition to any optional hub
+        if (!noDraw) {					//Draw a link line, in addition to any optional hub
           let d, refState, refPoint, refVM = nodeBus.notify(link)[0]
-//console.log("Connecting:", this.state.tag, 'at', this.state.x+center.x, this.state.y+center.y, 'to', link)
-          if (refVM) {					//If it already exists
+//console.log("Connecting:", this.state.tag, 'at', this.state.x+center.x, this.state.y+center.y, 'to', link, 'I:', index)
+          if (refVM) {					//If it has already been build/rendered
             refState = refVM.state			//Generate connection
             refPoint = refVM.connection({x:this.state.x+center.x, y:this.state.y+center.y}, index)	//Ask for coordinates of the other node's connection point
-//console.log("  found his connection:", refPoint.x, refPoint.y)
-          } else {					//Create placeholder, for now
+//if (refPoint) console.log("  found his connection:", refPoint.x, refPoint.y)
+          }
+          if (!refVM || !refPoint) {			//Create placeholder, for now
             if (refState = this.$parent.nodeState(link))
               refPoint = {x:refState.x, y:refState.y, xs:refState.x, ys:refState.y}
             else
               refPoint = {x:0, y:0, xs:0, ys:0}
           }
-//console.log(" at:", refState.x, refState.y)
+//if (refState) console.log(" at:", refState.x, refState.y)
           let myPoint = this.closest(this.state, ends, refPoint)		//Now find closest point on me, to other node's point
 //console.log("  found my connection:", myPoint.x, myPoint.y)
           let xMyC = myPoint.x*2 - center.x, yMyC = myPoint.y*2 - center.y	//Curve control point on my end
           let xEnd = refPoint.x  - this.state.x, yEnd = refPoint.y  - this.state.y	//Convert his closest point to relative x,y
           let xEnC = refPoint.xs - this.state.x, yEnC = refPoint.ys - this.state.y	//Curve control point on his end, as relative coordinates
-          d = `M${myPoint.x},${myPoint.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
-//          d = `M${myPoint.x},${myPoint.y} L${xMyC},${yMyC}, L${xEnC},${yEnC}, L${xEnd},${yEnd}`
-          paths[link] = d
+          if (reverse) {
+            d = `M${myPoint.x},${myPoint.y} C${xMyC},${yMyC}, ${xEnC},${yEnC}, ${xEnd},${yEnd}`
+          } else {
+            d = `M${xEnd},${yEnd} C${xEnC},${yEnC}, ${xMyC},${yMyC}, ${myPoint.x},${myPoint.y}`
+          }
+          paths[index] = d
         }
       })
+//console.log('Connectors:', paths)
       return paths
     },
     hubs: function () {				//Generate SVG code for appendages where connecting arrows should terminate
@@ -88,10 +95,7 @@ export default {
   },
 
   methods: {
-    linkName(link) {					//Link might be a node name, or an object with more data including the node name
-      if (typeof link == 'object') {return link.link} else {return link}
-    },
-    hubIndex(link) {					//Link might be a node name, or an object with more data including the node name
+    linkIndex(link) {				//Link might be a node name, or an object with more data including the node name
       if (typeof link == 'object') {return link.index} else {return link}
     },
     closest(base, points, point) {			//Find closest vertex from a list of points, to a specified point
@@ -103,13 +107,13 @@ export default {
       })
       return {x, y}					//Return closest point, relative to base
     },
-    connection(Him, index) {				//Return my closest connection point to other coordinate 'Him'
+    connection(him, index) {				//Return my closest connection point to other coordinate 'him'
       let center = this.cent, ends = this.state.ends, me = this.state
       if (index) this.state.links.forEach(lk => {	//Find the matching hub, if there is one
         if (lk.index == index) {({ center, ends } = lk)}
       })
-//console.log("Him: (", Him.x, Him.y,")", this.state.tag, "@", me.x, me.y, index)
-      let cp = this.closest(this.state, ends, Him)	//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
+//console.log("him: (", him.x, him.y,")", this.state.tag, "@", me.x, me.y, index)
+      let cp = this.closest(this.state, ends, him)	//cp=closest point, 'ends' describes possible relative locations to terminate connector lines
         , xs = cp.x*2 - center.x + me.x			//Compute curve control points
         , ys = cp.y*2 - center.y + me.y
         , x = me.x + cp.x				//Compute absolute connection point
