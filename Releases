@@ -1,6 +1,7 @@
 Change Log:
 
-1.0.15	2019-Oct
+1.0.17	2019-Oct
+	- Improved function of svgraph objects
 	- Follow relational links correctly on master/slave windows
 	- Obey default load criteria
 	- Restore saved ordering of preview tables

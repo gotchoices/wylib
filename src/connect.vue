@@ -368,11 +368,6 @@ console.log("Error in importKeys:", err.message)
     })
 //console.log("Connect mounted:", this.sites)
 
-//    let suggested = window.location.hostname + ":" + this.port
-//    if (this.sites.length == 0 || this.sites.indexOf(suggested) < 0)
-//      this.newSite = suggested			//Offer a resonable default to connect to
-//console.log("newSite:", this.newSite)
-
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
 //console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
       this.$emit('site', this.currentSite = addr)	//Tell my parent about connection change
