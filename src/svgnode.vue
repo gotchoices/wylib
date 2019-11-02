@@ -12,7 +12,7 @@
         <g v-for="link in state.links" v-html="hubs[linkIndex(link)]"></g>
       </g>
       <g class="connectors" v-for="link in state.links">
-        <path :d="connectors[linkIndex(link)]" marker-end="url(#marker-arrow)" stroke="blue" stroke-width="1" fill="none"/>
+        <path :d="connectors[linkIndex(link)]" marker-end="url(#marker-arrow)" :stroke="linkColor(link)" stroke-width="1" fill="none"/>
       </g>
     </g>
 </template>
@@ -21,6 +21,7 @@
 import Com from './common.js'
 import Bus from './bus.js'
 import Interact from 'interactjs'
+const LinkColor = 'blue'
 var nodeBus = new Bus.eventBus(this)			//Discover vms by a given tag
 
 export default {
@@ -97,6 +98,10 @@ export default {
   methods: {
     linkIndex(link) {				//Link might be a node name, or an object with more data including the node name
       if (typeof link == 'object') {return link.index} else {return link}
+    },
+    linkColor(link) {				//Link might be a node name, or an object with more data including the node name
+//console.log("linkColor:", link)
+      if (typeof link == 'object' && link.color) {return link.color} else {return LinkColor}
     },
     closest(base, points, point) {			//Find closest vertex from a list of points, to a specified point
       let x = 0, y = 0, lenMin = Number.MAX_SAFE_INTEGER	//Base(state) and point contain absolute coordinates
