@@ -1,5 +1,8 @@
 Change Log:
 
+1.0.18	2019-Nov
+	- Settable color on graph links
+
 1.0.17	2019-Oct
 	- Improved function of svgraph objects
 	- Follow relational links correctly on master/slave windows
