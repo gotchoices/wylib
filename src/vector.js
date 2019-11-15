@@ -20,22 +20,28 @@ module.exports = {
     return({x,y})
   },
 
-  add: function(v1, ...args) {
+  add: function(v0, ...args) {
+    let v1 = Object.assign({}, v0)
     if (!('x' in v1 || 'y' in v1)) v1 = this.ptor(v1)	//convert to rectangular?
     args.forEach(v2=>{
-      if (!('x' in v2 || 'y' in v2)) v2 = this.ptor(v2)
-      v1.x += v2.x
-      v1.y += v2.y
+      if (v2) {
+        if (!('x' in v2 || 'y' in v2)) v2 = this.ptor(v2)
+        v1.x += v2.x
+        v1.y += v2.y
+      }
     })
     return (v1)
   },
 
-  sub: function(v1, ...args) {
+  sub: function(v0, ...args) {
+    let v1 = Object.assign({}, v0)
     if (!('x' in v1 || 'y' in v1)) v1 = this.ptor(v1)	//Convert to rectangular?
     args.forEach(v2=>{
-    if (!('x' in v2 || 'y' in v2)) v2 = this.ptor(v2)
-      v1.x -= v2.x
-      v1.y -= v2.y
+      if (v2) {
+        if (!('x' in v2 || 'y' in v2)) v2 = this.ptor(v2)
+        v1.x -= v2.x
+        v1.y -= v2.y
+      }
     })
     return (v1)
   }

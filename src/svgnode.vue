@@ -36,12 +36,12 @@ export default {
     transform: function() {				//Moves the object around when we change x or y
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
     },
-    cent: function() {					//My center in relative terms
+    cent: function() {					//My center, relative to my local node origin
       let xSum = 0, ySum = 0, count = 0
       this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
       return {x: xSum / count, y: ySum / count}		//Calculate center of mass for my connections
     },
-    center: function() {				//Compute my centroid in absolute terms
+    center: function() {				//Compute my centroid in absolute terms inside the SVG
       return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}
     },
     objStyle: function () {return {			//Change the cursor to show our object as movable
@@ -89,7 +89,7 @@ export default {
     hubs: function () {				//Generate SVG code for appendages where connecting arrows should terminate
       var code = {}
       this.state.links.forEach(lk => {		//For each node I point to
-        if (typeof lk == 'object') {code[lk.index] = lk.hub()}
+        if ('hub' in lk) {code[lk.index] = lk.hub()}
       })
       return code
     },
@@ -133,8 +133,10 @@ export default {
   },
 
   beforeMount: function() {
-//console.log("Node beforeMount:", this.state.tag, this.state)
+//console.log("Node beforeMount:", this.state.x, this.state.y)
     Com.stateCheck(this)
+    if (this.state.x == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
+//console.log("     beforeMount:", this.state)
     this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
       if (typeof lk == 'object' && !lk.hub) this.$set(lk, 'hub', ()=>{})	
     })

@@ -30,10 +30,10 @@
         <button class="nodrag" @click="$emit('refresh')" title="Reload chart from its source data">Refresh</button>
         <button class="nodrag" @click="$emit('reset')" title="Reload chart and reinitialize arrangement">Reset</button>
         <div class="sliders">
-          <input type="range" min="1" max="100" v-model="state.pushForce" class="slider nodrag" title="How hard the nodes repel each other">Repel: {{state.pushForce}}</input>
-          <input type="range" min="1" max="100" v-model="state.pullForce" class="slider nodrag" title="How hard the links attract connected nodes">Attract: {{state.pullForce}}</input>
-          <input type="range" min="1" max="100" v-model="state.randForce" class="slider nodrag" title="How much random force to introduce">Random: {{state.randForce}}</input>
-          <input type="range" min="-50" max="50" v-model="state.aspForce" class="slider nodrag" title="How much to squish vertically">Aspect: {{state.aspForce}}</input>
+          <input type="range" min="0" max="100" v-model="state.pushForce" class="slider nodrag" title="How hard the nodes repel each other (r^3)">Repel: {{state.pushForce}}</input>
+          <input type="range" min="0" max="100" v-model="state.pullForce" class="slider nodrag" title="How hard the links attract connected nodes (r^3)">Attract: {{state.pullForce}}</input>
+          <input type="range" min="0" max="100" v-model="state.gravForce" class="slider nodrag" title="General linear attractive force">Gravity: {{state.gravForce}}</input>
+          <input type="range" min="0" max="100" v-model="state.randForce" class="slider nodrag" title="How much random force to introduce">Random: {{state.randForce}}</input>
         </div>
       </div>
     </div>
@@ -61,7 +61,7 @@ export default {
     repeatTimer:	null,
     toolX:		0,
     toolY:		0,
-    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}, pushForce:50, pullForce:50, randForce:1, aspForce:1},
+    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}, pushForce:50, pullForce:50, randForce:0, aspForce:1, gravForce:50},
   }},
   
   computed: {
@@ -113,38 +113,59 @@ export default {
       state.x += (event.dx * ratio)
       state.y += (event.dy * ratio)
     },
+    clip(val, max) {
+      let i = val
+      if (val > max) return max
+      if (val < -max) return -max
+      return val
+    },
     bump() {			//Nudge each object according to the computed forces on it
       let forces = []
-      this.$refs.node.forEach((vm, ix) => {forces[ix] = {r:0, a:0}})
+        , xSize = this.state.maxX - this.state.minX
+        , ySize = this.state.maxY - this.state.minY
+        , svgAsp = xSize / ySize
+        , winAsp = window.innerWidth / (window.innerHeight * 0.80)		//Estimate vertical space used for display of SVG
+        , adjAsp = Math.log10(winAsp/svgAsp)
+        , maxMove = Math.min(xSize, ySize) / 5
+//console.log("Bump:", maxMove, svgAsp, winAsp, adjAsp)
+      this.$refs.node.forEach((vm, ix) => {forces[ix] = {x:0, y:0}})		//Init forces
       this.$refs.node.forEach((vm1, ix1) => {
-        let links = vm1.state.links.map(lk => {return (typeof lk == 'object') ? lk.link : lk})	//in case links involve a hub object
-//console.log("links:", links)
+//console.log("vm1:", vm1.state.x, vm1.state.y)
         this.$refs.node.forEach((vm2, ix2) => {
           if (ix1 != ix2) {
             let rect12 = vector.sub(vm2.center, vm1.center)	//Distance between 2 nodes
               , polar12 = vector.rtop(rect12)
-              , aspectBias = {x:vm2.center.x * 0.00005 * this.state.aspForce, y: -vm2.center.y * 0.00005 * this.state.aspForce}		//Squish vertically a little
-              , maxMove = (this.state.maxX - this.state.minX) / 10			//Don't try to expand faster than this
-              , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 10 (or negative)
-              , push = Math.min(this.state.pushForce * 800 / Math.pow(mag,2), maxMove)
-              , pull = this.state.pullForce * mag / 1000000000	//All objects have a little attractive gravity
+              , aspectBias = {x:vm2.center.x / 10 * adjAsp, y: -vm2.center.y / 10 * adjAsp}		//Squish vertically a little
+              , mag = Math.max(polar12.r - vm1.state.radius - vm2.state.radius, 10)	//Ignore closer than 2, or negative
+              , maxPull = Math.min(maxMove, mag / 10)
+              , push = Math.min(this.state.pushForce * 100 / Math.pow(mag,2), maxMove/20)
+              , pull = this.state.gravForce * mag / 50000				//All objects have a little attractive gravity
               , randPull = 0
-//console.log("bump:", ix1, ix2, rect12, polar12, maxMove, push, aspectBias)
+              , link = vm1.state.links.find(el=>(el.link == vm2.state.tag))
+              , linkBias
 
-            if (links.includes(vm2.state.tag)) {
-              pull += this.state.pullForce * Math.pow(mag,2) / 1000000			//Linked objects have a lot more attraction
-              if (Math.random() < 0.02) {randPull = pull * (Math.random() - 0.5) * this.state.randForce}	//Inject an extra random burst 2% of the time
+            if (link) {
+//console.log("link:", ix1, ix2, link)
+              if (link.bias) linkBias = link.bias()
+              pull += this.state.pullForce * Math.pow(mag,2) / 200			//Linked objects have a lot more attraction
+              if (this.state.randForce && Math.random() < 0.02) {			//Inject an extra random burst 2% of the time
+                randPull = pull * (Math.random() - 0.5) * this.state.randForce
+              }
             }
-            forces[ix1] = vector.add(forces[ix1], {r:-push + pull + randPull, a:polar12.a})
+            pull = Math.min(pull, maxPull)
+//console.log("PP:", ix1, ix2, push.toFixed(4), pull.toFixed(4), maxPull.toFixed(1))	//, adjAsp, aspectBias)
+//console.log("vals:", vm1.center, vm2.center, rect12, polar12, linkBias)
+            forces[ix1] = vector.add(forces[ix1], {r:-push + pull + randPull, a:polar12.a}, linkBias)
             forces[ix2] = vector.add(forces[ix2], {r: push - pull + randPull, a:polar12.a}, aspectBias)
+//console.log("  pp:", forces[ix1], forces[ix2])
           }
         })
       })
       let minX = Number.MAX_VALUE, minY = minX, maxX = -Number.MAX_VALUE, maxY = maxX
       this.$refs.node.forEach((vm, ix) => {		//Now do the nudging
-//console.log("Bump:", ix, forces[ix])
-        vm.state.x += forces[ix].x			//Nudge
-        vm.state.y += forces[ix].y
+//console.log("Nudge:", ix, forces[ix].x.toFixed(3), forces[ix].y.toFixed(3), maxMove.toFixed(1))
+        vm.state.x += this.clip(forces[ix].x, maxMove)		//Nudge
+        vm.state.y += this.clip(forces[ix].y, maxMove)
 
         let hubs = vm.$el.getElementsByClassName("hubs")
           , bBox = hubs.length >= 1 ? hubs[0].getBBox() : vm.$el.getBBox()
@@ -158,17 +179,20 @@ export default {
       })
 //console.log("  mins:", minX, minY)
       this.$refs.node.forEach((vm, ix) => {		//Move all objects back relative to origin
-        vm.state.x -= (minX - 10)
-        vm.state.y -= (minY - 10)
+        vm.state.x -= (minX - 20)
+        vm.state.y -= (minY - 20)
+//console.log("x:", vm.state.x, "y:", vm.state.y)
       })
       this.state.minX = this.state.minY = 0		//And adjust SVG viewport to show all objects
-      this.state.maxX = maxX - minX + 20
-      this.state.maxY = maxY - minY + 20
+      this.state.maxX = maxX - minX + 60
+      this.state.maxY = maxY - minY + 60
     },
   },
 
   beforeMount: function() {
     Com.stateCheck(this)
+    if (this.state.maxX == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
+//console.log("SVGraph beforeMount:", this.state)
   },
 
   mounted: function() {
@@ -176,6 +200,7 @@ export default {
       onmove: (event) => {this.toolX += event.dx; this.toolY += event.dy},
       ignoreFrom: '.nodrag'
     })
+    this.$on('bump', ()=>{this.bump()})
   },
 }
 </script>
@@ -185,7 +210,6 @@ export default {
     position: absolute;
     right: 10px;
   }
-
   .wylib-svg button {
     width: 100%;
     padding: 4px;
@@ -224,5 +248,9 @@ export default {
   }
   .wylib-svg .graph {
     position: absolute;
+  }
+  .wylib-svg {
+    height: auto;
+    background: blue;
   }
 </style>
