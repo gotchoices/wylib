@@ -84,7 +84,6 @@ export default {
     wm:			{},
     lang:		{title: null, help: null},
     stateTag:		'win',
-    myTopElement:	null,
     top:		null,
     modal:		{posted: false, client:{}},
     restoreMenu:	[],
@@ -97,6 +96,7 @@ export default {
     winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
     stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null, fresh: true},
   }},
+  inject: ['app'],
   provide() { return {
     top: () => {return this.top}
   }},
@@ -210,16 +210,6 @@ console.log("Clone to popup:", popId)
       })
     },
 
-    topClick(ev) {		//Any click in bounds of our toplevel window
-      if (!this.state.posted) return			//Only posted windows need to check
-//console.log("Top window click:", ev.target.nodeName, "This:", this.$el.classList.value, "Target: ", ev.target.classList.value)
-      if (ev.target.closest('.wylib-menu')) return	//Click came from another menu
-      if (ev.target.closest('.wylib-button')) return	//Click came from the menu button itself
-      if (this.$el.contains(ev.target)) return		//Click is within our own window
-//console.log("  pinnable:", this.pinnable, this.state.pinned)
-      if (!this.pinnable || !this.state.pinned) this.$emit('close')
-    },
-
     moveHandler(event) {
 //console.log("Moving: ", event, this.state, this.winStyleF);
       this.state.x += event.dx
@@ -297,13 +287,18 @@ console.log("Clone to popup:", popId)
     },
   },
 
-  watch: {		//Let parent and any content clients, we just posted
+  watch: {		//Let parent and any content clients know we just posted
     'state.posted': function(isPosted) {
 //console.log("Posted, children:", this.$scopedSlots, this.state.x, this.state.y)
       if (isPosted) this.$nextTick(() => {
         this.$emit('posted') 				//Tell parent
         if (this.top) this.top.posted()			//Tell anyone else who might be listening
-      })
+        if (this.pinnable) this.app().listenClick(this.id, () => {
+//console.log("win", this.id, "sees app click")
+          this.state.posted = this.state.pinned			//Unpost me on external clicks
+        })
+      }); else
+        this.app().listenClick(this.id)				//Un-listen for clicks
     },
   },
 
@@ -368,12 +363,6 @@ console.log("Clone to popup:", popId)
     })
 //console.log("Mounted; this: ", wId, this.title, "topLevel:", this.topLevel, "top:", this.top)
 
-    if (!this.topLevel) {			//Find a toplevel where clicks will unpost menus
-      this.myTopElement = this.$el.closest('.wylib-win.toplevel')
-    }
-    if (this.myTopElement) this.myTopElement.addEventListener('click', this.topClick)
-//console.log("Win components: " + JSON.stringify(this.$options.components))
-
     this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
 
     if (this.topLevel && this.state.fresh) {		//This is a brand new window--not one restored from saved state
@@ -385,11 +374,6 @@ console.log("Clone to popup:", popId)
         Object.assign(this.state, savedState)		//Comment line for debugging from default state
       }
     }
-  },
-
-  beforeDestroy: function() {
-//console.log("Win about to die:", this.state)
-    if (this.myTopElement) this.myTopElement.removeEventListener('click', this.topClick)
   },
 }
 </script>

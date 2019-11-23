@@ -23,6 +23,7 @@ module.exports = function topHandler(context) {
   this.postCB = null
   this.context = context
   this.dialogCB = {}
+  this.clickCB = {}
 
   if (context) topWins[context.id] = context		//Keep a list of all participating windows
 //console.log("Registering ID", context ? context.id : null)
@@ -38,6 +39,16 @@ module.exports = function topHandler(context) {
     if (this.dialogCB[actTag]) {
       return this.dialogCB[actTag](dialogTag, ...args)
     }
+  }
+
+  this.listenClick = function(tag, cb) {		//Register for a callback upon any click in the toplevel
+//console.log("Top click register:", tag, !!cb)
+    if (cb) this.clickCB[tag] = cb; else delete this.clickCB[tag]
+  }
+
+  this.notifyClick = function(ev) {			//Notify any listers of clicks
+//console.log("Top notify click:", ev)
+    Object.keys(this.clickCB).forEach(key => this.clickCB[key](ev))
   }
 
   this.emit = function(code, ev) {		//Do we still use this?
@@ -96,13 +107,13 @@ module.exports = function topHandler(context) {
   },
 
   this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
-//console.log("makeMessage:", msg, typeof mes, msg[0], this.context.wm)
+console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
     if (typeof msg == 'string') {
       return this.wmCheck(msg)
     } else if (typeof msg == 'object') {
       if (msg.title && msg.help) return msg
-//      else if (msg.lang && msg.lang.title && msg.lang.help)	//When does this happen?
-//        return msg.lang
+      else if (msg.lang && msg.lang.title && msg.lang.help)	//reports may use this format
+        return msg.lang
       else if (msg.message) return msg.message
       else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
       else return this.makeMessage('!winUnknown')
@@ -162,7 +173,7 @@ module.exports = function topHandler(context) {
 
   this.actionLaunch = function(view, action, info, editCB) {	//Handle request for a report/action
     if (typeof action == 'string') {
-      return notImplemented()				//Fixme: fetch action metadata, and call actionLaunch recursively
+      return notImplemented()			//Fixme: fetch action metadata, and call actionLaunch recursively
     }
     let { buttonTag, options, dialogIndex, popUp } = info
       , name = action.name
@@ -174,7 +185,7 @@ module.exports = function topHandler(context) {
       , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : RepCom.unique(actTag))
       , config = {repTag, view, action, info}		//Will save this for restore purposes
     info.keys = getKeys()				//Remember the last key values too
-//console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config)
+console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config)
 //console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp)
 
     if (buttonTag == 'diaCancel') {			//If we came from a dialog, and user says cancel
@@ -182,34 +193,34 @@ module.exports = function topHandler(context) {
       return true
     }
     
-    var perform = (target, message, win) => {			//Respond to messages from report window
+    var perform = (target, message, win) => {		//Respond to messages from report window
       let {request, data} = message ? message : {}
-//console.log("Report query:", repTag, request, data, location.origin)
+console.log("Report query:", repTag, 'tgt:', target, message)
 
       if (target == 'report') {
-//console.log("Report:", repTag, "dirty:", data)
+console.log("Report:", repTag, "dirty:", data)
         this.context.repBus.notify(repTag, request, data)
 
-      } else if (target == 'control') {
+      } else if (target == 'control') {			//Report window content is mounted and asking for content from the control layer on the backend
         let request = data
         Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys:getKeys()}}, (content, error) => {
-//console.log("DB answers:", content, "error:", error)
+console.log("DB answers:", content, "error:", error)
           if (error) {this.error(error); return}
           if (win && content)
             win.postMessage({request:'populate', format:action.format, content, config}, location.origin)	//send content to report window
         })
 
-      } else if (target == 'editor') {
-//console.log("Send to Dbe:", request, data)
+      } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
+console.log("Command for Dbe:", request, "data:", data)
         if (editCB) editCB(request, data)
       }
     }
     
     if (action.format) {				//This action is a report, has a window
-      RepCom.register(repTag, perform)
-      this.context.reportWin(repTag, ReportFile, config)
+      RepCom.register(repTag, perform)			//Get ready to communicate with it
+      this.context.reportWin(repTag, ReportFile, config)	//Create the window
     } else {						//Immediate query, execute it
-      perform('control', 'ready')
+      perform('control')
     }
     return (buttonTag != 'diaApply')		//Tell top window to close the options dialog, if any
   }

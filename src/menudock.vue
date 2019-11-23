@@ -8,7 +8,7 @@
 <template>
   <div class="wylib wylib-menudock">
     <div class="buttons">
-      <wylib-button class="menubutton" icon="menu" :toggled="state.menu.posted" @mousedown="state.menu.posted = !state.menu.posted" :title="lang.title"/>
+      <wylib-button class="menubutton" icon="menu" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="lang.title"/>
       <wylib-button class="shortcut" v-for="conf in config" v-if="conf.shortcut"
       	:key="conf.idx" :icon="conf.icon" :toggled="conf.toggled" @click="conf.call" 
       	:disabled="('disabled' in conf) ? conf.disabled : false"

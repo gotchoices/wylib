@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //- Register single event listener for toplevel window to unpost all menus (rather than having every menu register an event listener)
+//- Implement maximum height preference for menus (1/2 of screen size?)
 //- Configuration separate from contents?
 //- Contents gives actual menu items
 //- Can have multiple text fields, icons, cascades
@@ -12,13 +13,11 @@
 //- Menu icon inside menu toggles, as done shortcut button
 //- Default menu icon for sub-menus
 //- 
-//- Implement window save/restore using menu component
-//- 
 <template>
   <div class="wylib wylib-menu">
     <div class="menu" title=''>
       <table>
-        <tr v-for="item in config" :key="item.idx" @click="execute(item.call, $event)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
+        <tr v-for="item in config" :key="item.idx" @click.stop="execute(item.call, $event, item)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
           <td v-for="fld in layout" :key="fld">
             <svg v-if="fld=='icon'" class="icon" style="height:1em; width:1em" :style="iconStyle(item.toggled)" v-html="iconSvg(item.icon)"></svg>
             <div v-else-if="fld=='lang'">{{ (item.lang?item.lang.title:null) || item.idx }}</div>
@@ -52,12 +51,14 @@ export default {
     layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
     config:	Array,
     lang:	{type: Object, default: Com.langTemplate},
+    top:	null,
   },
   data() { return {
     pr:		require('./prefs'),
     stateTpt:	{subs: {}}
   }},
   computed: {
+    id() {return 'menu_' + this._uid + '_'},
   },
   methods: {
     iconSvg(icon) {
@@ -92,11 +93,18 @@ export default {
 //console.log("Posting sub:", theSub.x, theSub.y, "Item:",itemBBox, "Menu:",menuBBox, viewWidth, "Comp:", subComp, "Elem:", subElem)
         })
       }
-//console.log("  Posted: ", theSub)
+console.log("  Posted: ", theSub)
     },
-    execute(cb, ev) {		//Execute the specified callback
-      this.$emit('done')
+    execute(cb, ev, item) {		//Execute the specified callback
       if (cb) cb(ev)
+console.log("  Executed: ", ev.target, item)
+      if (item.menu) {			//Clicking on sub-menu selector
+        let { idx } = item
+          , sub = this.state.subs[idx]
+        sub.posted = !sub.posted	//Toggle sub-menu
+      } else {
+        this.$emit('done')
+      }
     },
   },
 
@@ -114,6 +122,11 @@ export default {
 //console.log("Set default for: ", item.idx, "State:", this.state.subs[item.idx])
       }
     })
+
+//    if (this.top) this.top.listenClick(this.id, (ev)=>{
+//console.log("Menu sees external click", ev.target)
+//      this.$emit('done')
+//    })
   },
 
   mounted: function() {
@@ -121,6 +134,9 @@ export default {
 //    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
     this.$parent.$emit('customize', this.lang)
   },
+  beforeDestroy: function() {
+    if (this.top) this.top.listenClick(this.id)		//De-register
+  }
 }
 </script>
 
@@ -136,12 +152,6 @@ export default {
   .wylib-menu > .menu {
     width: calc(100% - 6px);	//Fixme: can do with padding or borders?
     position: relative;
-//    top: 3px;			//Fixme: can do with padding or borders?
-//    left: 3px;			//Fixme: can do with padding or borders?
-//    margin: 1px 1px 1px 1px;
-//    overflow-x: hidden;
-//    overflow-y: scroll;
-//    border: 1px solid purple;
   }
   .wylib-menu .menu tr:hover {
     background: lightblue;	//Fixme: prefs

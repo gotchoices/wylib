@@ -18,7 +18,7 @@
     </div>
     <hr/>
     <label v-if="!pw.ready">{{pw.prompt}}:<input type='password' @keyup.enter="submitPW" autofocus/></label>
-    <div v-if="pw.ready" class="appbody">
+    <div v-if="pw.ready" class="appbody" @click="appClick">
       <div class="tabset">
         <div v-for="tab in tabs" class="tab" :title="tab.lang?tab.lang.help:null" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
           {{ (tab.lang ? tab.lang.title : null) || tab.title }}
@@ -66,6 +66,7 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   appSave:	{title:'Save State',	help:'Save application state to the backend'},
   appSaveAs:	{title:'Save State As',	help:'Save application state to the backend using a named configuration'},
   appRestore:	{title:'Load State',	help:'Load application from a previously saved state'},
+  appPrefs:	{title:'Preferences',	help:'Change application preferred settings'},
   appDefault:	{title:'Default State',	help:'Initialize the application to a default state'},
   appEditState:	{title:'Edit State',	help:'Preview a list of saved states for this application'},
 }
@@ -94,9 +95,11 @@ export default {
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
     wm:			WmDefs,
+    pr:			require('./prefs')
   }},
   provide() { return {
-    top: () => {return this.top}
+    top: () => {return this.top},
+    app: () => {return this.top}
   }},
   computed: {
     id: function() {return 'app_' + this._uid + '_'},
@@ -109,16 +112,26 @@ export default {
     },
     appMenuConfig: function() {let wm = this.wm
       return [
-      {idx: 'sav', lang: wm.appSave,      icon: 'upload', call: this.saveState},
-      {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2', call: this.saveStateAs},
+      {idx: 'sav', lang: wm.appSave,      icon: 'upload',   call: this.saveState},
+      {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2',  call: this.saveStateAs},
       {idx: 'res', lang: wm.appRestore,   icon: 'download', menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'def', lang: wm.appDefault,   icon: 'home',   call: this.defaultState},
-      {idx: 'edi', lang: wm.appEditState, icon: 'pencil', call: ()=>{this.previews[0].posted = true}},
+      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',      menu: this.prefsMenu, layout: ['lang', 'input']},
+      {idx: 'def', lang: wm.appDefault,   icon: 'home',     call: this.defaultState},
+      {idx: 'edi', lang: wm.appEditState, icon: 'pencil',   call: ()=>{this.previews[0].posted = true}},
+    ]},
+    prefsMenu: function() {let wm = this.wm
+      return [
+      {idx: 'hi', lang: 'Hi',  type:'ent'},
+      {idx: 'ho', lang: 'Ho',  type:'text', input:()=>{}},
     ]},
   },
   methods: {
     lang(key, title, defVal) {
       return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
+    },
+    appClick(ev) {			//Any click in the app
+console.log("Got app click")
+      this.top.notifyClick(ev)
     },
     siteChange(site) {
 //console.log("App site change:", site)
@@ -178,7 +191,7 @@ export default {
     },
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-        if (data.msg) this.wm = data.msg
+        if (data.msg) Object.assign(this.wm,data.msg)	//Don't overwrite what might be in WmDefs
 //console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
       })
