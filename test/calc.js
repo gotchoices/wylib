@@ -5,7 +5,6 @@ import Vue from 'vue'
 Vue.config.productionTip = false
 import Trans from '../src/trans.vue'
 import Calc from '../src/calc.vue'
-import Stretch from '../src/stretch.vue'
 import Icons from '../src/icons.js'
 
 const Template = `
@@ -15,9 +14,7 @@ const Template = `
     <hr>
     <h4><a name="Calc">Calc:</a></h4>
     <div style="height: 240px; border: 1px solid blue;">
-      <wylib-stretch style="height: 200px; width: 200px; border: 1px solid red;">
-        <wylib-calc/>
-      </wylib-stretch>
+      <wylib-calc/>
       <button @click="test1">Test 1</button>
       <button @click="test2">Test 2</button>
     </div>
@@ -57,7 +54,6 @@ console.log("Test 2:" + event)
   components: {
     'wylib-calc': Calc,
     'wylib-trans': Trans,
-    'wylib-stretch': Stretch,
   }
 }
 

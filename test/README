@@ -4,10 +4,4 @@ To access wylib test functionality:
   npm run dev-hot
 
 - Connect browser to:
-  http://linux-box:3300
-
-- You will need a data server running for functions that access a database.
-  For example, to access the WyseGI admin tool, navigate to mychips sample 
-  code and run:
-
-  npm run dev-server
+  http://hostname:3300

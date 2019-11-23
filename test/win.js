@@ -3,13 +3,12 @@
 // -----------------------------------------------------------------------------
 import Vue from 'vue'
 Vue.config.productionTip = false
-import WylibDoc from '../src/doc.vue'
+import WylibDoc from '../src/strdoc.vue'
 import WylibWin from '../src/win.vue'
 import WylibDbp from '../src/dbp.vue'
 import WylibSVGraph from '../src/svgraph.vue'
 import Wyseman from '../src/wyseman.js'
 var wmAddress = 'lux2.batemans.org:54320'
-import '../src/wylib.css'
 
 const Template = `
   <div>

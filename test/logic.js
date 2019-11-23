@@ -4,7 +4,6 @@
 import Vue from 'vue'
 Vue.config.productionTip = false
 import WylibLogList from '../src/loglist.vue'
-import '../src/wylib.css'
 
 const Template = `
   <div>

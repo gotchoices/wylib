@@ -4,7 +4,6 @@
 import Vue from 'vue'
 Vue.config.productionTip = false
 import WylibMlb from '../src/mlb.vue'
-import WylibStretch from '../src/stretch.vue'
 //import jQuery from 'jquery'	//Doesn't actually put jQuery in the global space (Use: https://stackoverflow.com/questions/28969861/managing-jquery-plugin-dependency-in-webpack)
 
 const Template = `
@@ -19,9 +18,7 @@ const Template = `
 
     <h4><a name="Mlb">A Mlb with lots of data:</a></h4>
     <div id="aBigMlb" style="border: 1px solid red;">
-      <wylib-stretch style="border: 1px solid grey;" @drag='(w, h) => {bigHeight = h}'>
-        <wylib-mlb ref="anMlb" label="List of Stuff" :columns="bigGridColumns" :data="bigGridData" :height="bigHeight"/>
-      </wylib-stretch>
+      <wylib-mlb ref="anMlb" label="List of Stuff" :columns="bigGridColumns" :data="bigGridData" :height="bigHeight"/>
       <br>
       <button @click="test3">Regenerate</button>
       <button @click="test4">Test 4</button>
@@ -95,7 +92,6 @@ console.log("Test 4:" + event)
   },
   components: {
     'wylib-mlb': WylibMlb,
-    'wylib-stretch': WylibStretch
   }
 }
 
