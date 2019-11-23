@@ -78,7 +78,7 @@ export default {
       return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
     mapValue() {
-      return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value) : this.value
+      return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value,null,2) : this.value
     },
     dirty() {						//The user has changed the value
       let dirty = (this.userValue != this.mapValue)
