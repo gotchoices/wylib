@@ -12,6 +12,7 @@
 //- Implement built-in template codes (date, time, etc)
 //- Arrange remaining fields for mychips.users_v
 //- Change dew state to config? (probably not--just trim state at this level)
+//- Should an mle save its state when the user enlarges it?  How do we get the default back?
 //- 
 //- Later:
 //- Can do 2D array with: 

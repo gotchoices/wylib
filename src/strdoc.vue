@@ -402,6 +402,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   },
   created: function() {
     Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+console.log("Got wm update:", err, data)
       if (data.msg) this.wm = data.msg
     })
   },

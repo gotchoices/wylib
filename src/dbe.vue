@@ -80,7 +80,7 @@ export default {
             , lang = sub.lang || {title: viewName, help:null}
         subs.push({idx: viewName, lang, icon: 'table', call: ()=>{this.addWin(sub.view)}})
       })
-      return subs
+      return subs.length > 0 ? subs : null	//Don't create an empty menu
     },
     dockConfig() { return [
       {idx: 'act', lang: this.wm.dbeActions, menu: this.actMenu, icon: 'wand'},
@@ -194,7 +194,7 @@ export default {
         }
       })
 
-      this.dataRequest('insert', {fields}, null, ()=> {this.dirty = false})
+      this.dataRequest('insert', {fields}, true, ()=> {this.dirty = false})
     },
 
     update() {
@@ -258,9 +258,9 @@ export default {
       Com.closeWindow(this.state.subs, idx, this, reopen)
     },
 
-    reportQuery(request, data) {		//Requests from a launched report
-//console.log("Dbe got request from report:", request, data)
-      if (!request || request == 'pKey') {
+    reportQuery(request, data) {		//Handle editor requests from a launched report
+console.log("Dbe got request from report:", request, data)
+      if (!request || request == 'pKey') {	//Default to asking for currently loaded key
         return (this.keyValues ? [this.pKey] : null)
       } else if (request == 'update') {
         let uData = {}

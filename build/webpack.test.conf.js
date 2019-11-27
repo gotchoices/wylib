@@ -10,8 +10,7 @@ module.exports = {
     doc:  './test/doc.js',
     mlb:  './test/mlb.js',
     win:  './test/win.js',
-    calc: './test/calc.js',
-    wysegi: './wysegi/wysegi.js'
+    calc: './test/calc.js'
   },
   output: {
     path: path.join(__dirname, '..', 'dist'),

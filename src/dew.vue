@@ -5,6 +5,7 @@
 //X- Emit event when data changed
 //X- Validity doesn't show on first load
 //X- Why do fields show changed after a clear?
+//X- Allow arbitrary misc attributes to be added to an input
 //- Honor -justify field from wyseman wmd files
 //- 
 //- Later:
@@ -18,19 +19,20 @@
 //-   Editing window
 //- Can select from scrolled menu of available countries (and other queries)
 //- 
-<template>
-  <div class="wylib wylib-dew" :title="lang ? lang.help : null">
-    <div v-if="state.style == 'chk'" class="check" :style="genStyle">
-      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
-    </div>
-    <textarea ref="input" v-else-if="state.style == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
-    <select ref="input" v-else-if="state.style == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
-      <option v-for="val in values" :label="val.title" :value="val.value" :title="val.help"/>
-    </select>
-    <input ref="input" v-else-if="state.style == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
-    <input ref="input" v-else :type="state.style" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
-  </div>
-</template>
+
+//<--template>		Changed to render function below
+//  <div class="wylib wylib-dew" :title="lang ? lang.help : null">
+//    <div v-if="state.input == 'chk'" class="check" :style="genStyle">
+//      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
+//    </div>
+//    <textarea ref="input" v-else-if="state.input == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
+//    <select ref="input" v-else-if="state.input == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
+//      <option v-for="val in pdmValues" :label="val.title" :value="val.value" :title="val.help"/>
+//    </select>
+//    <input ref="input" v-else-if="state.input == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
+//    <input ref="input" v-else :type="state.input" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
+//  </div>
+//<--template>
 
 <script>
 import Com from './common.js'
@@ -50,7 +52,7 @@ export default {
 //  components: {'wylib-indate': InDate},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
-    lang:	{type: Object},
+    lang:	null,
     value:	{default: null},			//value to compare dirty to
     values:	{type: Array, default: () => ([])},	//valid values for select
     field:	{default: null},			//column or field code
@@ -62,10 +64,22 @@ export default {
     pr:		require('./prefs'),
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-    stateTpt:	{style: 'ent', size: null, state: null, template: null, special: {}},
+    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: {}},
   }},
 
   computed: {
+    pdmValues: function() {
+      let vals = []
+      this.values.forEach(el=>{
+        if (typeof el != 'object') {
+          el = {value: el, title: el, help:null}
+        } else if ('value' in el && !('title' in el)) {
+          el.title = el.value
+        }
+        vals.push(el)
+      })
+      return vals
+    },
     hint: function() {
       let hint = this.state ? this.state.hint : null
       if (hint in shortHints) return shortHints[hint]; else return hint
@@ -75,9 +89,10 @@ export default {
       if (temp in shortTpts) return shortTpts[temp]; else return temp
     },
     disabled: function() {				//No user data entry, just for looking at
-      return (this.state.style == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
+      return (this.state.input == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
     mapValue() {
+//console.log("mapValue", this.field, this.value, typeof this.value)
       return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value,null,2) : this.value
     },
     dirty() {						//The user has changed the value
@@ -87,11 +102,11 @@ export default {
     },
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
       let isValid = false
-      if (this.state.style == 'chk' || this.state.style == 'inf') {
+      if (this.state.input == 'chk' || this.state.input == 'inf') {
         isValid = true
-      } else if (this.state.style == 'pdm') {
+      } else if (this.state.input == 'pdm') {
 //console.log(' values:', this.userValues ? this.values.map(e=>(e.value)) : null)
-        isValid = this.values ? this.values.map(e=>(e.value)).includes(this.userValue || '') : true
+        isValid = this.values ? this.pdmValues.map(e=>(e.value)).includes(this.userValue || '') : true
       } else if (this.template == null) {
         isValid = true
       } else {
@@ -110,21 +125,29 @@ export default {
       background: ('background' in this.state) ? this.state.background : this.pr.dataBackground,
       borderLeftWidth: this.pr.dewFlagWidth + 'px',
       borderRightWidth: this.pr.dewFlagWidth + 'px',
+//x:console.log("width:", this.field, this.width),
+      minWidth: this.width/2 + 'em',		//Better way to compare to actual text size?
     }},
-    height: function() {
-//console.log("Height:", this.state.size)
-      return this.state.size.split(' ')[1] || this.pr.dewDefHeight || 2
+    dims: function() {
+      if (typeof this.state.size == 'string') return this.state.size.split(' ')
+      return (typeof this.state.size == 'number') ? [this.state.size] : []
     },
-    width: function() {
-//console.log("Width:", this.state.size)
-      return this.state.size.split(' ')[0] || this.pr.dewDefWidth || 40
+    height: function() {			//Specified height in characters
+//console.log("Height:", this.state.size, this.dims)
+      return this.dims[1] || this.pr.dewMleHeight || 1
     },
+    width: function() {				//In characters
+//console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth)
+      return this.dims[0] || (
+        this.state.input == 'mle' ? (this.pr.dewMleWidth || 40) : 
+          (this.state.input != 'chk' ? (this.pr.dewEntWidth || 4) : 2)
+    )},
   },
 
   methods: {
     input(ev, value = ev.target.value) {
 //console.log("Dew input:", ev, this.nonull, value)
-      if (this.state.style == 'file' && ev.target.files) {	//Special handler for file selectors
+      if (this.state.input == 'file' && ev.target.files) {	//Special handler for file selectors
         value = ev.target.files
       } else {
         if (!this.nonull && !value) value = null		//Map '' to null if allowed
@@ -146,6 +169,7 @@ export default {
   },
 
   created: function() {
+//console.log("Dew init:", this.field, this.mapValue)
     this.userValue = this.mapValue
   },
   beforeMount: function() {
@@ -171,7 +195,56 @@ export default {
   },
   beforeDestroy: function() {
     if (this.datePicker) this.datePicker.destroy()
-  }
+  },
+  
+  render: function(h, context) {
+    let entry
+      , st = this.state
+      , attrs = {value: this.userValue, autofocus: st.focus, disabled: this.disabled}
+      , on = {input: this.input}
+      , style = this.genStyle
+      , ref = 'input'
+      , conf = {ref, style, attrs, on}
+//console.log("render:", this.field, st)
+    if (st.other) attrs = Object.assign(attrs, st.other)
+    if (st.input == 'mle') {			//Multi-line entry / textarea
+      Object.assign(attrs, {rows: this.height, cols: this.width})
+      entry = h('textarea', conf)
+    } else if (st.input == 'chk') {		//Checkbox
+      Object.assign(attrs, {type: 'checkbox'})
+      delete attrs.value; Object.assign(attrs, {checked: this.userValue})
+      entry = h('div', {class: 'check', style}, [h('input',
+        {ref, attrs, on: {change: ev=>this.input(ev, ev.target.checked)}}
+      )])
+    } else if (st.input == 'pdm') {		//Pull-down menu
+      let optList = []
+      for (let val of this.pdmValues) {
+        optList.push(h('option', {
+          attrs: {label: val.title, value: val.value, title: val.help}
+        }))
+      }
+      entry = h('select', conf, optList)
+    } else if (st.input == 'button') {		//Action button
+//console.log("button lang:", this.lang)
+      let txt = (this.lang ? this.lang.title || this.lang : 'Reset')
+        , innerHTML = txt.split(' ')[0]
+      Object.assign(on, {click: ev=>this.input(ev, true)})
+      Object.assign(conf, {domProps: {innerHTML}})
+      entry = h('button', conf)
+    } else {					//Text or other input type
+      Object.assign(attrs, {type: st.input == 'ent' ? 'text' : st.input, placeholder: this.hint})
+      Object.assign(conf, {class: 'text'})
+      Object.assign(on, {keyup: ev=>{
+        if (ev.code == 'Enter') this.submit()
+      }})
+//console.log("Render:", conf)
+      entry = st.input ? h('input', conf) : null
+    }
+    return h('div', {
+      class: "wylib wylib-dew",
+      attrs: {title: this.lang ? this.lang.help || this.lang.title || this.lang : null},
+    }, [entry])
+  },
 }
 </script>
 
@@ -189,6 +262,10 @@ export default {
 //border: 1px solid blue;
   }
   .wylib-dew input.text {
+    width: 100%;			//Make a preferences option
+  }
+  .wylib-dew button {
+    height: 1.5em;
     width: 100%;
   }
   .wylib-dew div.check {

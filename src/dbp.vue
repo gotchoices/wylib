@@ -132,7 +132,7 @@ export default {
 
     mlbConfig: function() {			//Make the column description format mlb expects
       let colConfigs = {}, foundDisplay = false
-//console.log("mlbConfig:", this.viewMeta)
+//console.log("mlbConfig:", this.state.dbView, this.viewMeta)
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
         let defWidth
           , key = meta.col
@@ -149,7 +149,7 @@ export default {
           width:	defWidth ? (defWidth <= this.pr.mlbMaxWidth ? defWidth : this.pr.mlbMaxWidth) : this.pr.mlbDefWidth,
           visible:	('display' in meta.styles) ? !!parseInt(meta.styles.display) : false,
         }
-//console.log("Width:", meta.styles.size, config.field, defWidth, config.width)
+//console.log("  width:", key, meta.styles.size, "d:", defWidth, "->", config.width)
         colConfigs[key] = config
       })
 //console.log("colConfigs:", colConfigs)
