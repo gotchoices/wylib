@@ -3,7 +3,8 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//- UI to edit preferences
+//X- UI to edit preferences
+//- Save preferences with state
 //- 
 
 <template>
@@ -26,7 +27,7 @@
         <div class="tab-filler">
           <wylib-button icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
           <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false">
-            <wylib-menu :state="appMenu.client" :config="appMenuConfig" @done="appMenu.posted=appMenu.pinned"/>
+            <wylib-menu v-if="appMenu.posted" :state="appMenu.client" :config="appMenuConfig()" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
         </div>
       </div>
@@ -66,7 +67,7 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   appSave:	{title:'Save State',	help:'Save application state to the backend'},
   appSaveAs:	{title:'Save State As',	help:'Save application state to the backend using a named configuration'},
   appRestore:	{title:'Load State',	help:'Load application from a previously saved state'},
-  appPrefs:	{title:'Preferences',	help:'Change application preferred settings'},
+  appPrefs:	{title:'Preferences',	help:'Change preferred settings'},
   appDefault:	{title:'Default State',	help:'Initialize the application to a default state'},
   appEditState:	{title:'Edit State',	help:'Preview a list of saved states for this application'},
 }
@@ -110,27 +111,22 @@ export default {
     appLang: function () {
       return (this.wm ? this.wm['app.'+this.tag] : null) || (this.title.title ? this.title : {title: this.title})
     },
-    appMenuConfig: function() {let wm = this.wm
-      return [
-      {idx: 'sav', lang: wm.appSave,      icon: 'upload',   call: this.saveState},
-      {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2',  call: this.saveStateAs},
-      {idx: 'res', lang: wm.appRestore,   icon: 'download', menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',      menu: this.prefsMenu, layout: ['lang', 'input']},
-      {idx: 'def', lang: wm.appDefault,   icon: 'home',     call: this.defaultState},
-      {idx: 'edi', lang: wm.appEditState, icon: 'pencil',   call: ()=>{this.previews[0].posted = true}},
-    ]},
-    prefsMenu: function() {let wm = this.wm
-      return [
-      {idx: 'hi', lang: 'Hi',  type:'ent'},
-      {idx: 'ho', lang: 'Ho',  type:'text', input:()=>{}},
-    ]},
   },
   methods: {
     lang(key, title, defVal) {
       return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
     },
-    appClick(ev) {			//Any click in the app
-console.log("Got app click")
+    appMenuConfig() {let wm = this.wm
+      return [
+      {idx: 'sav', lang: wm.appSave,      icon: 'upload',    call: this.saveState},
+      {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2',   call: this.saveStateAs},
+      {idx: 'res', lang: wm.appRestore,   icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
+      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: this.pr.menu('app'), layout: ['lang', 'dew']},
+      {idx: 'def', lang: wm.appDefault,   icon: 'home',      call: this.defaultState},
+      {idx: 'edi', lang: wm.appEditState, icon: 'pencil',    call: ()=>{this.previews[0].posted = true}},
+    ]},
+    appClick(ev) {					//Any click in the app
+//console.log("Got app click")
       this.top.notifyClick(ev)
     },
     siteChange(site) {

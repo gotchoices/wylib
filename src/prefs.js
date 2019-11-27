@@ -1,75 +1,129 @@
 //A global object to maintain preferences across an application
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
-//Components are responsible to tap into this object and bind to any
-//style/theme properties they need.
-//There is a language object at text: containing text for all the registered views:
-//   viewname: {columns: {}, messages: {}}
 //TODO:
-//X- Allow for multiple callbacks per view
-//X- Rely more on Wyseman module to cache (combine with meta special type)
+//X- Fill in default text descriptions
+//X- Build object of preferences when launched
+//- Defer building Prefs until init explicitly called (which includes saved prefs)
+//- Generate pull-down to select supported languages from menu
+//- Language changes in one swoop--not a character at a time
+//- Call wyseman with new language, app updates reactively
+//- Create initialize routine
+//-   Fills in any missing properties from default structure
+//- Make routine to build menu items for editing prefs
+//- How does prefs call to refill wyseman cache when language changes?
+//- We should start with an empty config
+//-   Modules should supply their own prefs for the array (including app)
+//- This makes a mobile/alternate version more able to use wyseman.js as-is
 //- 
 
-const Preferences = {
-  dataBackground:		'#fefefe',	//Data entry areas
-  frameBackground:		'#f4f4f4',	//Containers
-  titleBackground:		'#dfdfdf',	//Labels, column headers, etc.
-  highlightBackground:		'#ddffff',
-  dragOverBackground:		'#ffd8a0',
+const Config = {
+  language:		{def: 'eng',		mod:'app', inp:'text',	lang: 'Language'},
   
-  winBorderWidth:		2,
-  winBorderRad:			5,
-  winBorderColor:		'#c0c0c0',
-  winHighlightColor:		'#202060',
-  winOpacity:			0.94,
-  winHeadColorHigh:		'#f0f0f8',
-  winHeadColorLow:		'#b8b8c0',
-  winFullHeader:		22,
-  winSmallHeader:		12,
-  winSubWindowX:		40,
-  winSubWindowY:		40,
+  dataBackground:	{def: '#fefefe',	mod:'app', inp:'color',	lang: 'Data Entry Background'},
+  frameBackground:	{def: '#f4f4f4',	mod:'app', inp:'color',	lang: 'Container Background'},
+  titleBackground:	{def: '#dfdfdf',	mod:'app', inp:'color',	lang: 'Title Background'},
+  highlightBackground:	{def: '#ddffff',	mod:'app', inp:'color',	lang: 'Highlight Background'},
+  dragOverBackground:	{def: '#ffd8a0',	mod:'app', inp:'color',	lang: 'Dragover Background'},
+
+  butHoverColor:	{def: '#88ff88',	mod:'app', inp:'color',	lang: 'Button Hover'},
+  butActiveColor:	{def: '#55cc55',	mod:'app', inp:'color',	lang: 'Button Active Color'},
+  butToggledColor:	{def: '#66aa66',	mod:'app', inp:'color',	lang: 'Button Tottled Color'},
+  butBackground:	{def: '#f4f6f0',	mod:'app', inp:'color',	lang: 'Button Background'},
+  butIconFill:		{def: '#2482a4',	mod:'app', inp:'color',	lang: 'Button Icon Fill'},
+  butIconStroke:	{def: '#222222',	mod:'app', inp:'color',	lang: 'Button Icon Stroke'},
+  butCloseColor:	{def: '#ffdddd',	mod:'app', inp:'color',	lang: 'Close Button Color'},
+  butCloseHoverColor:	{def: '#ffbbbb',	mod:'app', inp:'color',	lang: 'Close Button Hover Color'},
+  butDisabledColor:	{def: '#aaaaaa',	mod:'app', inp:'color',	lang: 'Button Disabled Color'},
+  butDisabledBackground:{def: '#eeeeee',	mod:'app', inp:'color',	lang: 'Button Disabled Background'},
+  butSize:		{def: 1.5,		mod:'app', inp:{type:'number', min:0.5, max:100, step:0.1},	lang: 'Button Size'},
   
-  butSize:			1.5,
-  butHoverColor:		'#88ff88',
-  butActiveColor:		'#55cc55',
-  butToggledColor:		'#66aa66',
-  butBackground:		'#f4f6f0',
-  butIconFill:			'#2482a4',
-  butIconStroke:		'#222222',
-  butCloseColor:		'#ffdddd',
-  butCloseHoverColor:		'#ffbbbb',
-  butDisabledColor:		'#aaaaaa',
-  butDisabledBackground:	'#eeeeee',
+  winBorderColor:	{def:'#c0c0c0',		mod:'win', inp:'color',	lang: 'Border Color'},
+  winHighlightColor:	{def:'#202060',		mod:'win', inp:'color',	lang: 'Highlight Color'},
+  winHeadColorHigh:	{def:'#f0f0f8',		mod:'win', inp:'color',	lang: 'Header Gradient Light'},
+  winHeadColorLow:	{def:'#b8b8c0',		mod:'win', inp:'color',	lang: 'Header Gradient Dark'},
+  winBorderWidth:	{def:2,			mod:'win', inp:{type:'number', min:0, max:20, step:1},	lang:'Border Width'},
+  winBorderRad:		{def:5,			mod:'win', inp:{type:'number', min:0, max:20, step:1},	lang:'Border Radius'},
+  winOpacity:		{def:0.94,		mod:'win', inp:{type:'number', min:0, max:1, step:0.05},lang:'Opacity'},
+  winFullHeader:	{def:22,		mod:'win', inp:{type:'number', min:8, max:50, step:1},	lang:'Large Header Height'},
+  winSmallHeader:	{def:12,		mod:'win', inp:{type:'number', min:4, max:50, step:1},	lang:'Small Header Height'},
+  winSubWindowX:	{def:40,		mod:'win', inp:{type:'number', min:0, max:500, step:10},lang:'Sub Offset X'},
+  winSubWindowY:	{def:40,		mod:'win', inp:{type:'number', min:0, max:500, step:10},lang:'Sub Offset Y'},
   
-  dewInvalidColor:		'#f02020',
-  dewDirtyColor:		'#f0a020',
-  dewBorderColor:		'#808080',
-  dewFlagWidth:			4,
-  dewDefHeight:			2,		//Default textarea dimensions
-  dewDefWidth:			40,		//Default textarea dimensions
+  dewInvalidColor:	{def:'#f02020',		mod:'app', inp:'color',	lang: 'Data Invalid Color'},
+  dewDirtyColor:	{def:'#f0a020',		mod:'app', inp:'color',	lang: 'Data Dirty Color'},
+  dewBorderColor:	{def:'#808080',		mod:'app', inp:'color',	lang: 'Entry Border Color'},
+  dewFlagWidth:		{def:4,			mod:'app', inp:{type:'number', min:1, max:10, step:1},	lang:'Data Flag Width'},
+  dewMleHeight:		{def:2,			mod:'app', inp:{type:'number', min:1, max:40, step:1},	lang:'Text Area Height'},
+  dewMleWidth:		{def:40,		mod:'app', inp:{type:'number', min:10, max:100, step:1},lang:'Text Area Width'},
+  dewEntWidth:		{def:4,			mod:'app', inp:{type:'number', min:1, max:80, step:1},	lang:'Text Entry Min Width'},
 
-  mlbMinWidth:			20,
-  mlbMaxWidth:			200,
-  mlbDefWidth:			80,
-  mlbCharWidth:			8,
+  mlbMinWidth:		{def:20,		mod:'mlb', inp:{type:'number', min:1, max:100, step:1},	lang:'Minimum Width'},
+  mlbMaxWidth:		{def:200,		mod:'mlb', inp:{type:'number', min:1, max:500, step:1},	lang:'Maximum Width'},
+  mlbDefWidth:		{def:80,		mod:'mlb', inp:{type:'number', min:1, max:500, step:1},	lang:'Default Width'},
+  mlbCharWidth:		{def:8,			mod:'mlb', inp:{type:'number', min:1, max:16, step:1},	lang:'Character Width'},
 
-  _callbacks:			{},
-  _currentLanguage:		'eng',
-
-  get language() {return this._currentLanguage},
-  set language(lang) {
-//console.log("Set language:", lang)
-    this._currentLanguage = lang
-    Object.keys(this._callbacks).forEach( (id) => {	//Notify all listeners
-      this._callbacks[id](this._currentLanguage)
-    })
-  },
-
-  register(id, cb) {		//Remember a component to call back if language changes
-//console.log("Prefs register ID:", id)
-    if (cb) this._callbacks[id] = cb; else delete this._callbacks[id]
-  }
 }
 
-//Preferences.text = Preferences._textCache.en
+const Preferences = {
+  
+
+  menu(module) {					//Build a preferences edit menu
+    let rest = 'Restore Defaults'
+      , conf = [{idx: 'restore', lang:rest, state:{input:'button'}, input:(v)=>{
+if (v) console.log("Restore:", v)
+          if (v != undefined) for (let idx in Config) {
+            let {def, mod} = Config[idx]
+            if (mod == module) this[idx] = def
+          }
+        }}]
+    for (let idx in Config) {				//For each configuration item
+      let {def, mod, inp, lang} = Config[idx]
+      if (mod != module) continue			//Include only the ones in the desired module (win, dbe, etc)
+      let input = inp, other				//Default to string input type
+      if (inp != null && typeof inp == 'object') {	//If more complex than just a string
+        input = inp.type || 'text'			//Get the type from the object
+        other = Object.assign({}, inp); delete other.type	//Other properties to apply to the input
+      }
+      let size = input == 'text' ? 20 : 10		//Better way to do this?
+        , state = {input, lang, other, size}		//dew configuration
+//console.log("Pref state:", JSON.stringify(state))
+        , elem = {idx, lang, state, input:(va, ix, d, v)=>{	//Menu configuration
+//console.log("Pref input:", idx, va, ix, this[idx])
+        if (ix == 'language') {
+console.log("Prefs detects language change:", va)
+        }
+        if (va != null && va != undefined && ix)	//Change the preference
+          this[ix] = va
+        return this[idx]
+      }}
+      conf.push(elem)
+    }
+//console.log("Pref conf:", conf)
+    return conf
+  },
+  
+//  _callbacks:			{},
+//  _currentLanguage:		'eng',
+//
+//  get language() {return this._currentLanguage},
+//  set language(lang) {
+//console.log("Set language:", lang)
+//    this._currentLanguage = lang
+//    Object.keys(this._callbacks).forEach( (id) => {	//Notify all listeners
+//      this._callbacks[id](this._currentLanguage)
+//    })
+//  },
+//  register(id, cb) {		//Remember a component to call back if language changes
+//console.log("Prefs register ID:", id)
+//    if (cb) this._callbacks[id] = cb; else delete this._callbacks[id]
+//  }
+}
+
+//Temporary init; replace with initialization call from app
+for (let key in Config) {
+  let {def, mod, inp, title} = Config[key]
+  Preferences[key] = def
+}
+
 module.exports = Preferences

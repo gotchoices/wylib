@@ -2,16 +2,17 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Register single event listener for toplevel window to unpost all menus (rather than having every menu register an event listener)
+//X- Register single event listener for toplevel window to unpost all menus (rather than having every menu register an event listener)
+//X- Can have multiple text fields, icons, cascades
+//X- Default menu icon for sub-menus
 //- Implement maximum height preference for menus (1/2 of screen size?)
+//- Don't create menus until the first time they are posted (win)
 //- Configuration separate from contents?
 //- Contents gives actual menu items
-//- Can have multiple text fields, icons, cascades
 //- Move Fixme's in CSS to prefs
 //- Move subMenuPosted[] into state object
 //- Standardize code in "created:" (Con.init?)
-//- Menu icon inside menu toggles, as done shortcut button
-//- Default menu icon for sub-menus
+//- Menu icon inside menu toggles, as done with shortcut button
 //- 
 <template>
   <div class="wylib wylib-menu">
@@ -19,13 +20,33 @@
       <table>
         <tr v-for="item in config" :key="item.idx" @click.stop="execute(item.call, $event, item)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
           <td v-for="fld in layout" :key="fld">
-            <svg v-if="fld=='icon'" class="icon" style="height:1em; width:1em" :style="iconStyle(item.toggled)" v-html="iconSvg(item.icon)"></svg>
-            <div v-else-if="fld=='lang'">{{ (item.lang?item.lang.title:null) || item.idx }}</div>
-            <svg v-else-if="fld=='input' && item.menu" class="icon" style="height: 1em; width: 1em" v-html="iconSvg('play3')"></svg>
-            <input v-else-if="fld=='input' && (item.input!=undefined) && item.type == 'checkbox'" type="checkbox" :checked="item.input()" @input="item.input($event.target.checked)"/>
-            <input v-else-if="fld=='input' && (item.input!=undefined) && item.type == 'file'" type="file" @input="item.input($event.target.checked)"/>
-            <input v-else-if="fld=='input' && (item.input!=undefined)" :type="item.type" :value="item.input()" @input="item.input($event.target.value)"/>
-            <div v-else>{{ item[fld] }}</div>
+            <svg v-if="fld=='icon'" class="icon" 
+              style="height:1em; width:1em" :style="iconStyle(item.toggled)" v-html="iconSvg(item.icon)">
+            </svg>
+            <div v-else-if="fld=='lang'">
+              {{ (item.lang?item.lang.title:null) || item.lang || item.idx }}
+            </div>
+            <svg v-else-if="fld=='input' && item.menu" class="icon" 
+              style="height: 1em; width: 1em" v-html="iconSvg('play3')">
+            </svg>
+            <input v-else-if="fld=='input' && (item.input!=undefined) && item.type == 'checkbox'"
+              type="checkbox" :checked="item.input()" @input="item.input($event.target.checked)"
+            />
+            <input v-else-if="fld=='input' && (item.input!=undefined)"
+              :type="item.type" :value="item.input()" @input="item.input($event.target.value, item.idx)"
+            />
+            <wylib-dew v-else-if="fld=='dew'"
+              :field="item.idx" :state="item.state" :values="item.values" :lang="item.lang"
+              :value="item.input()" @input="(va,ix,d,v)=>{item.input(va, ix, d, v)}"
+            />
+<!-- Just use a dew for file?  Input code below looks invalid anyway!
+            <input v-else-if="fld=='input' && (item.input!=undefined) && item.type == 'file'" 
+              type="file" @input="item.input($event.target.checked)"
+            />
+-->
+            <div v-else>
+              {{ item[fld] }}
+            </div>
           </td>
         </tr>
       </table>
@@ -40,12 +61,13 @@
 
 <script>
 import Com from './common.js'
+import Dew from './dew.vue'
 const Icons = require('./icons.js')
 //import Win from './win.vue'		//Recursive, so defined in beforeCreate
 
 export default {
   name: 'wylib-menu',
-//components: {'wylib-win': Win}
+  components: {'wylib-dew': Dew},
   props: {
     state:	{type: Object, default: () => ({})},
     layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
@@ -93,15 +115,17 @@ export default {
 //console.log("Posting sub:", theSub.x, theSub.y, "Item:",itemBBox, "Menu:",menuBBox, viewWidth, "Comp:", subComp, "Elem:", subElem)
         })
       }
-console.log("  Posted: ", theSub)
+//console.log("  Posted: ", theSub)
     },
     execute(cb, ev, item) {		//Execute the specified callback
       if (cb) cb(ev)
-console.log("  Executed: ", ev.target, item)
+//console.log("Menu Execute: ", item.idx, ev)
       if (item.menu) {			//Clicking on sub-menu selector
         let { idx } = item
           , sub = this.state.subs[idx]
-        sub.posted = !sub.posted	//Toggle sub-menu
+        sub.posted = (sub.pinnable && sub.pinned) ? true : !sub.posted	//Toggle sub-menu
+      } else if (item.input) {		//Is this a data input item, don't execute anything
+//console.log("  Input menu item: ", item.idx)
       } else {
         this.$emit('done')
       }
@@ -122,11 +146,6 @@ console.log("  Executed: ", ev.target, item)
 //console.log("Set default for: ", item.idx, "State:", this.state.subs[item.idx])
       }
     })
-
-//    if (this.top) this.top.listenClick(this.id, (ev)=>{
-//console.log("Menu sees external click", ev.target)
-//      this.$emit('done')
-//    })
   },
 
   mounted: function() {

@@ -17,7 +17,7 @@
 //- 
 <template>
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
-    <div class="header" :title="lang.help" :style="headerStyle">
+    <div class="header" :title="lang.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
         <wylib-button v-if="topLevel" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
         <wylib-button v-if="!topLevel && pinnable" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
@@ -35,7 +35,7 @@
     </div>
     <div class="subwindows">
       <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false">
-        <wylib-menu :state="winMenu.client" :config="winMenuConfig" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
+        <wylib-menu v-if="winMenu.posted" :state="winMenu.client" :config="winMenuConfig()" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
       </wylib-win>
       <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @submit="(...a)=>{dialogSubmit(key,...a)}" @close="r=>{closeDia(key,r)}">
         <wylib-dialog :state="dia.client"/>
@@ -113,21 +113,6 @@ export default {
       if (this.lastLoadName) lang.title += ' (' + this.lastLoadName + ')'
       return lang
     },
-    winMenuConfig: function() {let wm = this.wm
-      let prElem = this.printable ?
-        {idx: 'prn', lang: wm.winPrint,    icon: 'printer',   call: this.print} :
-        {idx: 'pop', lang: wm.winPopUp,    icon: 'rocket',    call: this.popup}
-      return [
-      {idx: 'sav', lang: this.saveTitle, icon: 'upload',    call: this.saveState},
-      {idx: 'sas', lang: wm.winSaveAs,   icon: 'upload2',   call: this.saveStateAs},
-      {idx: 'res', lang: wm.winRestore,  icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'def', lang: wm.winDefault,  icon: 'home',      call: this.defaultState},
-      prElem,
-      {idx: 'top', lang: wm.winToTop,    icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
-      {idx: 'bot', lang: wm.winToBottom, icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
-      {idx: 'min', lang: wm.winMinimize, icon: 'eyeblock',  call: this.minimize},
-      {idx: 'cls', lang: wm.winClose,    icon: 'close',     call: this.close}
-    ]},
     winStyleS: function () {return {
       borderColor:	this.pr.winBorderColor,
       background:	this.pr.dataBackground,
@@ -147,6 +132,23 @@ export default {
     }},
   },
   methods: {
+    winMenuConfig() {let wm = this.wm
+      let prElem = this.printable ?
+        {idx: 'prn', lang: wm.winPrint,   icon: 'printer',   call: this.print} :
+        {idx: 'pop', lang: wm.winPopUp,   icon: 'rocket',    call: this.popup}
+      return [
+      {idx: 'sav', lang: this.saveTitle,  icon: 'upload',    call: this.saveState},
+      {idx: 'sas', lang: wm.winSaveAs,    icon: 'upload2',   call: this.saveStateAs},
+      {idx: 'res', lang: wm.winRestore,   icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
+      {idx: 'def', lang: wm.winDefault,   icon: 'home',      call: this.defaultState},
+      {idx: 'geo', lang: wm.winGeom,      icon: 'shrink',    call: this.defaultSize},
+      prElem,
+      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: this.pr.menu('win'), layout: ['lang', 'dew']},
+      {idx: 'top', lang: wm.winToTop,     icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
+      {idx: 'bot', lang: wm.winToBottom,  icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
+      {idx: 'min', lang: wm.winMinimize,  icon: 'eyeblock',  call: this.minimize},
+      {idx: 'cls', lang: wm.winClose,     icon: 'close',     call: this.close}
+    ]},
     close(ev) {
 //console.log("In close", this.id, this.dirty, this.dirty ? this.dirty() : null)
       let closeIt = () => {
@@ -156,6 +158,8 @@ export default {
       if (this.dirty ? this.dirty() : false) this.top.confirm('!winModified', tag => {
         if (tag == 'diaYes') closeIt()
       }); else closeIt()
+    },
+    headerClick() {		//Capture this to keep it away from the app toplevel (for moving windows around while menus posted)
     },
     minimize() {
       this.state.minim = !this.state.minim
@@ -200,6 +204,10 @@ console.log("Clone to popup:", popId)
     storeState() {		//Redundant with stored app state?
 //console.log("Storing window state:", this.stateTag)
       if (this.topLevel && this.stateTag) Local.set(this.stateTag, this.state)
+    },
+    defaultSize() {
+      this.state.width = this.state.height = null
+      this.storeState()
     },
     defaultState() {
       this.top.confirm(this.wm.winDefault.help, (tag) => {

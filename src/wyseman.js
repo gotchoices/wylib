@@ -15,9 +15,10 @@
 // { id:id_string action: action_name, data: {k1: v1, k2: v2, ...}}
 // -----------------------------------------------------------------------------
 // TODO:
+//- Make it so this module does not rely on wylib prefs
+//- Instead initialize the object with cb to access current language
 //- 
-import Prefs from './prefs.js'
-import Local from './local.js'
+const Local = require('./local')
 
 const Wyseman = {
   address:	'',			//To remember node:port when we are currently connected
@@ -30,6 +31,7 @@ const Wyseman = {
   callbacks:	{},			//Callbacks waiting for meta/language changes
   listens:	{},			//Callbacks waiting for async messages
   localCache:	{},			//Temporary cache just for calls from localStorage
+  language:	'eng',			//Current language
 
   close() {				//Close server connection from this end
     this.socket.close()
@@ -128,7 +130,7 @@ console.log("Connection closed to:", address, event)
                 cache = this.cache.lang[errView]
 if (error) console.log("Error:", error, errView, code, cache)
             if (!cache) {						//If we don't already have it
-              this.request('_wm_E_' + id, 'lang', {language: Prefs.language, view: errView}, (d,e) => {
+              this.request('_wm_E_' + id, 'lang', {language: this.language, view: errView}, (d,e) => {
                 let cache = this.cache.lang[errView]			//Get it and cache it
 //console.log("Now have:", error, errView, code, cache)
                 if (cache.msg[code]) error.lang = cache.msg[code]	//No guaranty this language query worked (do we need to check for secondary errors?)
@@ -219,7 +221,7 @@ if (error) console.log("Error:", error, errView, code, cache)
 //console.log("  processing: ", action, " View:", view)
     if (action == 'meta') {
       if (!this.cache.lang[view])		//Force language request before our meta data requested
-        this.request('_wm_L_' + id, 'lang', {language: Prefs.language, view})
+        this.request('_wm_L_' + id, 'lang', {language: this.language, view})
     }
 
     if (action == 'meta' || action == 'lang') {
@@ -282,31 +284,34 @@ if (error) console.log("Error:", error, errView, code, cache)
 //console.log("Listening for:", id, chan)
     this.listens[chan][id] = cb
   },
-}
 
-Prefs.register('_wyseman', (language) => {		//Register callback for when language changes
+  newLanguage(language) {		//Call here if our language preference changes
 console.log("Wyseman new language:", language)
-  if (!Wyseman.langCache[language]) Wyseman.langCache[language] = {}
-  Wyseman.cache.lang = Wyseman.langCache[language]	//Point to stored data in the new language
-
-  let view = 'wylib.data'; Wyseman.request('_wyseman_' + view, 'lang', {language, view})
+    this.language = language
+    if (!this.langCache[language]) this.langCache[language] = {}
+    this.cache.lang = this.langCache[language]	//Point to stored data in the new language
   
-  Object.keys(Wyseman.cache.meta).forEach((view) => {	//Fetch all necessary text in new language
-    Wyseman.request('_wyseman_' + view, 'lang', {language, view}, (data) => {
-      Wyseman.linkLang(view)
-//console.log("  got new language for:", view, data)
-      Object.keys(Wyseman.callbacks[view]).forEach(id => {
-//console.log("    CB:", view, id, Wyseman.metaCache[view])
-        Wyseman.callbacks[view][id](Wyseman.metaCache[view])
+    let view = 'wylib.data'
+    this.request('_wyseman_' + view, 'lang', {language, view})
+    
+    Object.keys(this.cache.meta).forEach((view) => {	//Fetch all necessary text in new language
+      this.request('_wyseman_' + view, 'lang', {language, view}, (data) => {
+        this.linkLang(view)
+console.log("  got new language for:", view, data)
+        Object.keys(this.callbacks[view]).forEach(id => {
+//console.log("    CB:", view, id, this.metaCache[view])
+          this.callbacks[view][id](this.metaCache[view])
+        })
       })
     })
-  })
-})
+  }
 
-if (!Wyseman.cache) {
-  let language = Prefs.language
-  if (!Wyseman.langCache[language]) Wyseman.langCache[language] = {}
-  Wyseman.cache = {meta: Wyseman.metaCache, lang: Wyseman.langCache[language]}
+}
+
+if (!Wyseman.cache) {					//Initialize local cache
+  let lang = Wyseman.language
+  if (!Wyseman.langCache[lang]) Wyseman.langCache[lang] = {}
+  Wyseman.cache = {meta: Wyseman.metaCache, lang: Wyseman.langCache[lang]}
 }
 
 module.exports = Wyseman
