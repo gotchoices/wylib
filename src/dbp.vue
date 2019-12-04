@@ -23,7 +23,7 @@
     <div class="header">
       <wylib-menudock ref="headMenu" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.dbpMenu"/>
       <div class="headerfill"/>
-      <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.dbpLoaded?wm.dbpLoaded.help:null">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
+      <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.h.dbpLoaded">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
     </div>
     <div class="subwindows">
       <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false" :env="env">
@@ -305,7 +305,7 @@ export default {
         if (err) {this.top().error(err); return}
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
-        let title = (this.wm.dbp ? this.wm.dbp.title : '') + ': ' + data.title
+        let title = (this.wm.t.dbp || '') + ': ' + data.title
         this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },

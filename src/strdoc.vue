@@ -37,26 +37,26 @@
     <div class="content" draggable='true' v-on:dblclick="togEdit" :style="comStyle"
           v-on:mouseover.stop="over=true" v-on:mouseout="over=false" 
           v-on:dragstart.stop="dragStart" v-on:dragend.stop="dragDrop" v-on:dragover.stop="zoneOver" v-on:dragleave.stop="zoneLeave">
-      <div v-show="state.edit" class="edit" :title="lang('sdcEdit')">
+      <div v-show="state.edit" class="edit" :title="wm.h.sdcEdit">
         <span>
           <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
-          {{lang('sdcTitle','t','Title')}}:
+          {{wm.t.sdcTitle || 'Title'}}:
         </span>
-        <span draggable='false' :title="lang('sdcTitle')"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="lang('sdcTitle','')" @input="change"></span>
-        <span>{{lang('sdcTag','t','Tag')}}:</span>
-        <span draggable='false' :title="lang('sdcTag')"><input class="input tag" v-model="state.tag" :placeholder="lang('sdcTag','t')" @input="change"></span>
+        <span draggable='false' :title="wm.h.sdcTitle"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="wm.t.sdcTitle" @input="change"></span>
+        <span>{{wm.t.sdcTag || 'Tag'}}:</span>
+        <span draggable='false' :title="wm.h.sdcTag"><input class="input tag" v-model="state.tag" :placeholder="wm.t.sdcTag" @input="change"></span>
         <span draggable='false'><button class="input" @click="addChild">+</button></span>
         <span v-if="level > 0" draggable='false'><button class="input" @click="$emit('delete',index)">X</button></span>
         <div>
-          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="lang('sdcText')" :placeholder="lang('sdcText','t')" @input="change"/>
+          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="wm.h.sdcText" :placeholder="wm.t.sdcText" @input="change"/>
         </div>
       </div>
       <div v-if="!state.edit" class="preview">
-        <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="lang('sdcPreview')"/>
+        <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="wm.h.sdcPreview"/>
         <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="subs" v-for="(sub, idx) in state.subs">
-        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sub" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
+        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sub" :env="env" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
       </div>
     </div>
   </div>
@@ -96,7 +96,7 @@ export default {
     level:	{type: Number, default: 0},
     prefix:	{type: String, default: null},
     index:	{type: Number, default: 0},
-    env:	{default: ()=>({wm:{}, pr:{}})},
+    env:	{default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {
@@ -115,44 +115,44 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id: function() {return 'sdc_' + this._uid + '_'},
-    iAmChief: function() {return (this.level <= 0)},
-    wm: function() {return this.env.wm},
-    pr: function() {return this.env.pr},
-    useBus: function() {return this.iAmChief ? this.subBus : this.bus},
-    headerHeight: function() {return this.pr.winFullHeader - 1},	//Fit in parent header, plus top border
-    nextPrefix: function() {						//Prefix to send to my children
+    id() {return 'sdc_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    iAmChief() {return (this.level <= 0)},
+    useBus() {return this.iAmChief ? this.subBus : this.bus},
+    headerHeight() {return this.pr.winFullHeader - 1},	//Fit in parent header, plus top border
+    nextPrefix() {						//Prefix to send to my children
       return (this.iAmChief) ? '' : (this.prefix || '') + (this.index || '') + '.'
     },
-    secNumber: function() {
+    secNumber() {
       return (this.prefix || '') + (this.index == null ? '' : this.index)
     },
-    numTitle: function() {						//Full, numbered title
+    numTitle() {						//Full, numbered title
       return this.secNumber + '.' + (this.state.title ? '<b>' + this.state.title + '</b>' : '')
     },
-    titledText: function() {
+    titledText() {
       return this.iAmChief ? this.state.text : (this.numTitle + (this.state.title ? ': ' : '') + (this.state.text || ''))
     },
-    secHelp: function() {
-      return (this.wm.sdcSection?this.wm.sdcSection.title:"Section") + ': ' + this.state.title + '(' + this.state.tag + '); ' + (this.wm.sdcSection?this.wm.sdcSection.help:'')
+    secHelp() {
+      return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title + '(' + this.state.tag + '); ' + (this.wm.h.sdcSection||'')
     },
-    dragCursor: function() {
+    dragCursor() {
       let cur = 'move'
       if (this.dragType == 'none') cur = 'no-drop'
       else if (this.dragType == 'trash') cur = iconBin
       else if (this.dragType == 'copy') cur = 'copy'
       return cur
     },
-    comStyle: function() { return {
+    comStyle() { return {
       background: this.dragOver ? this.pr.dragOverBackground : (this.over ? this.pr.highlightBackground : this.pr.dataBackground),
       padding: '' + this.parSpace + 'em 0px 0px ' + this.indent + 'em',
       border: this.state.edit ? '2px solid ' + this.pr.highlightBackground : 'none',
       cursor: this.dragCursor,
     }},
-    parStyle: function() { return {
+    parStyle() { return {
       textIndent: this.contEdit ? '0px' : (this.iAmChief ? '1em' : '-1em'),
     }},
-    dockConfig: function() { return [
+    dockConfig() { return [
       {idx: 'und', lang: this.wm.sdcUndo,   call: this.undo,    icon: 'undo',   shortcut: true, disabled: !this.undoStack.length},
       {idx: 'upd', lang: this.wm.sdcUpdate, call: this.update,  icon: 'floppy', shortcut: true, disabled: !this.dirty},
       {idx: 'clr', lang: this.wm.sdcClear,  call: this.clear,   icon: 'sun',    shortcut: true},
@@ -168,9 +168,9 @@ export default {
     ]},
   },
   methods: {
-    lang(key, type='help', defVal) {
-      return this.wm[key] ? this.wm[key][Com.unabbrev(type, ['title', 'help'])] : defVal
-    },
+//    lang(key, type='help', defVal) {
+//      return this.wm[key] ? this.wm[key][Com.unabbrev(type, ['title', 'help'])] : defVal
+//    },
     change(ev) {
       if (this.bus) this.bus.master.$emit('dirty')
       else this.dirty = true
@@ -272,7 +272,8 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
 //      this.$nextTick(()=>{ev.target.innerHTML = this.titledText})
     },
     update() {
-      this.$parent.$emit('submit', 'editor', {request:'update', data:this.state})
+//      this.$parent.$emit('submit', 'editor', {request:'update', data:this.state})
+      this.$emit('submit', 'editor', {request:'update', data:this.state})
     },
 
     clear() {				//Empty workspace
@@ -394,16 +395,16 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   },
 
   watch: {
-    dirty: function(data) {
+    dirty(data) {
       if (this.iAmChief)
         this.$parent.$emit('submit', 'report', {request:'dirty', data})	//Let my container know my clear/dirty status
     },
   },
 
-  beforeCreate: function() {
+  beforeCreate() {
     this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
   },
-//  created: function() {
+//  created() {
 //    this.top().registerEnv(this.id, (env) => {		//Ask my toplevel for prefs, language data
 //console.log("Strdoc got environment:", this.id, env)
 ////      this.set(this, 'pr', env.pr)
@@ -412,7 +413,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
 //      Object.assign(this.wm, env.wm)
 //    })
 //  },
-  beforeMount: function() {
+  beforeMount() {
     Com.stateCheck(this)
 
     if (this.iAmChief) {
@@ -428,7 +429,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
       else if (msg == 'check') Com.stateCheck(this, this.state, true)
     })
   },
-  mounted: function() {
+  mounted() {
     if (this.iAmChief) {
       this.top().context.$emit('swallow', this.$refs.header)
     }
@@ -441,8 +442,8 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     position: fixed;
     top: 0;
     left: 0;
-    opacity: 0.20;
-//    transition: opacity 800ms ease-in;	//Things go blurry during transition
+    opacity: 0.24;
+    transition: opacity 100ms ease-in;	//Things go blurry during transition
   }
   .wylib-strdoc .header:hover {
     opacity: 0.94;

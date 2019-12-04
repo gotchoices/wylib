@@ -170,7 +170,16 @@ if (error) console.log("Error:", error, errView, code, cache)
     if (!data) return
     if (!data.messages) data.messages = []
     if (!data.msg) data.msg = {}		//Make node of messages indexed by code
-    data.messages.forEach((rec, idx) => {data.msg[rec['code']] = data.messages[idx]})
+    let msg = data.msg
+    if (!msg.help) msg.h = {}			//Also make objects of just helps
+    if (!msg.title) msg.t = {}			//and just titles
+    data.messages.forEach((rec, idx) => {
+      let code = rec.code
+//console.log("Proc msg:", code, rec)
+      msg[code] = data.messages[idx]
+      msg.h[code] = rec.help
+      msg.t[code] = rec.title
+    })
   },
 
   linkLang(view) {				//Merge in table language data
@@ -194,8 +203,20 @@ if (error) console.log("Error:", error, errView, code, cache)
 //console.log("  act:", act, x, act.name, newElem)
       })
     })
-    
-  },			//procColumns
+  },
+
+  langDefs(langObj, defaults) {		//Create a default language object from defaults
+    if (!langObj) langObj = {}
+    if (!langObj.h) langObj.h = {}
+    if (!langObj.t) langObj.t = {}
+    Object.keys(defaults).forEach(key=>{
+      langObj[key] = defaults[key]
+      langObj.h[key] = defaults[key].help
+      langObj.t[key] = defaults[key].title
+    })
+console.log('langDefs:', langObj)
+    return langObj
+  },
 
   request(id, action, opt, cb) {			//Ask to receive specified information back asynchronously
     if (typeof opt === 'string') {opt = {view: opt}}	//Shortcut: just give view rather than full options object

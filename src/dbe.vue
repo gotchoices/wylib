@@ -17,7 +17,7 @@
     <div class="header">
       <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :env="env" :lang="wm.dbeMenu"/>
       <div class="headerfill"/>
-      <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
+      <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.h.dbePrimary">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
     <div class="subwindows">
       <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" :env="env" @close="r=>{closeWin(key, r)}">
@@ -262,7 +262,7 @@ export default {
     },
 
     reportQuery(request, data) {		//Handle editor requests from a launched report
-//console.log("Dbe got request from report:", request, data)
+console.log("Dbe got request from report:", request, data)
       if (!request || request == 'pKey') {	//Default to asking for currently loaded key
         return (this.keyValues ? [this.pKey] : null)
       } else if (request == 'update') {
@@ -295,7 +295,7 @@ export default {
         this.viewMeta = data
         this.lastView = this.state.dbView
         
-        let lang = {title: this.wm.dbeMenu.title+': '+data.title, help: this.state.dbView+':\n'+data.help}
+        let lang = {title: this.wm.t.dbeMenu+': '+data.title, help: this.state.dbView+':\n'+data.help}
         this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
         
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view

@@ -19,8 +19,8 @@
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
-        <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
-        <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
+        <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.h.winMenu"/>
+        <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.h.winPinned"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
       <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
@@ -30,7 +30,7 @@
       </div>
       <div class="headerbar operations">
         <div ref="childStatus" class="childstatus"></div>
-        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :env="env" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
+        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :env="env" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.h.winClose"/>
       </div>
     </div>
     <div class="subwindows">
@@ -213,7 +213,7 @@ console.log("Clone to popup:", popId)
       this.storeState()
     },
     defaultState() {
-      this.top.confirm(this.wm.winDefault.help, (tag) => {
+      this.top.confirm(this.wm.h.winDefault, (tag) => {
         if (tag == 'diaYes') {
           Local.set(this.stateTag)
           this.$emit('close', true)
@@ -401,11 +401,13 @@ console.log("Clone to popup:", popId)
     min-height: 14px;
   }
   .wylib-win > .header {
+    position: relative;
     margin: 1px 1px 0 1px;
     display: flex;
     flex-flow: row nowrap;
+//    border: 1px solid red;
   }
-  .wylib-win > .menus, .wylib-win > operations {
+  .wylib-win > .menus, .wylib-win > .operations {
     flex: 0 0 auto;
   }
   .wylib-win .header > .handle {

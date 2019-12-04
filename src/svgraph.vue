@@ -65,17 +65,17 @@ export default {
   }},
   
   computed: {
-    viewCoords: function() {		//Viewport of SVG space
+    viewCoords() {			//Viewport of SVG space
 //console.log('Re-render')
       return [this.state.minX, this.state.minY, this.state.maxX-this.state.minX, this.state.maxY-this.state.minY].join(' ')
     },
-    border: function() {		//Outline the normal drawing area
+    border() {				//Outline the normal drawing area
       return `M ${this.state.minX} ${this.state.maxX} H ${this.state.maxX} V ${this.state.maxY} H ${this.state.minX} V ${this.state.minY}`
     },
-    boundBox: function () {return {
+    boundBox() {return {
       x:this.state.minX, y:this.state.minY, width:this.state.maxX-this.state.minX, height:this.state.maxY-this.state.minY
     }},
-    toolStyle: function () {return {
+    toolStyle() {return {
       transform:	'translate(' + this.toolX + 'px, ' + this.toolY + 'px)',
     }},
   },

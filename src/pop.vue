@@ -11,17 +11,16 @@
 
 <template>
   <div class="wylib-pop">
-    <div class="header">
-    </div>
+<!--    <div class="header"></div> -->
     <div class="subwindows">
       <wylib-modal v-if="modal.posted" :state="modal" v-slot="ws">
-        <wylib-dialog :state="ws.state"/>
+        <wylib-dialog :state="ws.state" :env="env"/>
       </wylib-modal>
     </div>
     <div class="pop-content">
       <div v-if="state.format == 'html'" v-html="state.content"/>
       <component v-else :is="compName" :env="env" :state="state.content" @submit="submit"/>
-      <slot></slot>
+<!--      <slot></slot> -->
     </div>
   </div>
 </template>
@@ -44,32 +43,34 @@ export default {
     top:	null,
 //    wm:		null,		//Stays null until we get data from parent
 //    pr:		null,
-    env:	{wm:{}, pr:{}}
+//    env:	{wm:{}, pr:{}}
+    env:		{wm: {h:{}, t:{}}, pr: require('./prefs')}
   }},
   provide() { return {
     top: () => {return this.top},
     app: () => {return this.top}
   }},
   computed: {
-    id: function() {return 'pop_' + this._uid + '_'},
-    compName: function() {		//What standard component we will use
+    id() {return 'pop_' + this._uid + '_'},
+    compName() {		//What standard component we will use
       if (!this.state.format || this.state.format == 'html') return null
       if (this.state.format.includes('-')) return this.state.format
       return 'wylib-' + this.state.format
     },
   },
   methods: {
-    submit: function(request, data) {		//If the widget we contain emits 'submit'
+    submit(request, data) {		//If the widget we contain emits 'submit'
 console.log("Pop got submit:", request, data)
-//      this.top.momWin({request, data})
+      this.top.momWin({request, data})
     },
   },
 
-  created: function() {
+  created() {
+console.log("Pop env:", this.env)
     this.top = new TopHandler(this, true)
   },
 
-  mounted: function() {
+  mounted() {
     this.top.momWin({request:'control'})		//Let parent window know we are ready to load content
 
     this.top.listenWin('', (request, data) => {		//Listen for messages from '' (master window)
@@ -96,8 +97,8 @@ console.log("Popup got env:", this.env)
     })
   },
 
-//  beforeDestroy: function() {
-//console.log("Pop closing:", window.opener)
+//  beforeDestroy() {
+//console.log("Pop closing:", window.opener)	//Do I need to inform the parent?
 //    this.top.momWin({request:'close'})
 //  },
 }
@@ -107,11 +108,11 @@ console.log("Popup got env:", this.env)
 .wylib-pop * {
   box-sizing: border-box;
 }
-.wylib-pop > .header {
-  width: 100%;
-}
-.wylib-pop .pop-content {
+//.wylib-pop > .header {
+//  width: 100%;
+//}
+//.wylib-pop .pop-content {
 //  width: 100%;
 //  border: 1px solid #c0c0c0;
-}
+//}
 </style>

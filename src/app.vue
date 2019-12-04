@@ -12,8 +12,8 @@
     <div class="header">
       <div class="title" :title="appLang.help">{{ appLang.title }}</div>
       <div v-if="pw.ready" class="status">
-        <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
-        <span :title="lang('appServerURL')">{{ siteConnected }}</span>
+        <button @click="conMenuPosted=!conMenuPosted" :title="wm.h.appServer">{{wm.t.appServer || 'Server'}}:</button>
+        <span :title="wm.h.appServerURL">{{ siteConnected }}</span>
         <wylib-connect :db="db" :env="env" v-show="conMenuPosted" @site="siteChange"/>
       </div>
     </div>
@@ -97,7 +97,7 @@ export default {
     lastLoadIdx:	null,
 //    wm:			WmDefs,
 //    pr:			require('./prefs')
-    env:		{wm: WmDefs, pr: require('./prefs')}
+    env:		{wm: Wyseman.langDefs({}, WmDefs), pr: require('./prefs')}
   }},
   provide() { return {
     top: () => {return this.top},
@@ -108,7 +108,7 @@ export default {
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     siteConnected() {
-      return this.currentSite || this.lang('appNoConnect',1,'Not Connected')
+      return this.currentSite || this.wm.t.appNoConnect || 'Not Connected'
     },
     tagTitle() {return this.tag || this.title},
     appLang() {
@@ -116,9 +116,9 @@ export default {
     },
   },
   methods: {
-    lang(key, title, defVal) {
-      return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
-    },
+//    lang(key, title, defVal) {
+//      return this.wm[key] ? this.wm[key][title?'title':'help'] : defVal
+//    },
     appMenuConfig() {let wm = this.wm
       return [
       {idx: 'sav', lang: wm.appSave,      icon: 'upload',    call: this.saveState},
@@ -191,7 +191,7 @@ export default {
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
         if (data.msg) Object.assign(this.env.wm, data.msg)	//Don't overwrite what might be in WmDefs
-console.log("App wm:", this.wm)
+//console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
 //        this.top.notifyEnv({wm:this.wm})
       })
@@ -214,6 +214,7 @@ console.log("App wm:", this.wm)
   },
 
   created: function() {
+//console.log("app created:", this.env)
     this.top = new TopHandler(this)
     Local.init(this, this.pw, this.tag, (isReady)=>{
       if (this.pw.ready = isReady) this.initApp()

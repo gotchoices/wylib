@@ -25,8 +25,8 @@
       <wylib-menudock :config="dockConfig" :state="dock" :env="env" :lang="wm.conMenu"/>
       <div>{{status}}</div>
     </div>
-    <div class="label" :title="lang('conTitle')">{{lang('conTitle', 1)}}:</div>
-    <div class="sitelist" :title="lang('conTitle')">
+    <div class="label" :title="wm.h.conTitle">{{wm.t.conTitle}}:</div>
+    <div class="sitelist" :title="wm.h.conTitle">
       <table>
         <tr v-for="site,idx in sites" :style="rowStyle(site.selected)" v-on:click="selectSite($event, idx)" v-on:dblclick="()=>{connectSite()}">
           <td><svg :style="keyStyle(site)" v-html="keyIcon(site)"/></td>
@@ -36,7 +36,7 @@
         </tr>
       </table>
     </div>
-    <div class="label" :title="lang('conImport')">{{lang('conImport',1)}}:<input type="file" @input="importKeys"/></div>
+    <div class="label" :title="wm.h.conImport">{{wm.t.conImport}}:<input type="file" @input="importKeys"/></div>
   </div>
 </template>
 
@@ -120,9 +120,9 @@ export default {
       if (extend) theLang.help += ` (${extend})`
       return theLang
     },
-    lang(key, title, defVal='') {
-      return this.bwm(key)[title ? 'title' : 'help'] || defVal
-    },
+//    lang(key, title, defVal='') {
+//      return this.bwm(key)[title ? 'title' : 'help'] || defVal
+//    },
     keyIcon(site) {		//What icon to display in the site list
       let icon = site.priv ? 'key' : (site.token ? 'ticket' : 'exclaim')
       return Icons(icon)
@@ -343,17 +343,18 @@ console.log("Error in importKeys:", err.message)
         this.retryIn--				//Else keep counting down
 //console.log("  decrement", this.retryIn)
       }
-      this.status = this.lang('conRetry', true) + ' (' + this.retryIn + ')'	//Update status message
+      this.status = this.wm.t.conRetry + ' (' + this.retryIn + ')'	//Update status message
       if (this.tryTimer) clearTimeout(this.tryTimer)
       this.tryTimer = setTimeout(this.retryConnect, 1000)
     },
   },
 
-//  created: function() {
+  created: function() {
+    Wyseman.langDefs(this.env.wm, WmDefs)
 //    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
 //      if (data.msg) this.wm = data.msg
 //    })
-//  },
+  },
 
   mounted: function () {
     let last = Local.get(LastKey)

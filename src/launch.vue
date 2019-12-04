@@ -12,10 +12,10 @@
     <div class="header">{{insTitle || state.title || 'Preview Launcher'}}
       <div class="controls">
         <label v-if="launchData && launchData.import">
-          {{wm.lchImport?wm.lchImport.title:null}}:
-          <input type="file" @change="importFile" accept="*.json" multiple :title="wm.lchImport?wm.lchImport.help:null"/>
+          {{ wm.t.lchImport }}:
+          <input type="file" @change="importFile" accept="*.json" multiple :title="wm.h.lchImport"/>
         </label>
-        <button @click="addWin" :title="wm.lchAdd?wm.lchAdd.help:null">{{wm.lchAdd?wm.lchAdd.title:null}}</button>
+        <button @click="addWin" :title="wm.h.lchAdd">{{wm.t.lchAdd}}</button>
       </div>
     </div>
     <div class="subwindows">

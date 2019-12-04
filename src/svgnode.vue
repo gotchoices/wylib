@@ -33,21 +33,21 @@ export default {
     stateTpt:	{x: 0, y: 0, xScale: 1, yScale: 1, rotate: 0, drag: true, body:'', links: [], ends: [], radius: 0},
   }},
   computed: {
-    transform: function() {				//Moves the object around when we change x or y
+    transform() {				//Moves the object around when we change x or y
       return `translate(${this.state.x}, ${this.state.y}) rotate(${this.state.rotate}) scale(${this.state.xScale}, ${this.state.yScale})`
     },
-    cent: function() {					//My center, relative to my local node origin
+    cent() {					//My center, relative to my local node origin
       let xSum = 0, ySum = 0, count = 0
       this.state.ends.forEach(el => {xSum += el.x; ySum += el.y; count++;})
       return {x: xSum / count, y: ySum / count}		//Calculate center of mass for my connections
     },
-    center: function() {				//Compute my centroid in absolute terms inside the SVG
+    center() {					//Compute my centroid in absolute terms inside the SVG
       return {x: this.state.x + this.cent.x, y: this.state.y + this.cent.y}
     },
-    objStyle: function () {return {			//Change the cursor to show our object as movable
+    objStyle() {return {			//Change the cursor to show our object as movable
       cursor:		this.state.drag ? 'move' : 'arrow',
     }},
-    connectors: function () {				//Generate SVG code for connector lines to other objects
+    connectors() {				//Generate SVG code for connector lines to other objects
       var paths = {}
       this.state.links.forEach(lk => {			//For each node I point to
         let link = lk, noDraw = false, reverse = false, ends = this.state.ends, center = this.cent, index, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
@@ -86,7 +86,7 @@ export default {
 //console.log('Connectors:', paths)
       return paths
     },
-    hubs: function () {				//Generate SVG code for appendages where connecting arrows should terminate
+    hubs() {				//Generate SVG code for appendages where connecting arrows should terminate
       var code = {}
       this.state.links.forEach(lk => {		//For each node I point to
         if ('hub' in lk) {code[lk.index] = lk.hub()}

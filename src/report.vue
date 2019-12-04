@@ -27,8 +27,8 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id: function() {return 'report_' + this._uid + '_'},
-//    tagTitle: function () {return this.tag || this.title},
+    id() {return 'report_' + this._uid + '_'},
+//    tagTitle() {return this.tag || this.title},
   },
   methods: {
     reload(req, data) {
