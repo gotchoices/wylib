@@ -19,8 +19,8 @@
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
-        <wylib-button v-if="topLevel" icon="menu" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
-        <wylib-button v-if="!topLevel && pinnable" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
+        <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.winMenu ? wm.winMenu.help : null"/>
+        <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.winPinned ? wm.winPinned.help : null"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
       <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
@@ -30,21 +30,21 @@
       </div>
       <div class="headerbar operations">
         <div ref="childStatus" class="childstatus"></div>
-        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
+        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :env="env" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.winClose ? wm.winClose.help : null"/>
       </div>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="topLevel" :state="winMenu" pinnable=true @close="winMenu.posted=false">
-        <wylib-menu v-if="winMenu.posted" :state="winMenu.client" :config="winMenuConfig()" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
+      <wylib-win v-if="topLevel" :state="winMenu" :env="env" pinnable=true @close="winMenu.posted=false">
+        <wylib-menu v-if="winMenu.posted" :state="winMenu.client" :env="env" :config="winMenuConfig()" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
       </wylib-win>
-      <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @submit="(...a)=>{dialogSubmit(key,...a)}" @close="r=>{closeDia(key,r)}">
-        <wylib-dialog :state="dia.client"/>
+      <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @close="r=>{closeDia(key,r)}" :env="env">
+        <wylib-dialog :state="dia.client" :env="env" @submit="(...a)=>{dialogSubmit(key,...a)}"/>
       </wylib-win>
-      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" @close="r=>{closeRep(key,r)}" @report="(v,a,i,k)=>{top.actionLaunch(v,a,i,k)}">
+      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" :env="env" @close="r=>{closeRep(key,r)}" @report="(v,a,i,k)=>{top.actionLaunch(v,a,i,k)}">
         <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client"/>
       </wylib-win>
-      <wylib-modal v-if="topLevel && modal.posted" :state="modal">
-        <wylib-dialog slot-scope="ws" :state="ws.state"/>
+      <wylib-modal v-if="topLevel && modal.posted" :state="modal" :env="env" v-slot="ws">
+        <wylib-dialog :state="ws.state" :env="env"/>
       </wylib-modal>
     </div>
     <div v-show="!state.minim" ref="content" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
@@ -63,7 +63,7 @@ import TopHandler from './top.js'
 import Menu from './menu.vue'
 import Button from './button.vue'
 import Interact from 'interactjs'
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import Dialog from './dialog.vue'
 import Report from './report.vue'
 import Modal from './modal.vue'
@@ -78,10 +78,11 @@ export default {
     topLevel:	{default: false},		//Full header and window menu
     fullHeader: {default: false},		//Full header only
     pinnable:	{default: false},		//Include pinning button/function
+    env:	Object
   },
   data() { return {
-    pr:			require('./prefs'),
-    wm:			{},
+//    pr:			require('./prefs'),
+//    wm:			{},
     lang:		{title: null, help: null},
     stateTag:		'win',
     top:		null,
@@ -101,19 +102,21 @@ export default {
     top: () => {return this.top}
   }},
   computed: {
-    id: function() {return 'win_' + this._uid + '_'},
-    buttonSize: function () {
+    id() {return 'win_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    buttonSize() {
       return ((this.topLevel || this.fullHeader) ? 1.25 : 0.8)
     },
-    headerHeight: function () {
+    headerHeight() {
       return ((this.topLevel || this.fullHeader) ? this.pr.winFullHeader : this.pr.winSmallHeader)
     },
-    saveTitle: function() {
+    saveTitle() {
       let lang = Object.assign({}, this.wm.winSave)
       if (this.lastLoadName) lang.title += ' (' + this.lastLoadName + ')'
       return lang
     },
-    winStyleS: function () {return {
+    winStyleS() {return {
       borderColor:	this.pr.winBorderColor,
       background:	this.pr.dataBackground,
       borderWidth:	this.pr.winBorderWidth + 'px',
@@ -121,12 +124,12 @@ export default {
       borderRadius:	this.pr.winBorderRad + 'px',
       zIndex:		this.topLevel ? this.state.layer : MenuLayer,
     }},
-    winStyleF: function () {return {		//Faster moves with these separate?
+    winStyleF() {return {		//Faster moves with these separate?
       transform:	'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
       height:		this.state.minim ? (this.headerHeight + 6) + 'px' : (this.state.height ? this.state.height + 'px': null),
       width:		this.state.width ? this.state.width + 'px' : null,
     }},
-    headerStyle: function () {return {
+    headerStyle() {return {
       borderRadius:	(this.pr.winBorderRad - 1) + 'px', 
       background:	`linear-gradient(to top, ${this.pr.winHeadColorLow}, ${this.pr.winHeadColorHigh})`,
     }},
@@ -311,9 +314,9 @@ console.log("Clone to popup:", popId)
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
     this.$on('swallow', this.swallowMenu)
 
     if (this.topLevel) this.top = new TopHandler(this)

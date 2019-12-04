@@ -45,17 +45,19 @@ export default {
     data:	{type: Array, default: () => []},
     config:	{type: Object, default: () => ({})},
     bus:	null,		//To receive commands from parent dbp
+    env:	Object
   },
   data: function () {return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     orderBoxes:		{},		//Div elements that show sort order in header field
     gridInstance:	null,		//Keep pointer to our grid
     stateTpt:		{footerOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null},
   }},
 
   computed: {
-    id: function() {return 'mlb_' + this._uid + '_'},
-    slickColumns: function() {		//Convert wyseman column spec to what slickgrid expects
+    id() {return 'mlb_' + this._uid + '_'},
+    pr() {return this.env.pr},
+    slickColumns() {			//Convert wyseman column spec to what slickgrid expects
       let cols = []
 //console.log("SlickColumns cols:", this.state.columns)
       
@@ -85,7 +87,7 @@ export default {
 //console.log("sorted: ", cols)
       return cols;
     },
-    gridWidth: function() {
+    gridWidth() {
       let wid = this.state.columns.reduce((acc, el)=>{return acc + (el.visible ? el.width : 0)}, 0)
 //console.log("Width: ", wid)
       return wid + 4 + 'px'

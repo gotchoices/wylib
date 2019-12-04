@@ -91,9 +91,10 @@ export default {
   props: {
     config:	Array,
     state:	{type: Object, default: () => ({})},	//Fixme: use this
+    env:	Object
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     splitMode:	false,
 //    state:	{},
     trData:	{
@@ -107,26 +108,27 @@ export default {
     memos: [],
   }},
   computed: {
-    fontStyle: function() {return {font: this.inputFont}},
-    bordStyle: function() {return {border: '1px solid ' + this.pr.winBorderColor}},
-    splitStyle: function() {return {
+    pr() {return this.env.pr},
+    fontStyle() {return {font: this.inputFont}},
+    bordStyle() {return {border: '1px solid ' + this.pr.winBorderColor}},
+    splitStyle() {return {
       background: this.splitMode ? this.pr.butToggledColor : this.pr.butBackground,
     }},
 
-    canUnSplit: function() {	//Can only unsplit under specific conditions
+    canUnSplit() {		//Can only unsplit under specific conditions
       let s = this.trData.splits
 //console.log("Credit0:", s[0].credit, "Debit1:", s[1].debit)
       if ((s.length != 2) || s[0].credit || s[1].debit || !(s[0].debit == s[1].credit)) return false
       return true
     },
 
-    okToEnter: function() {	//Transaction ready to be entered
+    okToEnter() {		//Transaction ready to be entered
       if (this.netSum != 0) return false
 //Fixme: check dates and accounts all filled out here
       return true
     },
 
-    netSum: function() {
+    netSum() {
       let sum = 0.0
       this.trData.splits.forEach(sp => {
         let debit = parseFloat(sp.debit || 0), credit = parseFloat(sp.credit || 0)

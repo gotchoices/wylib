@@ -27,9 +27,10 @@ export default {
     toggled:		Boolean,
     disabled:		{type: Boolean, default: false},
     size:		{default: 1.2},
+    env:		Object,
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     isHover:	false,
     isActive:	false,
   }},
@@ -41,18 +42,19 @@ export default {
     click:	function(ev) {if (this.disabled) return; this.$emit('click', ev)},
   },
   computed: {
-    iconSvg: function () {return Icons(this.icon)},
-    iconStyle: function () {return {
+    pr() {return this.env.pr},
+    iconSvg() {return Icons(this.icon)},
+    iconStyle() {return {
       fill:	this.disabled ? this.pr.butDisabledColor : (this.fill || this.pr.butIconfill),
       stroke:	this.disabled ? this.pr.butDisabledColor : (this.stroke || this.pr.butIconStroke),
     }},
-    buttonStyle: function () {return {
+    buttonStyle() {return {
       width:  (this.size || this.pr.butSize) + 'em',
       height: (this.size || this.pr.butSize) + 'em',
       padding: parseInt(this.size / 10) + 'px',
       backgroundColor: this.backgroundColor
     }},
-    backgroundColor: function () {
+    backgroundColor() {
       if (this.disabled)
         return this.pr.butDisabledBackground
       else if (this.isActive)

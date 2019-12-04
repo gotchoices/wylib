@@ -15,16 +15,16 @@
 <template>
   <div class="wylib wylib-dbe">
     <div class="header">
-      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :lang="wm.dbeMenu"/>
+      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :env="env" :lang="wm.dbeMenu"/>
       <div class="headerfill"/>
       <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.dbePrimary?wm.dbePrimary.help:null">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" @close="r=>{closeWin(key, r)}">
-        <wylib-dbp :state="sub.client" :bus="subBus" :master="keyMaster"/>
+      <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" :env="env" @close="r=>{closeWin(key, r)}">
+        <wylib-dbp :state="sub.client" :env="env" :bus="subBus" :master="keyMaster"/>
       </wylib-win>
     </div>
-    <wylib-mdew ref="mdew" :state="state.dews" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
+    <wylib-mdew ref="mdew" :state="state.dews" :env="env" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
   </div>
 </template>
 
@@ -44,11 +44,12 @@ export default {
     state:	{type: Object, default: () => ({})},
     bus:	null,			//Commands from my parent dbp
     master:	null,			//Key info for my master, if any
+    env:	Object,
   },
   inject: ['top'],		//My toplevel window
   data() { return {
-    pr:		require('./prefs'),
-    wm:		{},
+//    pr:		require('./prefs'),
+//    wm:		{},
     viewMeta:	null,
     dbData:	{},		//Data as fetched from the database
     dirty:	false,
@@ -62,6 +63,8 @@ export default {
 
   computed: {
     id() {return 'dbe_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
     metaStyles() {return this.viewMeta && this.viewMeta.styles ? this.viewMeta.styles : {}},
     actMenu() {
       let acts = []
@@ -259,7 +262,7 @@ export default {
     },
 
     reportQuery(request, data) {		//Handle editor requests from a launched report
-console.log("Dbe got request from report:", request, data)
+//console.log("Dbe got request from report:", request, data)
       if (!request || request == 'pKey') {	//Default to asking for currently loaded key
         return (this.keyValues ? [this.pKey] : null)
       } else if (request == 'update') {
@@ -315,9 +318,9 @@ console.log("Dbe got request from report:", request, data)
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
     this.metaListen()
   },
 

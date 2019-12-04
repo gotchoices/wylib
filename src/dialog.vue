@@ -3,14 +3,18 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Make it work under a toplevel window
+//-Did report.vue obsolete the iframe/component stuff?
+//-
 //- Keepopen status of buttons should be a config status--not the handler return value
 //- Test under a modal frame
 //-
 <template>
   <div class="wylib wylib-dialog">
     <div v-if="message && reason" class="title" v-html="reason + ': ' + message" :title="help"/>
+<!--
     <component ref="component" v-if="state.component" :is="'wylib-'+stateVar('component','type')" :state="stateVar('component','state')" @submit="submit"/>
     <iframe ref="iframe" v-if="state.iframe" :src="stateVar('iframe','src')" :name="stateVar('iframe','name')" :height="stateVar('iframe','width','100%')"/>
+-->
     <wylib-mdew v-if="state.dews" :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
     <div v-if="buttons" class="buttons">
       <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
@@ -22,7 +26,7 @@
 import Com from './common.js'
 import Mdew from './mdew.vue'
 import Strdoc from './strdoc.vue'
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   diaQuery:	{title:'Query', help:'Please provide your input'},
@@ -35,28 +39,33 @@ export default {
   components: {'wylib-mdew': Mdew, 'wylib-strdoc': Strdoc},
   props: {
     state:	{type: Object, default: () => ({})},
+    env:	{type: Object, default: () => ({wm: WmDefs, pr: require('./prefs')})},
   },
   data() { return {
-    pr:		require('./prefs'),
-    wm:		WmDefs,
+//    pr:		require('./prefs'),
+//    wm:		WmDefs,
     valid:	true,
     stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
 
   computed: {
-    id: function() {return 'dialog_' + this._uid + '_'},
-    message: function() {
-      if (typeof this.state.message == 'string') return this.state.message
-      if (typeof this.state.message == 'object') return this.state.message.title
+    id() {return 'dialog_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    message() {
+      let msg = this.state.message
+      if (typeof msg == 'string') return msg
+      if (msg && typeof msg == 'object' && 'title' in msg)
+        return msg.title
     },
-    reason: function() {
+    reason() {
       let wmReason = this.wm[this.state.reason]
       return (wmReason ? wmReason.title : this.state.reason) || 'Notice'
     },
-    help: function() {
+    help() {
       if (typeof this.state.message == 'object') return this.state.message.help
     },
-    buttons: function() {
+    buttons() {
       let butArr = []
 //console.log("Buttons:", this.state.buttons)
       if (this.state.buttons) this.state.buttons.forEach(b=>{
@@ -77,11 +86,12 @@ export default {
       return (this.state[sub1] ? this.state[sub1][sub2] : def)
     },
     submit(ev, butTag = 'diaYes', data = this.state.data) {
-//console.log("Dia submit:", ev, butTag, data)
+console.log("Dia submit:", ev, butTag, data)
       if (!this.valid) return
       if (this.state.cb)			//Callback for the dialog; Will not be persistent across reloads!
         this.state.cb(butTag, data)
-      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
+//      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
+      this.$emit('submit', ev, butTag, this.state.tag, data)
     },
     change(value, field, dirty, valid) {	//When data changed
       let checked = true
@@ -93,11 +103,11 @@ export default {
     },
   },
 
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
 
   beforeMount: function() {
     Com.stateCheck(this)

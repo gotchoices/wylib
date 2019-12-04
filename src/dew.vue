@@ -58,17 +58,19 @@ export default {
     field:	{default: null},			//column or field code
     nonull:	{type: Boolean, default: false},	//No nulls allowed
     bus:	null,					//message bus from parent
+    env:	Object,
   },
   inject: ['top'],
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     userValue:	null,					//Value, as modified by user
     datePicker: null,
     stateTpt:	{input: 'ent', size: null, state: null, template: null, special: {}},
   }},
 
   computed: {
-    pdmValues: function() {
+    pr() {return this.env.pr},
+    pdmValues() {
       let vals = []
       this.values.forEach(el=>{
         if (typeof el != 'object') {
@@ -80,15 +82,15 @@ export default {
       })
       return vals
     },
-    hint: function() {
+    hint() {
       let hint = this.state ? this.state.hint : null
       if (hint in shortHints) return shortHints[hint]; else return hint
     },
-    template: function() {
+    template() {
       let temp = this.state ? this.state.template : null
       if (temp in shortTpts) return shortTpts[temp]; else return temp
     },
-    disabled: function() {				//No user data entry, just for looking at
+    disabled() {				//No user data entry, just for looking at
       return (this.state.input == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
     mapValue() {
@@ -118,7 +120,7 @@ export default {
 //console.log("Valid:", this.field, this.userValue, this.template, this.disabled, isValid)
       return isValid
     },
-    genStyle() { return {		//Generate style, based on data state
+    genStyle() { return {			//Generate style, based on data state
       borderLeftColor: this.disabled ? this.pr.dataBackground : (this.valid ? this.pr.dewBorderColor : this.pr.dewInvalidColor),
       borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
       borderBottomColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor),
@@ -128,15 +130,15 @@ export default {
 //x:console.log("width:", this.field, this.width),
       minWidth: this.width/2 + 'em',		//Better way to compare to actual text size?
     }},
-    dims: function() {
+    dims() {
       if (typeof this.state.size == 'string') return this.state.size.split(' ')
       return (typeof this.state.size == 'number') ? [this.state.size] : []
     },
-    height: function() {			//Specified height in characters
+    height() {					//Specified height in characters
 //console.log("Height:", this.state.size, this.dims)
       return this.dims[1] || this.pr.dewMleHeight || 1
     },
-    width: function() {				//In characters
+    width() {					//In characters
 //console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth)
       return this.dims[0] || (
         this.state.input == 'mle' ? (this.pr.dewMleWidth || 40) : 

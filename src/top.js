@@ -1,4 +1,4 @@
-//Manage communication to/from the toplevel window for generating dialogs and reports
+//Manage communication to/from the toplevel window primarily for generating dialogs and reports.
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // Z-Level Descriptions:
@@ -13,20 +13,50 @@
 //- Re-normalize all registered window layers after raise
 //- 
 import Com from './common.js'
-import RepCom from './repcom.js'
+import WinCom from './wincom.js'
 import Wyseman from './wyseman.js'
 const ReportFile = '/report.html'
 const zLevelMod = 10
 var topWins = {}		//Keep the state of all toplevel windows
 
-module.exports = function topHandler(context) {
+module.exports = function topHandler(context, amSlave) {
   this.postCB = null
   this.context = context
+  this.amSlave = amSlave
   this.dialogCB = {}
   this.clickCB = {}
+  this.envCB = {}
 
-  if (context) topWins[context.id] = context		//Keep a list of all participating windows
+  if (context && context.id) topWins[context.id] = context	//Keep a list of all participating windows
 //console.log("Registering ID", context ? context.id : null)
+//if (context.state) context.state.layer = 10		//Recover from trouble with layers (debug)
+
+//  this.registerEnv = function(compTag, cb) {		//Register handler to receive pref/language data
+//    if (cb) {
+//console.log("Top register env:", compTag, this.context.$options._componentTag)
+//      let env = this.context.env
+//      this.envCB[compTag] = cb
+//      if (env) {				//Is there an environment in this component
+//        if (Object.keys(env.pr).length > 1) {	//And has it been initialized
+//          cb(this.context.env)			//Then pass it along
+//        } else if (this.context.$options._componentTag == 'wylib-pop') {
+//          WinCom.mom({request:'env'})		//Else ask for it from parent window
+//        }
+//      }
+//    } else {
+//      delete this.envCB[compTag]
+//    }
+//  }
+//    
+//  this.notifyEnv = function(env) {			//Notify any listers about pref/language updates
+//console.log("Top notify env:", env.wm, env.pr)
+//    Object.keys(this.envCB).forEach(key => this.envCB[key](env))
+//  }
+
+  this.env = () => {return this.context.env}
+  
+  this.listenWin = WinCom.listen			//Make calls available to component
+  this.momWin = WinCom.mom
 
   this.registerDialog = function(dialogTag, cb) {	//Register handlers for our standard dialog actions
 //console.log("Top register:", dialogTag)		//so callbacks are persistent across reloads
@@ -60,14 +90,28 @@ module.exports = function topHandler(context) {
     let th = this.context, newLayer
       , maxLevel = -Number.MAX_VALUE
       , minLevel =  Number.MAX_VALUE
+//      , levArray = []
 //console.log("Layer request:", layer, "from:", th.id, th.$options.name, "cur:", th.state.layer)
-    Object.keys(topWins).forEach((id) => {
+    Object.keys(topWins).forEach(id => {
       let st = topWins[id].state
-//console.log("  loop id:", id, st.layer)
-      if (st.layer > maxLevel) maxLevel = st.layer
-      if (st.layer < minLevel) minLevel = st.layer
+        , slay = st.layer
+//console.log("  loop id:", id, slay)
+      if (slay > maxLevel) maxLevel = slay
+      if (slay < minLevel) minLevel = slay
+//      if (id != th.id) levArray.push({id, slay, st})	//List of every window except the one just raised/lowered
     })
 //console.log("      min:", minLevel, "max:", maxLevel)
+//WIP: attempt to get child windows to render below the parent
+//    levArray.sort((a,b)=>(b.slay - a.slay))		//Order windows top-down
+//console.log("Sorted::", levArray)
+//    let lCnt = -10
+//    levArray.forEach(el=>{
+//console.log(" set:", el.id, "to:", lCnt)
+//      el.st.layer = lCnt
+//      lCnt -= 10
+//    })
+//    th.layer = 100
+
     if (layer > 0)
       newLayer = maxLevel + zLevelMod
     else
@@ -182,7 +226,7 @@ console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
         let fromFunc = ((typeof editCB == 'function') ? editCB() : null)
         return fromFunc || info.keys
       }
-      , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : RepCom.unique(actTag))
+      , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : WinCom.unique(actTag))
       , config = {repTag, view, action, info}		//Will save this for restore purposes
     info.keys = getKeys()				//Remember the last key values too
 console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config)
@@ -198,26 +242,33 @@ console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", 
 console.log("Report query:", repTag, 'tgt:', target, message)
 
       if (target == 'report') {
-console.log("Report:", repTag, "dirty:", data)
+//console.log("Report:", repTag, "dirty:", data)
         this.context.repBus.notify(repTag, request, data)
 
       } else if (target == 'control') {			//Report window content is mounted and asking for content from the control layer on the backend
         let request = data
         Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys:getKeys()}}, (content, error) => {
-console.log("DB answers:", content, "error:", error)
+//console.log("DB answers:", content, "error:", error)
           if (error) {this.error(error); return}
           if (win && content)
-            win.postMessage({request:'populate', format:action.format, content, config}, location.origin)	//send content to report window
+            win.postMessage({request:'populate', data:{format:action.format, content, config}}, location.origin)	//send content to report window
         })
 
       } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
 console.log("Command for Dbe:", request, "data:", data)
         if (editCB) editCB(request, data)
+
+      } else if (target == 'env') {			//Content is asking for data for its environment
+console.log("Request for env", win)
+        win.postMessage({request:'env', data:{
+          wm:this.context.wm, 
+          pr:Object.assign({}, this.context.pr)
+        }}, location.origin)	//send prefs, language metadata to report window
       }
     }
     
     if (action.format) {				//This action is a report, has a window
-      RepCom.register(repTag, perform)			//Get ready to communicate with it
+      WinCom.listen(repTag, perform)			//Get ready to communicate with it
       this.context.reportWin(repTag, ReportFile, config)	//Create the window
     } else {						//Immediate query, execute it
       perform('control')

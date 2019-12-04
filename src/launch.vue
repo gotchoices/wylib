@@ -19,8 +19,8 @@
       </div>
     </div>
     <div class="subwindows">
-      <wylib-win v-for="win,key in state.windows" topLevel=true :key="key" :state="win" @close="r=>{closeWin(key,r)}">
-        <wylib-dbp :state="win.client"/>
+      <wylib-win v-for="win,key in state.windows" topLevel=true :key="key" :state="win" :env="env" @close="r=>{closeWin(key,r)}">
+        <wylib-dbp :state="win.client" :env="env"/>
       </wylib-win>
     </div>
     <div v-if="instructions" class="instructions" v-html="instructions"/>
@@ -40,17 +40,20 @@ export default {
     state:	{type: Object, default: ()=>({})},
     view:	{type: String},
     tag:	{type: String},
+    env:	{type: Object},
   },
-  inject: ['top'],			//Where to send modal messages
+  inject: ['app','top'],
   data() { return {
     stateTpt:		{windows: {}},
     viewMeta:		null,
     launchData:		null,
-    wm:			{},
+//    wm:			{},
   }},
 
   computed: {
-    id: function() {return 'launch_' + this._uid + '_'},
+    id() {return 'launch_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
     viewMsg() {
       return this.viewMeta ? this.viewMeta.msg : null
     },
@@ -97,9 +100,10 @@ export default {
       if (this.launchNum > 0 && Object.keys(this.state.windows).length <= 0)
         for (let i = 0; i < this.launchNum; i++) this.addWin()
     })
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
+console.log("Launch wm:", this.wm)
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
   },
 }
 

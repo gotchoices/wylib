@@ -7,7 +7,7 @@
 //- Defer building Prefs until init explicitly called (which includes saved prefs)
 //- Generate pull-down to select supported languages from menu
 //- Language changes in one swoop--not a character at a time
-//- Call wyseman with new language, app updates reactively
+//- Call wyseman.newLanguage with new language setting, app updates reactively
 //- Create initialize routine
 //-   Fills in any missing properties from default structure
 //- Make routine to build menu items for editing prefs
@@ -65,10 +65,11 @@ const Config = {
 
 }
 
-const Preferences = {
-  
+const Preferences = {}
 
-  menu(module) {					//Build a preferences edit menu
+Object.defineProperty(Preferences, 'menu', {
+  enumerable: false,
+  value: function(module) {
     let rest = 'Restore Defaults'
       , conf = [{idx: 'restore', lang:rest, state:{input:'button'}, input:(v)=>{
 if (v) console.log("Restore:", v)
@@ -101,7 +102,8 @@ console.log("Prefs detects language change:", va)
     }
 //console.log("Pref conf:", conf)
     return conf
-  },
+  }
+})
   
 //  _callbacks:			{},
 //  _currentLanguage:		'eng',
@@ -118,7 +120,6 @@ console.log("Prefs detects language change:", va)
 //console.log("Prefs register ID:", id)
 //    if (cb) this._callbacks[id] = cb; else delete this._callbacks[id]
 //  }
-}
 
 //Temporary init; replace with initialization call from app
 for (let key in Config) {

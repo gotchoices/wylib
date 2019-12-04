@@ -35,7 +35,7 @@
             <input v-else-if="fld=='input' && (item.input!=undefined)"
               :type="item.type" :value="item.input()" @input="item.input($event.target.value, item.idx)"
             />
-            <wylib-dew v-else-if="fld=='dew'"
+            <wylib-dew v-else-if="fld=='dew'" :env="env"
               :field="item.idx" :state="item.state" :values="item.values" :lang="item.lang"
               :value="item.input()" @input="(va,ix,d,v)=>{item.input(va, ix, d, v)}"
             />
@@ -52,8 +52,8 @@
       </table>
     </div>
     <div class="submenus subwindows">
-      <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false">
-        <wylib-menu :state="state.subs[item.idx].client" :lang="item.lang" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
+      <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :env="env" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false">
+        <wylib-menu :state="state.subs[item.idx].client" :env="env" :lang="item.lang" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
       </wylib-win>
     </div>
   </div>
@@ -74,13 +74,15 @@ export default {
     config:	Array,
     lang:	{type: Object, default: Com.langTemplate},
     top:	null,
+    env:	Object
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     stateTpt:	{subs: {}}
   }},
   computed: {
     id() {return 'menu_' + this._uid + '_'},
+    pr() {return this.env.pr},
   },
   methods: {
     iconSvg(icon) {

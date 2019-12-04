@@ -22,7 +22,7 @@
 //- 
 
 <script>
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import Com from './common.js'
 import Bus from './bus.js'
 import Dew from './dew.vue'
@@ -37,26 +37,29 @@ export default {
     config:	{type: Array, default: () => ([])},
     bus:	null,
     height:	{type: Number, default: 300},		//Fixme: used?
+    env:	Object
     },
   data() { return {
+//    wm:		{},
     valids:	{},
     dirtys:	{},
     userData:	{},
     dewBus:	new Bus.messageBus(this),
-    wm:		{},
     stateTpt:	{optional: false, fields: []},
   }},
 
   computed: {
-    id: function() {return 'mdew_' + this._uid + '_'},
-    dirty: function() {
+    id() {return 'mdew_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    dirty() {
       return Object.values(this.dirtys).some(v=>(v))
     },
-    valid: function() {
+    valid() {
       return Object.values(this.valids).every(v=>(v))
     },
-    hideOpts: function() {return !this.state.optional},
-    gridConfig: function() {				//Build a 2D grid from flat configuration data
+    hideOpts() {return !this.state.optional},
+    gridConfig() {				//Build a 2D grid from flat configuration data
       let minX, maxX, rows = []
         , noSpecs = []
         , nextRow = 0
@@ -106,11 +109,11 @@ export default {
     },
   },
 
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
 
   beforeMount: function() {
     Com.stateCheck(this)
@@ -157,7 +160,7 @@ export default {
           if (item.styles && item.styles.optional != null && item.styles.optional) rowOptional = true
           let dew = h('wylib-dew', {			//Make our data editing widget
             attrs: {value: this.data[item.field]},
-            props: {field: item.field, state: item.styles, lang: item.lang, values: item.values, nonull:item.nonull, bus:this.dewBus},
+            props: {field: item.field, state: item.styles, lang: item.lang, values: item.values, nonull:item.nonull, bus:this.dewBus, env:this.env},
             on: {input: this.input, submit: this.submit},
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang.title + ':' : null))

@@ -21,22 +21,22 @@
 <template>
   <div class="wylib wylib-dbp">
     <div class="header">
-      <wylib-menudock ref="headMenu" :config="dockConfig" :state="state.dock" :lang="wm.dbpMenu"/>
+      <wylib-menudock ref="headMenu" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.dbpMenu"/>
       <div class="headerfill"/>
       <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.dbpLoaded?wm.dbpLoaded.help:null">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false">
-        <wylib-dbe :state="state.edit.client" @modified="modified" :bus="dbeBus" :master="master"/>
+      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false" :env="env">
+        <wylib-dbe :state="state.edit.client" :env="env" @modified="modified" :bus="dbeBus" :master="master"/>
       </wylib-win>
-      <wylib-win :state="state.colMenu" @close="state.colMenu.posted=false">
-        <wylib-menu :state="state.colMenu.client" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
+      <wylib-win :state="state.colMenu" :env="env" @close="state.colMenu.posted=false">
+        <wylib-menu :state="state.colMenu.client" :env="env" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
       </wylib-win>
-      <wylib-win v-if="this.filtPosts" :state="state.filter" topLevel=true @close="state.filter.posted=false">
-        <wylib-dbs :fields="logicFields" :state="state.filter.client" :bus="dbsBus" @search="search" @default="dbsDefault"/>
+      <wylib-win v-if="this.filtPosts" :state="state.filter" :env="env" topLevel=true @close="state.filter.posted=false">
+        <wylib-dbs :fields="logicFields" :state="state.filter.client" :env="env" :bus="dbsBus" @search="search" @default="dbsDefault"/>
       </wylib-win>
     </div>
-    <wylib-mlb ref="mlb" :state="state.grid" :data="gridData" :config="mlbConfig" @execute="executeRows" @headerMenu="colMenuHandler" @sort="sort" @geometry="geometry" :bus="mlbBus"/>
+    <wylib-mlb ref="mlb" :state="state.grid" :env="env" :data="gridData" :config="mlbConfig" @execute="executeRows" @headerMenu="colMenuHandler" @sort="sort" @geometry="geometry" :bus="mlbBus"/>
   </div>
 </template>
 
@@ -57,10 +57,11 @@ export default {
     autoEdit:	{type: Boolean, default: true},
     bus:	null,				//My master dbe, if any
     master:	null,				//Current key info of my master, if any
+    env:	Object,
   },
   data() { return {
-    pr:		require('./prefs'),
-    wm:		{},
+//    pr:		require('./prefs'),
+//    wm:		{},
     viewMeta:	null,
     gridData:	[],
     lastMenu:	null,
@@ -74,14 +75,16 @@ export default {
   inject: ['top'],
 
   computed: {
-    id: function() {return 'dbp_' + this._uid + '_'},
-    stateTpt:	function() {return {
+    id() {return 'dbp_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    stateTpt() {return {
       dock: {}, loaded: 0, autoLoad:false, lastLoad: {}, colMenu: {x: 100, y:0},
       edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
       filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
       grid: {footerOn: false, sorting: {}, columns: []}
     }},
-    logicFields: function() {
+    logicFields() {
       let flds = []
       for (let key in this.mlbConfig) {
         let conf = this.mlbConfig[key]
@@ -94,7 +97,7 @@ export default {
       if (this.loaded) len = this.loaded.length > 8 ? 8 : this.loaded.length
       return len
     },
-    dockConfig: function() { return [
+    dockConfig() { return [
       {idx: 'lod', lang: this.wm.dbpLoad,     call: ev=>this.load(),   icon: 'download',  shortcut: true},
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(), icon: 'spinner',   shortcut: true},
@@ -109,7 +112,7 @@ export default {
 //      {idx: 'tst', lang: {title: 'T', help: 'H'}, call: this.test, icon:'circle', shortcut: true},
       {idx: 'cvi', lang: this.wm.dbpVisible, icon:'eye', menu: this.visibleMenu},
     ]},
-    visibleMenu: function() { 
+    visibleMenu() { 
       let items = [], conf = this.mlbConfig
 //console.log("Visible:", this.state.dbView)
       Object.keys(this.mlbConfig).sort((a,b)=>{return conf[a].title < conf[b].title ? -1 : 1}).forEach(key=>{
@@ -122,15 +125,15 @@ export default {
       })
       return items
     },
-    colMenuConfig: function() {return [
+    colMenuConfig() {return [
       {idx: 'siz', lang: this.wm.dbpColAuto, call: this.autoSize, icon:'width'},
       {idx: 'hid', lang: this.wm.dbpColHide, call: this.hideColumn, icon:'eyeblock'},
     ]},
-    headerHeight: function() {
+    headerHeight() {
       return this.pr.winFullHeader - 1		//Fit in parent header, plus top border
     },
 
-    mlbConfig: function() {			//Make the column description format mlb expects
+    mlbConfig() {				//Make the column description format mlb expects
       let colConfigs = {}, foundDisplay = false
 //console.log("mlbConfig:", this.state.dbView, this.viewMeta)
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
@@ -354,9 +357,9 @@ export default {
   },
 
   created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
     this.metaListen()
   },
 

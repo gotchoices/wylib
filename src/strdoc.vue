@@ -31,7 +31,7 @@
 <template>
   <div class="wylib wylib-strdoc">
     <div ref="header" class="header">
-      <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :lang="wm.sdcMenu"/>
+      <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
     <div class="content" draggable='true' v-on:dblclick="togEdit" :style="comStyle"
@@ -40,19 +40,19 @@
       <div v-show="state.edit" class="edit" :title="lang('sdcEdit')">
         <span>
           <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
-          {{lang('sdcTitle','title','Title')}}:
+          {{lang('sdcTitle','t','Title')}}:
         </span>
-        <span draggable='false' :title="lang('sdcTitle')"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="lang('sdcTitle','title')" @input="change"></span>
-        <span>{{lang('sdcTag','title','Tag')}}:</span>
-        <span draggable='false' :title="lang('sdcTag')"><input class="input tag" v-model="state.tag" :placeholder="lang('sdcTag','title')" @input="change"></span>
+        <span draggable='false' :title="lang('sdcTitle')"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="lang('sdcTitle','')" @input="change"></span>
+        <span>{{lang('sdcTag','t','Tag')}}:</span>
+        <span draggable='false' :title="lang('sdcTag')"><input class="input tag" v-model="state.tag" :placeholder="lang('sdcTag','t')" @input="change"></span>
         <span draggable='false'><button class="input" @click="addChild">+</button></span>
         <span v-if="level > 0" draggable='false'><button class="input" @click="$emit('delete',index)">X</button></span>
         <div>
-          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="lang('sdcText')" :placeholder="lang('sdcText','title')" @input="change"/>
+          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="lang('sdcText')" :placeholder="lang('sdcText','t')" @input="change"/>
         </div>
       </div>
       <div v-if="!state.edit" class="preview">
-        <div v-if="level <= 0 && state.title" class="title" v-html="state.title"/>
+        <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="lang('sdcPreview')"/>
         <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="subs" v-for="(sub, idx) in state.subs">
@@ -67,7 +67,7 @@ import Com from './common.js'
 import Bus from './bus.js'
 import Interact from 'interactjs'
 import Icons from './icons.js'
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import FileSaver from 'file-saver'
 import CrossRef from './crossref.js'
 //import DiffPatch from 'jsondiffpatch'
@@ -96,14 +96,15 @@ export default {
     level:	{type: Number, default: 0},
     prefix:	{type: String, default: null},
     index:	{type: Number, default: 0},
+    env:	{default: ()=>({wm:{}, pr:{}})},
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		{},
+//    wm:		{},
     dragOver:	false,			//Kept by the dragged-onto
     dragType:	'move',			//'move', 'copy', 'none', 'trash', kept by the dragged
     over:	false,
-    wm:		{},
     dirty:	false,
     contEdit:	false,
     undoStack:	[],
@@ -116,6 +117,8 @@ export default {
   computed: {
     id: function() {return 'sdc_' + this._uid + '_'},
     iAmChief: function() {return (this.level <= 0)},
+    wm: function() {return this.env.wm},
+    pr: function() {return this.env.pr},
     useBus: function() {return this.iAmChief ? this.subBus : this.bus},
     headerHeight: function() {return this.pr.winFullHeader - 1},	//Fit in parent header, plus top border
     nextPrefix: function() {						//Prefix to send to my children
@@ -166,7 +169,7 @@ export default {
   },
   methods: {
     lang(key, type='help', defVal) {
-      return this.wm[key] ? this.wm[key][type] : defVal
+      return this.wm[key] ? this.wm[key][Com.unabbrev(type, ['title', 'help'])] : defVal
     },
     change(ev) {
       if (this.bus) this.bus.master.$emit('dirty')
@@ -400,12 +403,15 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   beforeCreate: function() {
     this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
   },
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-console.log("Got wm update:", err, data)
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    this.top().registerEnv(this.id, (env) => {		//Ask my toplevel for prefs, language data
+//console.log("Strdoc got environment:", this.id, env)
+////      this.set(this, 'pr', env.pr)
+////      this.set(this, 'wm', env.wm)
+//      Object.assign(this.pr, env.pr)
+//      Object.assign(this.wm, env.wm)
+//    })
+//  },
   beforeMount: function() {
     Com.stateCheck(this)
 

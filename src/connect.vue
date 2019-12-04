@@ -22,7 +22,7 @@
 <template>
   <div class="wylib-connect">
     <div class="header">
-      <wylib-menudock :config="dockConfig" :state="dock" :lang="wm.conMenu"/>
+      <wylib-menudock :config="dockConfig" :state="dock" :env="env" :lang="wm.conMenu"/>
       <div>{{status}}</div>
     </div>
     <div class="label" :title="lang('conTitle')">{{lang('conTitle', 1)}}:</div>
@@ -85,11 +85,12 @@ export default {
   name: 'wylib-connect',
   components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
   props: {
-    db:		null
+    db:		null,
+    env:	Object,
   },
   data() { return {
-    pr:			require('./prefs'),
-    wm:			WmDefs,		//Language data
+//    pr:			require('./prefs'),
+//    wm:			WmDefs,		//Language data
     sites:		null,		//site keys we have in memory
     lastSelect:		null,		//index of the last one clicked on
     lastConnected:	null,		//site object we were last connected to
@@ -103,9 +104,11 @@ export default {
   inject: ['top'],
   computed: {
     id() {return 'con_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
     selectedSite()  {return (this.lastSelect == null) ? null : this.sites[this.lastSelect]},
     connected() {return !!this.currentSite},
-    dockConfig: function() { return [
+    dockConfig() { return [
       {idx:'con', lang:this.wm.conConnect, call:this.togConn,   icon:'link',   shortcut:true, toggled:this.connected},
       {idx:'sub', lang:this.wm.conDelete,  call:this.delSites,  icon:'minus',  shortcut:true},
       {idx:'exp', lang:this.wm.conExport,  call:this.exportKeys,icon:'boxout'},
@@ -346,11 +349,11 @@ console.log("Error in importKeys:", err.message)
     },
   },
 
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
 
   mounted: function () {
     let last = Local.get(LastKey)

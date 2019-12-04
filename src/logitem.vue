@@ -6,7 +6,7 @@
 //- 
 <template>
   <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}">
-    <wylib-button class="button lower" size="1" icon="play3" @click="$emit('lower')" :title="wMsg('litToSub')"/>
+    <wylib-button class="button lower" :env="env" size="1" icon="play3" @click="$emit('lower')" :title="wMsg('litToSub')"/>
     <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
     </select>
@@ -20,13 +20,13 @@
     </select>
     <input v-model="state.entry" @keyup.enter="submit" :title="wMsg('litRightVal')" v-show="showEntry">
     </input>
-    <wylib-button class="button close" size="1" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
+    <wylib-button class="button close" :env="env" size="1" icon="close" @click="$emit('close')" :title="wMsg('litRemove')"/>
   </div>
 </template>
 
 <script>
 import WylibButton from './button.vue'
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import Interact from 'interactjs'
 var dragTarget = null		//Communicate with each other about drag/drop through this
 
@@ -37,20 +37,23 @@ export default {
     state:	{type: Object, default: () => ({})},
     config:	Object,
     index:	Number,
+    env:	Object
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
+//    wm:		{},
     dragOver: false,
-    wm:		{},
   }},
   computed: {
-    id: function() {return 'lit_' + this._uid + '_'},
-    notFunction: function() {return (this.state.not ? 'Not' : 'Is')},
-    isBinary: function() {return (this.state.oper != 'isnull' && this.state.oper != 'true')},
-    selRight: function() {return (this.state.right && this.state.right != '')},
-    showEntry: function() {return (this.isBinary && !this.selRight)},
-    rhValue: function() {return (this.state.right == "_")},
-    background: function() {
+    id() {return 'lit_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    notFunction() {return (this.state.not ? 'Not' : 'Is')},
+    isBinary() {return (this.state.oper != 'isnull' && this.state.oper != 'true')},
+    selRight() {return (this.state.right && this.state.right != '')},
+    showEntry() {return (this.isBinary && !this.selRight)},
+    rhValue() {return (this.state.right == "_")},
+    background() {
       return (this.dragOver ? this.pr.dragOverBackground : this.pr.titleBackground)
     }
   },
@@ -96,11 +99,11 @@ export default {
   updated: function() {
     this.$nextTick(() => {this.$emit('geometry', this)})
   },
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
   mounted: function() {
     this.$nextTick(() => {this.$emit('geometry', this)})
 //console.log("LogItem state: ", JSON.stringify(this.state))

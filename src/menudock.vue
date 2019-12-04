@@ -8,15 +8,15 @@
 <template>
   <div class="wylib wylib-menudock">
     <div class="buttons">
-      <wylib-button class="menubutton" icon="menu" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="lang.title"/>
-      <wylib-button class="shortcut" v-for="conf in config" v-if="conf.shortcut"
+      <wylib-button class="menubutton" icon="menu" :env="env" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="lang.title"/>
+      <wylib-button class="shortcut" v-for="conf in config" v-if="conf.shortcut" :env="env"
       	:key="conf.idx" :icon="conf.icon" :toggled="conf.toggled" @click="conf.call" 
       	:disabled="('disabled' in conf) ? conf.disabled : false"
       	:title="(conf.lang?conf.lang.title:null) + ':\n' + (conf.lang?conf.lang.help:null)"/>
     </div>
     <div class="subwindows">
-      <wylib-win :state="state.menu" pinnable=true @close="state.menu.posted=false">
-        <wylib-menu :state="state.menu.client" :config="config" :lang="lang" @done="state.menu.posted=state.menu.pinned"/>
+      <wylib-win :state="state.menu" :env="env" pinnable=true @close="state.menu.posted=false">
+        <wylib-menu :state="state.menu.client" :env="env" :config="config" :lang="lang" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
     </div>
   </div>
@@ -35,6 +35,7 @@ export default {
     state:	{type: Object, default: () => ({})},
     lang:	{type: Object, default: Com.langTemplate},
     config:	Array,
+    env:	Object
   },
   data() { return {
     stateTpt:	{menu: {client: {}, posted: false}},

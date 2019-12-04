@@ -14,7 +14,7 @@
       <div v-if="pw.ready" class="status">
         <button @click="conMenuPosted=!conMenuPosted" :title="lang('appServer')">{{lang('appServer',1,'Server')}}:</button>
         <span :title="lang('appServerURL')">{{ siteConnected }}</span>
-        <wylib-connect :db="db" v-show="conMenuPosted" @site="siteChange"/>
+        <wylib-connect :db="db" :env="env" v-show="conMenuPosted" @site="siteChange"/>
       </div>
     </div>
     <hr/>
@@ -25,22 +25,22 @@
           {{ (tab.lang ? tab.lang.title : null) || tab.title }}
         </div>
         <div class="tab-filler">
-          <wylib-button icon="menu" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
-          <wylib-win :state="appMenu" pinnable=true @close="appMenu.posted=false">
+          <wylib-button icon="menu" :env="env" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
+          <wylib-win :state="appMenu" :env="env" pinnable=true @close="appMenu.posted=false">
             <wylib-menu v-if="appMenu.posted" :state="appMenu.client" :config="appMenuConfig()" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
         </div>
       </div>
       <div class="subwindows">
-        <wylib-modal v-if="modal.posted" :state="modal">
-          <wylib-dialog slot-scope="ws" :state="ws.state"/>
+        <wylib-modal v-if="modal.posted" :state="modal" v-slot="ws">
+          <wylib-dialog :state="ws.state" :env="env"/>
         </wylib-modal>
-        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" @close="win.posted=false">
-          <wylib-dbp :state="win.client"/>
+        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" :env="env" @close="win.posted=false">
+          <wylib-dbp :state="win.client" :env="env"/>
         </wylib-win>
       </div>
       <div class="app-content">
-        <slot></slot>
+        <slot :env="env"></slot>
       </div>
     </div>
   </div>
@@ -91,24 +91,27 @@ export default {
     menuTitle:		'',
     pw:			{ready:false, prompt: 'Password', checked: false},
     persistent:		true,
-    top:		new TopHandler(this),
+    top:		null,
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
-    wm:			WmDefs,
-    pr:			require('./prefs')
+//    wm:			WmDefs,
+//    pr:			require('./prefs')
+    env:		{wm: WmDefs, pr: require('./prefs')}
   }},
   provide() { return {
     top: () => {return this.top},
     app: () => {return this.top}
   }},
   computed: {
-    id: function() {return 'app_' + this._uid + '_'},
-    siteConnected: function() {
+    id() {return 'app_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    siteConnected() {
       return this.currentSite || this.lang('appNoConnect',1,'Not Connected')
     },
-    tagTitle: function () {return this.tag || this.title},
-    appLang: function () {
+    tagTitle() {return this.tag || this.title},
+    appLang() {
       return (this.wm ? this.wm['app.'+this.tag] : null) || (this.title.title ? this.title : {title: this.title})
     },
   },
@@ -187,9 +190,10 @@ export default {
     },
     initApp() {					//Call when app ready to run
       Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-        if (data.msg) Object.assign(this.wm,data.msg)	//Don't overwrite what might be in WmDefs
-//console.log("App wm:", this.wm)
+        if (data.msg) Object.assign(this.env.wm, data.msg)	//Don't overwrite what might be in WmDefs
+console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
+//        this.top.notifyEnv({wm:this.wm})
       })
 
       let savedState = Local.get(this.tagTitle)
@@ -210,6 +214,7 @@ export default {
   },
 
   created: function() {
+    this.top = new TopHandler(this)
     Local.init(this, this.pw, this.tag, (isReady)=>{
       if (this.pw.ready = isReady) this.initApp()
     })

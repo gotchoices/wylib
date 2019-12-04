@@ -150,4 +150,11 @@ module.exports = {
       crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data)).then(v => 
         this.buf2str(new Uint8Array(v)))
   },
+  
+  unabbrev(short, longs) {		//Turn an abbreviated string into one of a set of full strings
+    let regex = new RegExp('^' + short)
+      , match = longs.find(el=>(el.match(regex)))
+//console.log("Unabbrev:", short, longs, match)
+    return match || short
+  }
 }

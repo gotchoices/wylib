@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import LogItem from './logitem.vue'
 import Button from './button.vue'
 import Com from './common.js'
@@ -39,18 +39,21 @@ export default {
     state:	{type: Object, default: () => ({})},
     config:	Object,
     index:	Number,
-    defOper:	{type: String, default: '='}
+    defOper:	{type: String, default: '='},
+    env:	Object
   },
 
   data() { return {
+//    wm:		{},
     isAnd:	true,
     childYs:	[],
-    wm:		{},
     stateTpt:	{and: true, items: []},
   }},
 
   computed: {
-    joinFunction: function() {
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    joinFunction() {
       return (this.state.and ? 'And' : 'Or')
     },
   },
@@ -136,11 +139,11 @@ console.log("Insert:" + idx + " State:" + state)
 //console.log("Updated:", this.index)
     this.$emit('geometry', this, true)
   },
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
   beforeMount: function() {
     Com.stateCheck(this)
 //console.log("Loglist stateCheck:", this.state)

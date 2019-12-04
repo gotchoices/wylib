@@ -12,7 +12,7 @@
 <template>
   <div class="wylib wylib-dbs">
     <div ref="header" class="header">
-      <wylib-menudock :state="state.dock" :config="dockConfig" label="Search" title="Functions relating to stored queries"/>
+      <wylib-menudock :state="state.dock" :env="env" :config="dockConfig" label="Search" title="Functions relating to stored queries"/>
       <div class="headerfill"/>
     </div>
     <wylib-loglist :state="state.logic" :config="logicConfig" @add="addNew" @geometry="geometry" @submit="search"/>
@@ -23,7 +23,7 @@
 import Com from './common.js'
 import Bus from './bus.js'
 import Logic from './loglist.vue'
-import Wyseman from './wyseman.js'
+//import Wyseman from './wyseman.js'
 import MenuDock from './menudock.vue'
 
 export default {
@@ -32,24 +32,27 @@ export default {
   props: {
     state:	{type: Object, default: () => ({})},
     bus:	null,			//Commands from my parent dbp
-    fields:	{type: Array}
+    fields:	{type: Array},
+    env:	Object,
   },
 
   data() { return {
-    pr:		require('./prefs'),
-    wm:		{},
+//    pr:		require('./prefs'),
+//    wm:		{},
 //    viewMeta:	null,
 //    viewLang:	null,
     stateTpt:	{logic: {and: true, items: [{left: null, not: false, oper: '='}]}, dock: {}},
   }},
 
   computed: {			//Fixme: get langauge from wyseman/db
-    id: function() {return 'dbs_' + this._uid + '_'},
-    logicConfig:function() {
+    id() {return 'dbs_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
+    logicConfig() {
 //console.log("logicConf:", this.fields)
       return {left: this.fields, oper: this.operators, right: this.fields}
     },
-    operators: function() {return [
+    operators() {return [
       {tag: '=',	lang: this.wm.dbsEqual	},
       {tag: '<',	lang: this.wm.dbsLess	},
       {tag: '<=',	lang: this.wm.dbsLessEq	},
@@ -62,12 +65,12 @@ export default {
       {tag: 'diff',	lang: this.wm.dbsDiff	},
       {tag: 'nop',	lang: this.wm.dbsNop	},
     ]},
-    dockConfig: function() { return [
+    dockConfig() { return [
       {idx: 'sch', lang: this.wm.dbsSearch, call: this.search, icon: 'wand', shortcut: true},
       {idx: 'clr', lang: this.wm.dbsClear, call: this.clear, icon: 'sun', shortcut: true},
       {idx: 'def', lang: this.wm.dbsDefault, call: this.default, icon: 'download'},
     ]},
-    headerHeight: function() {
+    headerHeight() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
     },
   },
@@ -92,11 +95,11 @@ export default {
     },
   },
 
-  created: function() {
-    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-      if (data.msg) this.wm = data.msg
-    })
-  },
+//  created: function() {
+//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+//      if (data.msg) this.wm = data.msg
+//    })
+//  },
 
   beforeMount: function() {
     Com.stateCheck(this)

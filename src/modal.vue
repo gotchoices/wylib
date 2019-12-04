@@ -20,18 +20,20 @@ export default {
   name: 'wylib-modal',
   props: {
     state:	{type: Object, default: () => ({})},
+    env:	Object,
   },
   data() { return {
-    pr:		require('./prefs'),
+//    pr:		require('./prefs'),
     top:	null,
     stateTpt:	{posted: false, client:{}},
   }},
   computed: {
-    id: function() {return 'modal_' + this._uid + '_'},
-    screenStyle: function() {return {
+    id() {return 'modal_' + this._uid + '_'},
+    pr() {return this.env.pr},
+    screenStyle() {return {
       display:		this.state.posted ? 'flex' : 'none',
     }},
-    dialogStyle: function() {return {
+    dialogStyle() {return {
       background:	this.pr.dataBackground,
       borderColor:	this.pr.winHighlightColor,
       borderWidth:	this.pr.winBorderWidth + 'px'
