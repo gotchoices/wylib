@@ -1,7 +1,9 @@
 Change Log:
 
-1.0.18	2019-Nov
+1.0.20	2019-Dec
 	- Settable color on graph links
+	- More efficient distribution of prefs and metadata
+	- Structured document and reports working better
 
 1.0.17	2019-Oct
 	- Improved function of svgraph objects

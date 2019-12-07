@@ -19,7 +19,7 @@ Wylib supports a
 [Model-View-Controller design.](https://en.wikipedia.org/wiki/Model-view-controller)
 However, the divisions between these layers are not always perfectly obvious.
 
-In the original implementation Wylib, was mostly responsible for View and 
+In the original implementation, Wylib was mostly responsible for View and 
 Control functions.
 The PostgreSQL backend contained nearly all the model and some additional 
 Control functions.
