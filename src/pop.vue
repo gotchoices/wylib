@@ -13,13 +13,13 @@
   <div class="wylib-pop">
 <!--    <div class="header"></div> -->
     <div class="subwindows">
-      <wylib-modal v-if="modal.posted" :state="modal" v-slot="ws">
+      <wylib-modal v-if="modal.posted" :state="modal" :env="env" v-slot="ws">
         <wylib-dialog :state="ws.state" :env="env"/>
       </wylib-modal>
     </div>
     <div class="pop-content">
       <div v-if="state.format == 'html'" v-html="state.content"/>
-      <component v-else :is="compName" :env="env" :state="state.content" @submit="submit"/>
+      <component v-else :is="compName" :env="env" :state="state.content" :bus="compBus" @submit="submit"/>
 <!--      <slot></slot> -->
     </div>
   </div>
@@ -30,6 +30,7 @@ import TopHandler from './top.js'
 import Dialog from './dialog.vue'
 import Modal from './modal.vue'
 import StructDoc from './strdoc.vue'
+import Bus from './bus.js'
 
 export default {
   name: 'wylib-pop',
@@ -41,10 +42,9 @@ export default {
     state:	{format: 'dialog', content: {}},
     modal:	{posted: false, client: {}},
     top:	null,
-//    wm:		null,		//Stays null until we get data from parent
-//    pr:		null,
-//    env:	{wm:{}, pr:{}}
-    env:		{wm: {h:{}, t:{}}, pr: require('./prefs')}
+    env:	{wm: {h:{}, t:{}}, pr: require('./prefs')},
+    compBus:	new Bus.messageBus(this),
+//    config:	{}			//Any applicable report configuration
   }},
   provide() { return {
     top: () => {return this.top},
@@ -66,7 +66,7 @@ console.log("Pop got submit:", request, data)
   },
 
   created() {
-console.log("Pop env:", this.env)
+//console.log("Pop env:", this.env)
     this.top = new TopHandler(this, true)
   },
 
@@ -74,25 +74,24 @@ console.log("Pop env:", this.env)
     this.top.momWin({request:'control'})		//Let parent window know we are ready to load content
 
     this.top.listenWin('', (request, data) => {		//Listen for messages from '' (master window)
-console.log("Popup got message:", request, "Data:", data)
+//console.log("Popup got message:", request, "Data:", data)
       if (request == 'populate' && data.format) {
-console.log("Popup got populate:", format, content, config)
+//console.log("Popup got populate:", format, content, config)
         let { format, content, config } = data
           , { action } = config || {}
         this.state.format = format
         this.state.content = content
+//        this.config = config				//Save original report configuration
         if (window.opener && action) window.document.title = action.lang.title
         if (format != 'html') this.top.momWin({request:'env'})	//Components will need language and prefs
+
       } else if (request == 'env' && data) {
-//        if (!this.wm && data.wm) this.wm = {}
-//        if (data.wm) this.$set(this, 'wm', data.wm)
-//        Object.assign(this.wm, data.wm)
-//        if (!this.pr && data.pr) this.pr = {}
-//        if (data.pr) this.$set(this, 'pr', data.pr)
-//        Object.assign(this.pr, data.pr)
         Object.assign(this.env, data)
-console.log("Popup got env:", this.env)
-//        this.top.notifyEnv(data)
+//console.log("Popup got env:", this.env)
+
+      } else if (request == 'child' && data) {
+//console.log("Popup send to child:", data)
+        this.compBus.notify(data)
       }
     })
   },

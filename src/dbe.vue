@@ -48,15 +48,13 @@ export default {
   },
   inject: ['top'],		//My toplevel window
   data() { return {
-//    pr:		require('./prefs'),
-//    wm:		{},
     viewMeta:	null,
     dbData:	{},		//Data as fetched from the database
     dirty:	false,
     valid:	false,
     lastView:	null,
     mdewBus:	new Bus.messageBus(this),
-    subBus:	new Bus.messageBus(this),
+    subBus:	new Bus.messageBus(this, this.reportQuery),
     stateTpt:	{dock:{}, dbView:'', key: {}, loaded:false, subs:{}, dews:{fields: []}},
     reports:	{},
   }},
@@ -93,6 +91,7 @@ export default {
       {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.keyValues},
       {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
+      {idx: 'opt', lang: this.wm.dbeOption,  call: this.opTog,   icon: 'eye',    type: 'checkbox', toggled: this.state.dews.optional, input: this.showOptValue},
     ]},
     headerHeight() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
@@ -132,7 +131,7 @@ export default {
 //console.log("Dbe keyValues:", keyVals)
       return keyVals.length > 0 ? keyVals : undefined
     },
-    keyMaster() {return {
+    keyMaster() {return {			//Record with all key data consolidated
       view: this.state.dbView,
       pKey: this.pKey,
       keys: this.viewMeta.pkey,
@@ -143,6 +142,10 @@ export default {
   },
 
   methods: {
+    showOptValue(v) {				//Set/get value for showing optional fields
+      if (v != null) this.state.dews.optional = v
+      return this.state.dews.optional
+    },
     loadRec() {					//Prompt for a primary key and load that record
       let resp = {}
       let dews = []; this.mdewConfig.forEach((el,ix)=>{
@@ -171,6 +174,16 @@ export default {
       this.dataRequest('tuple', {where, fields: '*'}, false, ()=>{this.dirty = false})
     },
 
+    fieldCheck(fields) {
+      this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
+//console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
+        if (fld.styles && ('write' in fld.styles) && (!fld.styles.write || fld.styles.write==0)) {
+//console.log(  "deleting", fld.field)
+          delete fields[fld.field]
+        }
+      })
+    },
+
     insert() {
       let fields = this.mdewBus.notify('userData')[0]
 
@@ -189,20 +202,14 @@ export default {
       }
 
 //console.log("Insert:", fields)
-      this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
-//console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
-        if (fld.styles && ('write' in fld.styles) && (!fld.styles.write || fld.styles.write==0)) {
-//console.log(  "deleting", fld.field)
-          delete fields[fld.field]
-        }
-      })
-
+      this.fieldCheck(fields)
       this.dataRequest('insert', {fields}, true, ()=> {this.dirty = false})
     },
 
-    update() {
-      let fields = this.mdewBus.notify('userData',true)[0]
-//console.log("Update data:", fields)
+    update(ev, fields) {
+console.log("Update data:", ev, JSON.stringify(fields))
+      if (!fields) fields = this.mdewBus.notify('userData',true)[0]
+      this.fieldCheck(fields)
       this.dataRequest('update', {fields, where: this.keyWhere()}, true, ()=>{this.dirty = false})
     },
 
@@ -248,7 +255,7 @@ export default {
           if (cb) cb(data)
           this.state.loaded = true
 //console.log("Loaded:", this.viewMeta.pkey)
-          this.$nextTick(()=>{this.subBus.notify('load')})	//Tell child dbp to update itself
+          this.$nextTick(()=>{this.subBus.notify('load', this.pKey)})	//Tell child dbp to update itself
         }
       })
     },
@@ -261,29 +268,39 @@ export default {
       Com.closeWindow(this.state.subs, idx, this, reopen)
     },
 
-    reportQuery(request, data) {		//Handle editor requests from a launched report
-console.log("Dbe got request from report:", request, data)
+    reportQuery(request, data, rptKey, cb) {	//Handle editor requests from a launched report
+//console.log("Dbe got request from report:", request, data, "k:", this.keyValues, rptKey)
       if (!request || request == 'pKey') {	//Default to asking for currently loaded key
         return (this.keyValues ? [this.pKey] : null)
       } else if (request == 'update') {
         let uData = {}
         this.mdewConfig.forEach(el => {		//Grab only valid and changed fields
           let key = el.field
-          if (key in data && data[key] != this.dbData[key]) uData[key] = data[key]
+//console.log("  checking:", key, this.dbData[key], data[key])
+          if ((key in data) && JSON.stringify(data[key]) != JSON.stringify(this.dbData[key])) {
+            uData[key] = data[key]
+          }
         })
-        this.dataRequest('update', {fields:uData, where: this.keyWhere()}, true)
+//console.log("  update:", uData, rptKey, this.pkey)
+        let key = rptKey || this.pKey		//Try to link to current record if one is loaded
+        if (key) {
+          this.fieldCheck(uData)
+          this.dataRequest('update', {fields:uData, where: rptKey}, true, cb)
+        } else {				//If not use, whatever key the report loaded with
+          this.top().error(this.wm.dbeNoPkey)
+        }
       }
     },
     
     perform(event, action) {
-//console.log("Perform action:", action, event.shiftKey)
+console.log("Perform action:", action, event.shiftKey)
       let data = {}
         , view = this.state.dbView
         , diaTag = ['action', view, action.name].join(':')
       if (action.options) {			//Do we need to prompt for report options?
         this.top().dialog(action.lang, action.options, data, null, diaTag + ':opts', this.top().diaButs3)
       } else {
-        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, this.reportQuery)	//Go direct to action/report
+        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, this.subBus)	//Go direct to action/report
       }
     },
 
@@ -301,7 +318,7 @@ console.log("Dbe got request from report:", request, data)
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
           this.top().registerDialog(['action',this.state.dbView,act.name].join(':'), (dia, info)=>{
 //console.log("Dbe got action callback:", dia, act, info)
-            return this.top().actionLaunch(this.state.dbView, act, info, this.reportQuery)
+            return this.top().actionLaunch(this.state.dbView, act, info, this.subBus)
           })
         })
       })
@@ -318,10 +335,10 @@ console.log("Dbe got request from report:", request, data)
   },
 
   created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
     this.metaListen()
+//    this.subBus = new Bus.messageBus(this, (msg)=>{
+//console.log("Dbe got sub message:", msg)
+//    })
   },
 
   beforeMount: function() {

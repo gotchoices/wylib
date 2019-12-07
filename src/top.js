@@ -31,28 +31,6 @@ module.exports = function topHandler(context, amSlave) {
 //console.log("Registering ID", context ? context.id : null)
 //if (context.state) context.state.layer = 10		//Recover from trouble with layers (debug)
 
-//  this.registerEnv = function(compTag, cb) {		//Register handler to receive pref/language data
-//    if (cb) {
-//console.log("Top register env:", compTag, this.context.$options._componentTag)
-//      let env = this.context.env
-//      this.envCB[compTag] = cb
-//      if (env) {				//Is there an environment in this component
-//        if (Object.keys(env.pr).length > 1) {	//And has it been initialized
-//          cb(this.context.env)			//Then pass it along
-//        } else if (this.context.$options._componentTag == 'wylib-pop') {
-//          WinCom.mom({request:'env'})		//Else ask for it from parent window
-//        }
-//      }
-//    } else {
-//      delete this.envCB[compTag]
-//    }
-//  }
-//    
-//  this.notifyEnv = function(env) {			//Notify any listers about pref/language updates
-//console.log("Top notify env:", env.wm, env.pr)
-//    Object.keys(this.envCB).forEach(key => this.envCB[key](env))
-//  }
-
   this.env = () => {return this.context.env}
   
   this.listenWin = WinCom.listen			//Make calls available to component
@@ -141,17 +119,16 @@ module.exports = function topHandler(context, amSlave) {
   },
 
   this.wmCheck = function(msg) {		//Is this a shortcut wyseman language code?
-    if (msg[0] == '!' && ('wm' in this.context)) {
+    if (msg[0] == '!' && ('env' in this.context)) {
       let tag = msg.slice(1)
-//console.log("wmCheck", this.context, this.context.wm)
-      if (!(tag in this.context.wm))				//Make reactive stub if it doesn't exist yet
-        this.context.$set(this.context.wm, tag, null)		//{title:null, help:null})
-      return this.context.wm[tag]
+        , wm = this.context.env.wm
+//console.log("wmCheck", this.context.env)
+      return wm[tag]
     } else return msg
   },
 
   this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
-console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
+//console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
     if (typeof msg == 'string') {
       return this.wmCheck(msg)
     } else if (typeof msg == 'object') {
@@ -215,31 +192,41 @@ console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
     if (this.postCB) this.postCB()
   }
 
-  this.actionLaunch = function(view, action, info, editCB) {	//Handle request for a report/action
+  this.actionLaunch = function(view, action, info, bus) {	//Handle request for a report/action
     if (typeof action == 'string') {
       return notImplemented()			//Fixme: fetch action metadata, and call actionLaunch recursively
     }
-    let { buttonTag, options, dialogIndex, popUp } = info
+    let { buttonTag, options, dialogIndex, popUp} = info
       , name = action.name
       , actTag = ['action', view, name].join(':')
-      , getKeys = () => {				//Try to get keys from callback, or fall back to key value in info
-        let fromFunc = ((typeof editCB == 'function') ? editCB() : null)
-        return fromFunc || info.keys
+      , getKeys = () => {				//Try to get keys from dbe message bus, or fall back to key value in info
+        let fromFunc = (bus && bus.mom) ? bus.mom() : null	//Will fail if restoring from saved state
+//console.log("Get keys:", fromFunc || info.keys)
+        return fromFunc || info.keys			//We will have to rely on stored key from last session
       }
       , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : WinCom.unique(actTag))
-      , config = {repTag, view, action, info}		//Will save this for restore purposes
+      , config = {repTag, view, action, info, actTag}	//Will save this for restore purposes
     info.keys = getKeys()				//Remember the last key values too
-console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config)
-//console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp)
+//console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
+//console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp, "bus:", bus)
 
     if (buttonTag == 'diaCancel') {			//If we came from a dialog, and user says cancel
       this.context.closeRep(repTag)			//Close our window if it is open
       return true
     }
     
-    var perform = (target, message, win) => {		//Respond to messages from report window
+    if (bus) bus.register(repTag, (data, pKey) => {	//Relay messages from dbe to the report slave
+//console.log(" slave relay:", repTag, data, pKey, info.keys[0])
+
+//Fixme: move this back to the dbe:?
+      if (data == 'load' && pKey) info.keys[0] = pKey	//New record, remember the new primary key
+      
+      WinCom.child(repTag, {request:'child', data})
+    })
+    
+    let perform = (target, message, win) => {		//Respond to messages from report window
       let {request, data} = message ? message : {}
-console.log("Report query:", repTag, 'tgt:', target, message)
+//console.log("Report query:", repTag, 'tgt:', target, message)
 
       if (target == 'report') {
 //console.log("Report:", repTag, "dirty:", data)
@@ -247,7 +234,9 @@ console.log("Report query:", repTag, 'tgt:', target, message)
 
       } else if (target == 'control') {			//Report window content is mounted and asking for content from the control layer on the backend
         let request = data
-        Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys:getKeys()}}, (content, error) => {
+          , keys = getKeys()
+//console.log("DB request:", view, request, options, "k:", JSON.stringify(keys))
+        Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys}}, (content, error) => {
 //console.log("DB answers:", content, "error:", error)
           if (error) {this.error(error); return}
           if (win && content)
@@ -255,11 +244,13 @@ console.log("Report query:", repTag, 'tgt:', target, message)
         })
 
       } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
-console.log("Command for Dbe:", request, "data:", data)
-        if (editCB) editCB(request, data)
+//console.log("Command for Dbe:", request, "data:", data, "keys:", info.keys)
+        if (bus && bus.mom) bus.mom(request, data, info.keys[0], ()=>{
+          win.postMessage({request:'child', data:'clean'}, location.origin)	//Confirm update with report window
+        })
 
       } else if (target == 'env') {			//Content is asking for data for its environment
-console.log("Request for env", win)
+//console.log("Request for env", win)
         win.postMessage({request:'env', data:{
           wm:this.context.wm, 
           pr:Object.assign({}, this.context.pr)

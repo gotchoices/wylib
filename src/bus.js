@@ -6,8 +6,9 @@
 //- 
 
 module.exports = {
-  messageBus(vm) {		//Bus for messages to be distributed to registered clients
+  messageBus(vm, masterCB) {		//Bus for messages to be distributed to registered clients
     this.master = vm
+    this.masterCB = masterCB
     this.clients = {}
     
     this.register = function(id, cb) {	//Clients register to receive callbacks
@@ -18,12 +19,16 @@ module.exports = {
         delete this.clients[id]
     },
     
-    this.notify = function(message, data) {	//Every registered client will get every message
+    this.mom = function(message, ...args) {	//Send a message to the bus master
+      if (this.masterCB) return this.masterCB(message, ...args)
+    },
+    
+    this.notify = function(message, ...args) {	//Every registered client will get every message
       let replies = []
 //console.log("Bus notify:", this.clients)
       Object.keys(this.clients).forEach(key => {
 //console.log("Bus:", this.master, "notifying:", key)
-        replies.push(this.clients[key](message, data))
+        replies.push(this.clients[key](message, ...args))
       })
 //console.log("Bus ans:", this.master, replies)
       return replies

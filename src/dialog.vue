@@ -15,7 +15,7 @@
     <component ref="component" v-if="state.component" :is="'wylib-'+stateVar('component','type')" :state="stateVar('component','state')" @submit="submit"/>
     <iframe ref="iframe" v-if="state.iframe" :src="stateVar('iframe','src')" :name="stateVar('iframe','name')" :height="stateVar('iframe','width','100%')"/>
 -->
-    <wylib-mdew v-if="state.dews" :config="state.dews" :data="state.data" @input="change" @submit="submit"/>
+    <wylib-mdew v-if="state.dews" :config="state.dews" :env="env" :data="state.data" @input="change" @submit="submit"/>
     <div v-if="buttons" class="buttons">
       <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
     </div>
@@ -26,12 +26,15 @@
 import Com from './common.js'
 import Mdew from './mdew.vue'
 import Strdoc from './strdoc.vue'
-//import Wyseman from './wyseman.js'
+import Wyseman from './wyseman.js'
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   diaQuery:	{title:'Query', help:'Please provide your input'},
   diaCancel:	{title:'Cancel', help:'Dismiss the query'},
+  diaConfirm:	{title:'Confirm', help:'Asking for user confirmation of notice'},
+  diaError:	{title:'Error', help:'Confirm the error message'},
   diaYes:	{title:'Yes', help:'Answer affirmatively'},
+  diaOK:	{title:'OK', help:'Confirm dialog'},
 }
 
 export default {
@@ -39,11 +42,9 @@ export default {
   components: {'wylib-mdew': Mdew, 'wylib-strdoc': Strdoc},
   props: {
     state:	{type: Object, default: () => ({})},
-    env:	{type: Object, default: () => ({wm: WmDefs, pr: require('./prefs')})},
+    env:	{type: Object, default: () => ({wm: {}, pr: require('./prefs')})},
   },
   data() { return {
-//    pr:		require('./prefs'),
-//    wm:		WmDefs,
     valid:	true,
     stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
@@ -86,12 +87,13 @@ export default {
       return (this.state[sub1] ? this.state[sub1][sub2] : def)
     },
     submit(ev, butTag = 'diaYes', data = this.state.data) {
-console.log("Dia submit:", ev, butTag, data)
+//console.log("Dia submit:", ev, butTag, data)
       if (!this.valid) return
       if (this.state.cb)			//Callback for the dialog; Will not be persistent across reloads!
         this.state.cb(butTag, data)
-//      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)
-      this.$emit('submit', ev, butTag, this.state.tag, data)
+
+      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)	//wylib-win with dialog in slot needs this
+      this.$emit('submit', ev, butTag, this.state.tag, data)		//dialog in pop uses this
     },
     change(value, field, dirty, valid) {	//When data changed
       let checked = true
@@ -103,11 +105,9 @@ console.log("Dia submit:", ev, butTag, data)
     },
   },
 
-//  created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
-//  },
+  created: function() {
+    Wyseman.langDefs(this.env.wm, WmDefs)
+  },
 
   beforeMount: function() {
     Com.stateCheck(this)

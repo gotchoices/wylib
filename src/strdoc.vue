@@ -7,14 +7,13 @@
 //X- Combine addChild with addSubs?
 //X- What to do with illegally added sections in paragraph 0?
 //X- Launch this component as action from mychips contract dbe
-//- Call new Icons.url
-//- 
+//X- Call new Icons.url
+//- Subs should not return/show published, digest, etc.
 //- Chief contains readonly: title, author, language, version, released, hash
 //- All are displayed, printable in preview mode
 //- Tag is fixed for chief as Author-Main_Title-Version-Language
 //- 
 //- Make a way to include other documents by reference
-//- 
 //- 
 //- Call back to database with update command
 //- Can edit contracts in database
@@ -30,7 +29,7 @@
 //- 
 <template>
   <div class="wylib wylib-strdoc">
-    <div ref="header" class="header">
+    <div v-if="iAmChief" ref="header" class="header">
       <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
@@ -55,8 +54,8 @@
         <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="wm.h.sdcPreview"/>
         <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
-      <div class="subs" v-for="(sub, idx) in state.subs">
-        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sub" :env="env" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
+      <div class="sections" v-for="(sec, idx) in state.sections">
+        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sec" :env="env" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
       </div>
     </div>
   </div>
@@ -67,7 +66,6 @@ import Com from './common.js'
 import Bus from './bus.js'
 import Interact from 'interactjs'
 import Icons from './icons.js'
-//import Wyseman from './wyseman.js'
 import FileSaver from 'file-saver'
 import CrossRef from './crossref.js'
 //import DiffPatch from 'jsondiffpatch'
@@ -96,12 +94,10 @@ export default {
     level:	{type: Number, default: 0},
     prefix:	{type: String, default: null},
     index:	{type: Number, default: 0},
-    env:	{default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
+    env:	{type: Object, default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {
-//    pr:		{},
-//    wm:		{},
     dragOver:	false,			//Kept by the dragged-onto
     dragType:	'move',			//'move', 'copy', 'none', 'trash', kept by the dragged
     over:	false,
@@ -111,7 +107,8 @@ export default {
     crossVals:	{},
     spellCheck:	true,
     subBus:	this.bus,
-    stateTpt:	{title: null, tag:null, edit:false, text:null, subs:[]}
+//    stateTpt:	{domain: null, name:null, title: null, version:null, text:null, tag:null, language:null, published:null, digest:null, sections:[], edit:false},
+    stateTpt:	{title: null, text:null, tag:null, sections:[], edit:false},
   }},
   inject: ['top'],
   computed: {
@@ -168,12 +165,10 @@ export default {
     ]},
   },
   methods: {
-//    lang(key, type='help', defVal) {
-//      return this.wm[key] ? this.wm[key][Com.unabbrev(type, ['title', 'help'])] : defVal
-//    },
     change(ev) {
-      if (this.bus) this.bus.master.$emit('dirty')
-      else this.dirty = true
+//console.log('Strdoc change', this.index, this.iAmChief, ev)
+      if (this.iAmChief) this.dirty = true		//Chief marks itself
+      else this.bus.master.$emit('dirty')		//Children emit on Chief
     },
 
     processXrefs(ev) {
@@ -187,10 +182,10 @@ export default {
     },
     targetChange(ev) {				//Cross reference has changed
 //console.log(`Target ${ev.type}:`, this.secNumber, ev.detail, 'n:', ev.target.name, 'v:', ev.target.value)
-      if (this.bus)
-        this.bus.master.$emit('xref', ev)	//Send up to the chief
-      else if (this.iAmChief)
+      if (this.iAmChief)
         this.processXrefs(ev)
+      else
+        this.bus.master.$emit('xref', ev)	//Send up to the chief
     },
     crossChange(ev) {				//Cross reference has been reconstructed
       let master = this.iAmChief ? this : this.bus.master
@@ -277,21 +272,22 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
     },
 
     clear() {				//Empty workspace
-      this.top().confirm('!sdcClearAsk', (ans) => {
-        if (ans == 'diaYes') {
-          let tmpState = Com.clone(this.stateTpt)
-          this.state = Object.assign(this.state, tmpState)
-          this.state.edit = true
-          this.dirty = false
-        }
-      })
+      let doIt = () => {
+        let tmpState = Com.clone(this.stateTpt)
+        this.state = Object.assign(this.state, tmpState)
+        this.state.edit = true
+        this.dirty = false
+      }
+      if (this.dirty) this.top().confirm('!sdcClearAsk', (ans) => {
+        if (ans == 'diaYes') doIt()
+      }); else doIt()
     },
 
     export() {
       let resp = {file:'document.json'}
         , dews = [
-            {field:'file', lang:'!sdcExportAsk', styles:{style:'ent', focus:true}},
-            {field:'pretty', lang:'!sdcExportFmt', styles:{style:'chk'}}]
+            {field:'file', lang:this.wm.sdcExportAsk, styles:{style:'ent', focus:true}},
+            {field:'pretty', lang:this.wm.sdcExportFmt, styles:{input:'chk'}}]
       this.top().query('!sdcExportAsk', dews, resp, (ans) => {
         if (ans == 'diaYes' && resp.file) {
 //console.log("Export file:", resp.file)
@@ -302,7 +298,7 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
     },
 
     import() {
-      let resp = {}, dews = [{field:'files', lang:this.wm.sdcImportAsk, styles:{style:'file', focus:true}}]
+      let resp = {}, dews = [{field:'files', lang:this.wm.sdcImportAsk, styles:{input:'file', focus:true}}]
       this.top().query('!sdcImportAsk', dews, resp, (ans) => {
 console.log("Import file:", ans, resp)
         if (ans == 'diaYes' && resp.files && resp.files.length >= 1) {
@@ -321,19 +317,19 @@ console.log("Import file:", ans, resp)
 
     deleteSub(idx) {					//Remove a sub-paragraph
 console.log('Got delete:', this.secNumber, 'level:', this.level, 'index:', idx)
-      if (idx != null && idx >= 0) this.state.subs.splice(idx,1)
+      if (idx != null && idx >= 0) this.state.sections.splice(idx,1)
     },
     addSubs(idx, addArr, skip=0) {			//Add sub-paragraphs
 console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
       idx += skip
       addArr.forEach(el=>{
         if (typeof el == 'string') el = {text:el}	//Make state object if given a string
-        this.state.subs.splice(idx++, 0, el)
+        this.state.sections.splice(idx++, 0, el)
       })
     },
     addChild(ev) {					//Add empty sub-paragraph at end
-//console.log("Add child:")
-      this.state.subs.push({title:null, text:null, subs:[]})
+console.log("Add child:", this.state)
+      this.state.sections.push(Object.assign({}, this.stateTpt))
     },
 
     undo() {
@@ -404,21 +400,29 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
   beforeCreate() {
     this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
   },
-//  created() {
-//    this.top().registerEnv(this.id, (env) => {		//Ask my toplevel for prefs, language data
-//console.log("Strdoc got environment:", this.id, env)
-////      this.set(this, 'pr', env.pr)
-////      this.set(this, 'wm', env.wm)
-//      Object.assign(this.pr, env.pr)
-//      Object.assign(this.wm, env.wm)
-//    })
-//  },
+
+  created() {
+    if (this.bus) this.bus.register(this.id, msg =>{
+console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
+      if (msg == 'clear') {
+        this.clear()
+      } else if (msg == 'clean') {
+        this.dirty = false
+      } else if (msg == 'load') {
+        if (this.dirty) this.top().confirm('!sdcClearAsk', (ans) => {
+          if (ans == 'diaYes') this.$emit('submit', 'control')
+        }); else this.$emit('submit', 'control')
+      }
+    })
+  },
+
   beforeMount() {
-    Com.stateCheck(this)
+    Com.stateCheck(this, this.state, true)
+//console.log("Strdoc state:", this.state)
 
     if (this.iAmChief) {
       this.subBus = new Bus.messageBus(this)		//Parent
-      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from subs
+      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
       this.$on('dirty', ()=>{this.dirty = true})
     }
     if (this.subBus) this.subBus.register(this.id, (msg, data) => {	//Children (and parent) listen
@@ -439,15 +443,15 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
 
 <style lang='less'>
   .wylib-strdoc .header {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative;				//Fixed makes things go blurry in Chrome?
+//    top: -4px;
+//    left: -4px;
     opacity: 0.24;
-    transition: opacity 100ms ease-in;	//Things go blurry during transition
+//    transition: opacity 500ms ease-in;	//Also has problem with blur
   }
   .wylib-strdoc .header:hover {
     opacity: 0.94;
-//    transition: opacity 50ms ease-in;
+//    transition: opacity 100ms ease-in;
   }
   .wylib-strdoc .header .menudock {		//Override menudock default outline
     border: 0;
@@ -468,7 +472,7 @@ console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
     width: 30%;
   }
   .wylib-strdoc div .text.input {
-    margin: 0px 1em 4px 0px;		//To see blue outline fully when editing
+    margin: 0px 1em 4px 0px;			//To see blue outline fully when editing
 //    border: 1px solid purple;
   }
   .wylib-strdoc .content {

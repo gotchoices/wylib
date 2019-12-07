@@ -8,17 +8,17 @@ module.exports = {
 
   langTemplate() {return {title: null, help: null}},
 
-  stateCheck(context, st = context.state, prune = false, properties = context.stateTpt) {		//Initialize any needed properties in a component's state
-//console.log("stateCheck:", context, properties, st)
-    if (st && properties) {
-      Object.keys(properties).forEach(key => {
-        if (!(key in st)) {
-          context.$set(st, key, properties[key])
-//console.log("    init key:", key, properties[key])
+  stateCheck(context, st = context.state, prune = false, props = context.stateTpt) {		//Initialize any needed properties in a component's state
+//console.log("stateCheck:", context, props, st)
+    if (st && props) {
+      Object.keys(props).forEach(key => {		//Make sure all required properties are present
+        if (!(key in st) || (st[key] == undefined && props[key] != undefined)) {
+          context.$set(st, key, this.clone(props[key]))
+//console.log("    init key:", key, st.key, props[key])
         }
       })
-      if (prune) Object.keys(st).forEach(key => {
-        if (!(key in properties)) {
+      if (prune) Object.keys(st).forEach(key => {	//Trim out unofficial properties
+        if (!(key in props)) {
 //console.log("    pruning key:", key)
           delete st[key]
         }
@@ -27,7 +27,9 @@ module.exports = {
   },
 
   clone: function(o) {				//Deep object copy
-    let output = Array.isArray(o) ? [] : (o == null || o == undefined ? o : {})
+    let output = {}
+    if (o == null || o == undefined || typeof o != 'object') return o
+    if (Array.isArray(o)) output = []
     for (let key in o) {
       let v = o[key]
 //console.log('clone:', key, o[key], v, typeof v)

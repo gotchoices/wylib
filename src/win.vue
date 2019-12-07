@@ -40,8 +40,8 @@
       <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @close="r=>{closeDia(key,r)}" :env="env">
         <wylib-dialog :state="dia.client" :env="env" @submit="(...a)=>{dialogSubmit(key,...a)}"/>
       </wylib-win>
-      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" :env="env" @close="r=>{closeRep(key,r)}" @report="(v,a,i,k)=>{top.actionLaunch(v,a,i,k)}">
-        <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client"/>
+      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" :env="env" @close="r=>{closeRep(key,r)}" @report="(v,a,i,b)=>{top.actionLaunch(v,a,i,b)}">
+        <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client" :env="env"/>
       </wylib-win>
       <wylib-modal v-if="topLevel && modal.posted" :state="modal" :env="env" v-slot="ws">
         <wylib-dialog :state="ws.state" :env="env"/>
@@ -290,7 +290,7 @@ console.log("Clone to popup:", popId)
     },
 
     closeRep(repTag, reopen) {
-//console.log("Close regular report:", repTag)
+console.log("Close regular report:", repTag)
       let oldState = this.state.reports[repTag]
       this.$delete(this.state.reports, repTag)
       if (reopen) this.reportWin(repTag, oldState.src, oldState.client.config)
@@ -314,9 +314,6 @@ console.log("Clone to popup:", popId)
   },
 
   created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
     this.$on('swallow', this.swallowMenu)
 
     if (this.topLevel) this.top = new TopHandler(this)
@@ -349,8 +346,8 @@ console.log("Clone to popup:", popId)
     })
 
     this.$on('report', (config)=>{
-//console.log("Win got message to launch report: ", config);
-      let { repTag, info } = config
+      let { action, repTag, info } = config
+//console.log("Win got message to launch report: ", config)
       this.top.submitDialog(repTag, info)
     })
   },
@@ -383,8 +380,10 @@ console.log("Clone to popup:", popId)
       if (savedState) {
         delete savedState.x; delete savedState.y	//So window doesn't land right on top of the last one
         Object.assign(this.state, savedState)		//Comment line for debugging from default state
+//console.log("Win restoring state:", this.id, savedState)
       }
     }
+//Object.keys(this.state.reports).forEach(key=>{let rep = this.state.reports[key]; console.log("Rep:",key, rep, JSON.stringify(rep.client.config))})	//Debug
   },
 }
 </script>

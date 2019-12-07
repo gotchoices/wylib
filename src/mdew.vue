@@ -59,6 +59,9 @@ export default {
       return Object.values(this.valids).every(v=>(v))
     },
     hideOpts() {return !this.state.optional},
+    optStyle() {return {
+      background:	this.state.optional ? this.pr.butToggledColor : this.pr.butBackground
+    }},
     gridConfig() {				//Build a 2D grid from flat configuration data
       let minX, maxX, rows = []
         , noSpecs = []
@@ -172,16 +175,17 @@ export default {
         colCount += xSpan
       }
       if (rowOpts == null && rowOptional) {		//Time for the 'optional' button?
-        let optButton = h('button', {
+        let optButton = h('div', {
           class: "wylib-mdew-option",
           attrs:{title:this.wmLang('mdewMore','help')},
-          domProps:{innerHTML: this.wmLang('mdewMore')},
+          style:this.optStyle,
+//          domProps:{innerHTML: this.wmLang('mdewMore')},
           on: {click: this.togOption}
         })
         rowOpts = {class: {				//All rows optional from here on
           'wylib-mdew-hide': this.hideOpts
         }}
-        tabRows.push(h('tr', [optButton]))
+        tabRows.push(h('tr', {class: 'wylib-mdew-optline'}, [optButton]))
       }
       if (tabItems.length > 0) tabRows.push(h('tr', rowOpts, tabItems))
     }
@@ -210,6 +214,14 @@ export default {
   .wylib-mdew .wylib-mdew-hide {
     display: none;
     background: #ff8080;
+  }
+  .wylib-mdew-option {
+//    border: 1px solid blue;
+    height: 0.25em;
+    width: 100%;
+  }
+  .wylib-mdew-optline {
+    line-height: 0;
   }
   .wylib-mdew td {
     border: 1px solid #e8e8e8;

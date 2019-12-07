@@ -47,7 +47,6 @@ export default {
     stateTpt:		{windows: {}},
     viewMeta:		null,
     launchData:		null,
-//    wm:			{},
   }},
 
   computed: {
@@ -100,10 +99,6 @@ export default {
       if (this.launchNum > 0 && Object.keys(this.state.windows).length <= 0)
         for (let i = 0; i < this.launchNum; i++) this.addWin()
     })
-console.log("Launch wm:", this.wm)
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
   },
 }
 

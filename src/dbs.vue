@@ -15,7 +15,7 @@
       <wylib-menudock :state="state.dock" :env="env" :config="dockConfig" label="Search" title="Functions relating to stored queries"/>
       <div class="headerfill"/>
     </div>
-    <wylib-loglist :state="state.logic" :config="logicConfig" @add="addNew" @geometry="geometry" @submit="search"/>
+    <wylib-loglist :state="state.logic" :env="env" :config="logicConfig" @add="addNew" @geometry="geometry" @submit="search"/>
   </div>
 </template>
 

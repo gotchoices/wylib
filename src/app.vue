@@ -27,12 +27,12 @@
         <div class="tab-filler">
           <wylib-button icon="menu" :env="env" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
           <wylib-win :state="appMenu" :env="env" pinnable=true @close="appMenu.posted=false">
-            <wylib-menu v-if="appMenu.posted" :state="appMenu.client" :config="appMenuConfig()" @done="appMenu.posted=appMenu.pinned"/>
+            <wylib-menu v-if="appMenu.posted" :state="appMenu.client" :env="env" :config="appMenuConfig()" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
         </div>
       </div>
       <div class="subwindows">
-        <wylib-modal v-if="modal.posted" :state="modal" v-slot="ws">
+        <wylib-modal v-if="modal.posted" :state="modal" :env="env" v-slot="ws">
           <wylib-dialog :state="ws.state" :env="env"/>
         </wylib-modal>
         <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" :env="env" @close="win.posted=false">
@@ -158,7 +158,9 @@ export default {
       let resp = {t:'Default'}
         , dewArr = this.top.dewArray([['t', this.wm.appStateTag], ['h', this.wm.appStateDescr]])
       this.top.query('!appStatePrompt', dewArr, resp, (tag) => {
-        if (tag == 'diaYes') State.saveAs(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{this.lastLoadIdx=ruid})
+        if (tag == 'diaYes') State.saveAs(this.tag,resp.t,resp.h,this.state,this.top.error,(ruid)=>{
+          this.lastLoadIdx = ruid
+        })
       })
     },
     saveState() {

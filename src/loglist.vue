@@ -20,8 +20,8 @@
       <button class="button close" @click="$emit('close')" :title="wMsg('lstRemove')">X</button>
     </div>
     <div class="subdivision" v-for="(item, index) in state.items">
-      <wylib-loglist v-if="'and' in item" :key="index" :index="index" :state="item" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
-      <wylib-logitem v-else :key="index" :index="index" :state="item" @input="val=>{item = val}" @submit="submit" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
+      <wylib-loglist v-if="'and' in item" :key="index" :index="index" :state="item" :env="env" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
+      <wylib-logitem v-else :key="index" :index="index" :state="item" :env="env" @input="val=>{item = val}" @submit="submit" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
     </div>
   </div>
 </template>

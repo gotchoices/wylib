@@ -4,10 +4,22 @@
 // TODO:
 //X- Behaves analogously to a popup window as far as report module needs
 //- Can this auto size its popup window based on content size?
+//- Reinstate report menu?
+//- Make "run" button work
+//- Report options editable from report menu
+//- Reports with options launched in internal window don't need dialog box
 //- 
 
 <template>
-  <iframe class="wylib-rep" v-if="render" ref="iframe" :src="state.src" :name="state.name"></iframe>
+  <div class="wylib-rep">
+<!-- Do we really need a menu here?
+    <div ref="header" class="header">
+      <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :env="env" :lang="wm.repMenu"/>
+      <div class="headerfill"/>
+    </div>
+-->
+    <iframe v-if="render" ref="iframe" :src="state.src" :name="state.name"></iframe>
+  </div>
 </template>
 
 <script>
@@ -15,11 +27,13 @@ import Com from './common.js'
 
 export default {
   name: 'wylib-report',
+//  components: {'wylib-menudock': MenuDock},	//To avoid recursion problems
   props: {
     state:	{type: Object, default: () => ({})},
     ready:	{type: Function},
     render:	{type: Boolean},
     bus:	{default: null},		//Communication from parent window
+    env:	null
   },
   data() { return {
     stateTpt:		{src: '', name: '', config:null},
@@ -28,9 +42,17 @@ export default {
   inject: ['top'],
   computed: {
     id() {return 'report_' + this._uid + '_'},
+    wm() {return this.env.wm},
+    pr() {return this.env.pr},
 //    tagTitle() {return this.tag || this.title},
+    dockConfig() { return [
+      {idx: 'run', lang: this.wm.repRun,     call: this.run,     icon: 'wand',   shortcut: true},
+    ]},
   },
   methods: {
+    run(ev) {
+console.log("Run report:", ev)
+    },
     reload(req, data) {
 //console.log("Reloading iframe:", this.state.src)
       let win = this.$refs.iframe ? this.$refs.iframe.contentWindow : null
@@ -39,8 +61,9 @@ export default {
     },
   },
 
-//  created: function() {
-//  },
+  beforeCreate() {
+    this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
+  },
   beforeMount: function() {
     Com.stateCheck(this)
     if (this.bus) this.bus.register(this.id, this.state.name, (req, data)=>{
@@ -52,8 +75,11 @@ export default {
 
   mounted: function () {
     let action = this.state.config ? this.state.config.action : null
-//console.log("Report mounted:", this.ready, this.state.name, this.state.config)
-    this.$parent.$emit('customize', action.lang, this.state.name, true, ()=>{return this.dirty})
+      , actTag = this.state.config ? this.state.config.actTag : null
+//console.log("Report mounted:", this.ready, this.state.config, actTag)
+    if (actTag)
+      this.$parent.$emit('customize', action.lang, actTag, true, ()=>{return this.dirty})
+//    this.$parent.$emit('swallow', this.$refs.header)		//Only if we re-enable a report menu
 
     if (this.ready && (typeof this.ready == 'function')) {
       this.ready(this.$refs.iframe)
@@ -74,7 +100,12 @@ export default {
 <style lang='less'>
 .wylib-rep {
   width: 100%;
+  height: 100%;
+}
+.wylib-rep iframe {
+  width: 100%;
   min-height: 100%;
   border: 1px solid #c0c0c0;
+  border-radius: 4px;
 }
 </style>

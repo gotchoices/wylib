@@ -214,7 +214,7 @@ if (error) console.log("Error:", error, errView, code, cache)
       langObj.h[key] = defaults[key].help
       langObj.t[key] = defaults[key].title
     })
-console.log('langDefs:', langObj)
+//console.log('langDefs:', langObj)
     return langObj
   },
 

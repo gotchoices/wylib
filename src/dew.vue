@@ -20,7 +20,7 @@
 //- Can select from scrolled menu of available countries (and other queries)
 //- 
 
-//<--template>		Changed to render function below
+//<!-- template>		Changed to render function below
 //  <div class="wylib wylib-dew" :title="lang ? lang.help : null">
 //    <div v-if="state.input == 'chk'" class="check" :style="genStyle">
 //      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
@@ -32,7 +32,7 @@
 //    <input ref="input" v-else-if="state.input == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
 //    <input ref="input" v-else :type="state.input" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
 //  </div>
-//<--template>
+//</template -->
 
 <script>
 import Com from './common.js'
@@ -62,10 +62,9 @@ export default {
   },
   inject: ['top'],
   data() { return {
-//    pr:		require('./prefs'),
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: {}},
+    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: {}, initial:null},
   }},
 
   computed: {
@@ -178,7 +177,7 @@ export default {
 //console.log("Dew state:", this.field, this.value, this.userValue, JSON.stringify(this.state))
     Com.stateCheck(this)
     
-    if (!('initial' in this.state)) this.state.initial = null
+//    if (!('initial' in this.state)) this.state.initial = null
 //console.log(" Refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
 
     if (this.bus) this.bus.register(this.field, (msg, data) => {
@@ -202,11 +201,12 @@ export default {
   render: function(h, context) {
     let entry
       , st = this.state
-      , attrs = {value: this.userValue, autofocus: st.focus, disabled: this.disabled}
+      , domProps = {value: this.userValue}
+      , attrs = {autofocus: st.focus, disabled: this.disabled}
       , on = {input: this.input}
       , style = this.genStyle
       , ref = 'input'
-      , conf = {ref, style, attrs, on}
+      , conf = {ref, style, attrs, domProps, on}
 //console.log("render:", this.field, st)
     if (st.other) attrs = Object.assign(attrs, st.other)
     if (st.input == 'mle') {			//Multi-line entry / textarea
@@ -214,15 +214,15 @@ export default {
       entry = h('textarea', conf)
     } else if (st.input == 'chk') {		//Checkbox
       Object.assign(attrs, {type: 'checkbox'})
-      delete attrs.value; Object.assign(attrs, {checked: this.userValue})
       entry = h('div', {class: 'check', style}, [h('input',
-        {ref, attrs, on: {change: ev=>this.input(ev, ev.target.checked)}}
+        {ref, attrs, domProps:{checked: this.userValue}, on: {change: ev=>this.input(ev, ev.target.checked)}}
       )])
     } else if (st.input == 'pdm') {		//Pull-down menu
       let optList = []
       for (let val of this.pdmValues) {
         optList.push(h('option', {
-          attrs: {label: val.title, value: val.value, title: val.help}
+          attrs: {label: val.title, title: val.help},
+          domProps: {value: val.value}
         }))
       }
       entry = h('select', conf, optList)
@@ -239,7 +239,7 @@ export default {
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
-//console.log("Render:", conf)
+//console.log("Render:", this.field, attrs, conf, on)
       entry = st.input ? h('input', conf) : null
     }
     return h('div', {

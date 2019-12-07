@@ -359,6 +359,7 @@ console.log("Error in importKeys:", err.message)
   mounted: function () {
     let last = Local.get(LastKey)
     this.sites = Local.get(SiteKey) || []		//Get our saved list of credentials
+//console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
       this.$set(site, 'selected', null)			//GUI needs to react to this
 //console.log("Processing saved key:", site)
