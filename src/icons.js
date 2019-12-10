@@ -250,6 +250,16 @@ const Icons = {
   shrink: `
     <path d="M14 18v13l-5-5-6 6-3-3 6-6-5-5zM32 3l-6 6 5 5h-13v-13l5 5 6-6z"></path>
   `,
+  chip: `
+    <path d="M 14 16  C 14 13 8 14 8 10  C 8 2 24 2 24 10  C 24 14 18 13 18 16  C 18 19 24 18 24 22  C 24 30 8 30 8 22  C 8 18 14 19 14 16" fill="none" stroke-width="2.5"/>
+    <path d="M 13.75 1 V 31 M 18.25 1 V 31" stroke-width="1.75" stroke-linecap="round">
+  `,
+  chipglass: `
+    <path d="M 10 29 L 16 19 L 22 29 M 13 9 L 16 14 L 19 9 Z" stroke-width="1"/>
+    <path d="M 6 4 L 26 4 M 6 28 L 26 28" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 7 4 L 14 16 L 7 28  M 25 4 L 18 16 L 25 28" stroke-width="2" fill="none"/>
+    <path d="M 14 1 V 4 M 18 1 V 4 M 14 31 V 28 M 18 31 V 28" stroke-width="2" stroke-linecap="round"/>
+  `,
 }
 
 module.exports = function(name) {
