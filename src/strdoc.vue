@@ -29,7 +29,7 @@
 //- 
 <template>
   <div class="wylib wylib-strdoc">
-    <div v-if="iAmChief" ref="header" class="header">
+    <div v-if="iAmChief && editable" ref="header" class="header">
       <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
@@ -52,7 +52,7 @@
       </div>
       <div v-if="!state.edit" class="preview">
         <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="wm.h.sdcPreview"/>
-        <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" contenteditable="true" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
+        <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" :contenteditable="editable" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="sections" v-for="(sec, idx) in state.sections">
         <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sec" :env="env" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
@@ -88,13 +88,14 @@ export default {
   name: 'wylib-strdoc',
 //  components: {'wylib-menudock': MenuDock},	//To avoid recursion problems
   props: {
-    state:	{type: Object, default: () => ({})},
-    indent:	{type: Number, default: 1},
-    parSpace:	{type: Number, default: 0.4},
-    level:	{type: Number, default: 0},
-    prefix:	{type: String, default: null},
-    index:	{type: Number, default: 0},
-    env:	{type: Object, default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
+    state:	{type: Object,	default: () => ({})},
+    indent:	{type: Number,	default: 1},
+    parSpace:	{type: Number,	default: 0.4},
+    level:	{type: Number,	default: 0},
+    prefix:	{type: String,	default: null},
+    index:	{type: Number,	default: 0},
+    editable:	{type: Boolean,	default: true},
+    env:	{type: Object,	default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {
@@ -383,7 +384,7 @@ console.log("Add child:", this.state)
 
     togEdit(ev) {
 //console.log("Toggle edit:", this.secNumber, this.state.edit, ev.target, ev.currentTarget)
-      if (!ev.target.classList.contains('input')) {
+      if (this.editable && !ev.target.classList.contains('input')) {
         this.state.edit = !this.state.edit
         ev.stopPropagation()
       }
