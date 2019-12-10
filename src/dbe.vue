@@ -175,7 +175,7 @@ export default {
     },
 
     fieldCheck(fields) {
-      this.state.dews.fields.forEach((fld,idx) => {		//Remove any fields that shouldn't get written to the DB
+      this.mdewConfig.forEach((fld, idx) => {		//Remove any fields that shouldn't get written to the DB
 //console.log(  "field:", fld.field, fld.styles.write, !fld.styles.write || fld.styles.write==0)
         if (fld.styles && ('write' in fld.styles) && (!fld.styles.write || fld.styles.write==0)) {
 //console.log(  "deleting", fld.field)
@@ -201,7 +201,7 @@ export default {
         })
       }
 
-//console.log("Insert:", fields)
+console.log("Insert:", fields)
       this.fieldCheck(fields)
       this.dataRequest('insert', {fields}, true, ()=> {this.dirty = false})
     },
