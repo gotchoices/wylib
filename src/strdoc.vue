@@ -151,12 +151,13 @@ export default {
     secHelp() {
       return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title||'' + '(' + this.state.tag||'' + '); ' + (this.wm.h.sdcSection||'')
     },
-//    sourceText() {
-//      return this.numTitle + (this.state.title ? ':' : '') + this.wm.h.sdcReference +
-//              <a :href="sourceURL" target="_blank">{{ sourceURL }}.</a>
-//    },
     sourceURL() {
-      return this.state.source
+      let [ domain, path ] = this.state.source ? this.state.source.split('/') : []
+//console.log("sourceURL:", domain, path)
+      if (domain)
+        return path + '?domain=' + domain
+      else
+        return this.state.source
     },
     iconStyle() {return {
       fill:	this.pr.butIconfill,
