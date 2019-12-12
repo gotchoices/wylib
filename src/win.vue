@@ -440,7 +440,8 @@ console.log("Close regular report:", repTag)
   .wylib-win .content {
 //    border: 2px solid green;
     margin: 0px 2px 1px 2px;
-    overflow-x: auto;
+//    overflow-x: auto;
+    user-select: none;
     overflow-y: auto;
     z-index: 1;
   }
