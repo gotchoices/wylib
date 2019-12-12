@@ -4,22 +4,17 @@
 // Makes a document such as a manual or contract which is composed of nested
 // sections, paragraphs, and so forth.
 //TODO:
-//X- Combine addChild with addSubs?
-//X- What to do with illegally added sections in paragraph 0?
-//X- Launch this component as action from mychips contract dbe
-//X- Call new Icons.url
-//- Subs should not return/show published, digest, etc.
-//- Chief contains readonly: title, author, language, version, released, hash
-//- All are displayed, printable in preview mode
-//- Tag is fixed for chief as Author-Main_Title-Version-Language
-//- 
-//- Make a way to include other documents by reference
-//- 
-//- Call back to database with update command
-//- Can edit contracts in database
+//X- Chief contains readonly: title, author, language, version, released, hash
+//X- All are displayed, printable in preview mode
+//X- window blurry in chrome with position: fixed on menu
+//X- How to include other documents by reference?
+//X- Call back to database with update command
+//X- Can edit contracts in database
+//- Double-click on section div now waits for mouse motion to transition
 //- Can mark a cross reference link from contenteditable view (insertHTML)
 //- 
 //- Later:
+//- Tag is fixed for chief as Author-Main_Title-Version-Language?
 //- Paragraphs created automatically editLeave don't exit direct editing right away on dblclick
 //- Implement headers/footers for printing
 //- Implement undo stack for state
@@ -33,29 +28,39 @@
       <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
     </div>
-    <div class="content" draggable='true' v-on:dblclick="togEdit" :style="comStyle"
-          v-on:mouseover.stop="over=true" v-on:mouseout="over=false" 
-          v-on:dragstart.stop="dragStart" v-on:dragend.stop="dragDrop" v-on:dragover.stop="zoneOver" v-on:dragleave.stop="zoneLeave">
-      <div v-show="state.edit" class="edit" :title="wm.h.sdcEdit">
-        <span>
-          <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
-          {{wm.t.sdcTitle || 'Title'}}:
-        </span>
-        <span draggable='false' :title="wm.h.sdcTitle"><input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="wm.t.sdcTitle" @input="change"></span>
-        <span>{{wm.t.sdcTag || 'Tag'}}:</span>
-        <span draggable='false' :title="wm.h.sdcTag"><input class="input tag" v-model="state.tag" :placeholder="wm.t.sdcTag" @input="change"></span>
-        <span draggable='false'><button class="input" @click="addChild">+</button></span>
-        <span v-if="level > 0" draggable='false'><button class="input" @click="$emit('delete',index)">X</button></span>
-        <div>
-          <textarea class="input" ref="textarea" :rows="6" v-model="state.text" draggable='false' spellcheck="spellCheck" :title="wm.h.sdcText" :placeholder="wm.t.sdcText" @input="change"/>
+    <div class="content" ref="content" :draggable="!iAmChief" @dblclick="togEdit" :style="comStyle"
+          @mouseover.stop="over=true" @mouseout="over=false" 
+          @dragstart.stop="dragStart" @dragend.stop="dragDrop" @dragover.stop="zoneOver" @dragleave.stop="zoneLeave">
+      <div v-show="state.edit" class="edit" :title="wm.h.sdcEdit" draggable="true" @dragstart.prevent.stop @dragend.prevent.stop @dragover.prevent.stop @dragleave.prevent.stop>
+        <div class="editline">
+          <div class="secnum">
+            <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
+            {{wm.t.sdcTitle || 'Title'}}:
+          </div>
+          <input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="wm.t.sdcTitle" @input="change" :title="wm.h.sdcTitle">
+          <div>{{ wm.t.sdcTag || 'Tag' }}:</div>
+          <input class="input tag" v-model="state.tag" :placeholder="wm.t.sdcTag" @input="change" :title="wm.h.sdcTag">
+          <wylib-button icon='document' @click="togEdit" :env="env" :title="butHelp('sdcPreview')"/>
+          <wylib-button icon='plus' @click="addChild" :env="env" :title="butHelp('sdcAdd')"/>
+          <wylib-button v-if="level > 0" icon='target' @click="togSource" :env="env" :title="butHelp('sdcTogSource')"/>
+          <wylib-button v-if="level > 0" icon='zap' @click="$emit('delete',index)" :env="env" :title="butHelp('sdcDelete')" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor"/>
+        </div>
+        <textarea v-if="state.source == null" class="input" ref="textarea" :rows="6" v-model="state.text" spellcheck="spellCheck" :title="wm.h.sdcText" :placeholder="wm.t.sdcText" @input="change"/>
+        <div v-else class="sourceline">
+          <span>{{wm.t.sdcSource || 'Source'}}:</span>
+          <input class="input source" v-model="state.source" :placeholder="wm.t.sdcSource" @input="change" :title="wm.h.sdcSource">
         </div>
       </div>
       <div v-if="!state.edit" class="preview">
         <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="wm.h.sdcPreview"/>
-        <div v-if="titledText" class="text input" v-html="titledText" :style="parStyle" :contenteditable="editable" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
+        <div v-if="level > 0 && state.source" class="text" :style="parStyle">
+          {{secNumber}}. <b v-html="state.title || wm.t.sdcReference"></b>: {{ wm.h.sdcReference }}:
+          <a :href="sourceURL" target="_blank">{{ sourceURL }}.</a>
+        </div>
+        <div v-else="titledText" class="text input" ref="text" v-html="titledText" :style="parStyle" :contenteditable="editable" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="sections" v-for="(sec, idx) in state.sections">
-        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sec" :env="env" :bus="useBus" @delete="deleteSub(idx)" @add="(arr,skip)=>{addSubs(idx,arr,skip)}"/>
+        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sec" :env="env" :bus="useBus" @delete="(x)=>{deleteSub(x||idx)}" @add="(a,s)=>{addSubs(idx,a,s)}"/>
       </div>
     </div>
   </div>
@@ -66,12 +71,22 @@ import Com from './common.js'
 import Bus from './bus.js'
 import Interact from 'interactjs'
 import Icons from './icons.js'
+import WylibButton from './button.vue'
 import FileSaver from 'file-saver'
 import CrossRef from './crossref.js'
 //import DiffPatch from 'jsondiffpatch'
 
-const IconBin = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16px' height='16px' viewBox='0 0 32 32'>${Icons.code.bin}</svg>`
-var iconBin = `url("${encodeURI(IconBin)}") 7 7, pointer`
+const IndentOff = 50
+const PtrString = ' 7 7, pointer'
+const TrashPtr = Icons.url('bin')       + PtrString
+const Pointers = {
+  movebef: 	Icons.url('redo')       + PtrString,
+  moveaft:  	Icons.url('forward')    + PtrString,
+  moveapp:  	Icons.url('arrowdr')    + PtrString,
+  copybef:  	Icons.url('replus')     + PtrString,
+  copyaft:  	Icons.url('forplus')    + PtrString,
+  copyapp:  	Icons.url('adrplus')    + PtrString,
+}
   
 const LegalTags = ['b','i','u','x-r']
 var dragTarget = null			//Communicate with others about drag/drop
@@ -86,7 +101,7 @@ customElements.define('x-r', CrossRef)
 
 export default {
   name: 'wylib-strdoc',
-//  components: {'wylib-menudock': MenuDock},	//To avoid recursion problems
+  components: {'wylib-button': WylibButton},	//To avoid recursion problems
   props: {
     state:	{type: Object,	default: () => ({})},
     indent:	{type: Number,	default: 1},
@@ -99,17 +114,18 @@ export default {
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {
-    dragOver:	false,			//Kept by the dragged-onto
-    dragType:	'move',			//'move', 'copy', 'none', 'trash', kept by the dragged
-    over:	false,
-    dirty:	false,
-    contEdit:	false,
-    undoStack:	[],
-    crossVals:	{},
-    spellCheck:	true,
-    subBus:	this.bus,
-//    stateTpt:	{domain: null, name:null, title: null, version:null, text:null, tag:null, language:null, published:null, digest:null, sections:[], edit:false},
-    stateTpt:	{title: null, text:null, tag:null, sections:[], edit:false},
+    dragOver:		false,			//Kept by the dragged-onto
+    dragType:		null,			//null, 'move', 'copy', 'trash', kept by the dragged
+    inPoint:		null,			//'bef', 'aft', 'app', kept by the dragged
+    dragOrigin:		null,			//X,Y where we started dragging
+    over:		false,
+    dirty:		false,
+    contEdit:		false,
+    undoStack:		[],
+    crossVals:		{},
+    spellCheck:		true,
+    subBus:		this.bus,
+    stateTpt:		{title: null, text:null, tag:null, sections:[], source:null, edit:false},
   }},
   inject: ['top'],
   computed: {
@@ -129,16 +145,33 @@ export default {
       return this.secNumber + '.' + (this.state.title ? '<b>' + this.state.title + '</b>' : '')
     },
     titledText() {
-      return this.iAmChief ? this.state.text : (this.numTitle + (this.state.title ? ': ' : '') + (this.state.text || ''))
+      return this.iAmChief ? this.state.text : 
+      		(this.numTitle + (this.state.title ? ':' : '') + (' ' + this.state.text || ''))
     },
     secHelp() {
-      return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title + '(' + this.state.tag + '); ' + (this.wm.h.sdcSection||'')
+      return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title||'' + '(' + this.state.tag||'' + '); ' + (this.wm.h.sdcSection||'')
     },
+//    sourceText() {
+//      return this.numTitle + (this.state.title ? ':' : '') + this.wm.h.sdcReference +
+//              <a :href="sourceURL" target="_blank">{{ sourceURL }}.</a>
+//    },
+    sourceURL() {
+      return this.state.source
+    },
+    iconStyle() {return {
+      fill:	this.pr.butIconfill,
+      stroke:	this.pr.butIconStroke,
+      height:	'1em',
+      width:	'1em',
+    }},
     dragCursor() {
       let cur = 'move'
-      if (this.dragType == 'none') cur = 'no-drop'
-      else if (this.dragType == 'trash') cur = iconBin
-      else if (this.dragType == 'copy') cur = 'copy'
+        , typeP = this.dragType + this.inPoint
+//console.log("dragCursor:", this.dragType, typeP)
+      if (this.dragType == 'trash')
+        cur = TrashPtr
+      else if (typeP && typeP in Pointers)
+        cur = Pointers[typeP]
       return cur
     },
     comStyle() { return {
@@ -171,7 +204,10 @@ export default {
       if (this.iAmChief) this.dirty = true		//Chief marks itself
       else this.bus.master.$emit('dirty')		//Children emit on Chief
     },
-
+    iconSvg(icon) {return Icons(icon)},
+    butHelp(tag) {
+      return (this.wm.t[tag] + ' (' + this.wm.h[tag] + ')')
+    },
     processXrefs(ev) {
       let name = ev.target.name, value = ev.target.value
 //console.log('Proc xref!', this.secNumber, 'n:', name, 'v:', value)
@@ -231,36 +267,34 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
       }
     },
     editEnter(ev) {
-//console.log("Entered direct edit")
+//console.log("Entered direct edit", this.state.text)
       this.contEdit = true
       ev.target.innerHTML = this.state.text
     },
-//    checkDoc(doc) {
-//      let changed = false
-//      Object.keys(doc).forEach(key=>{		//Check data for illegal HTML
-//        let tag = doc[key]
-//      })
-//      return changed
-//    },
-    editLeave(ev) {
-      let doc = ev.target
+
+    editLeave(ev) {				//If the user created paragraphs in a single section
+      let doc = ev.target			//break them up into multiple sections
         , changes = false
         , newSections = []
-//console.log("Left direct edit", doc, doc.childNodes)
-      for (let idx = doc.childNodes.length - 1; idx >= 0; idx--) {
+        , lastNode = null
+console.log("Left direct edit", doc, doc.childNodes)
+      for (let idx = doc.childNodes.length - 1; idx >= 0; idx--) {	//Did the edit produce multiple nodes
         let node = doc.childNodes[idx], name = node.nodeName.toLowerCase()
-//console.log("  node:", idx, node, name)
+console.log("  node:", idx, node, name)
         if (node.nodeName != '#text' && name && !LegalTags.includes(name)) {
-//console.log("    remove:", idx, name, node.childNodes)
+console.log("    remove:", idx, name, node.childNodes, 'last:', lastNode)
           if (name == 'div') {
             newSections.unshift(node.innerHTML)
           }
           doc.removeChild(node)
+          lastNode = name
           changes = true
         }
       }
-//      if (newSections.length > 0) this.$emit('add', newSections, 1)	//Add as peers after me
-      if (newSections.length > 0) this.addSubs(0, newSections)		//Add as my immediate children)
+
+      if (newSections.length > 0) this.$emit('add', newSections, 1)	//Add new sections as peers after me
+//      if (newSections.length > 0) this.addSubs(0, newSections)	//Add them as my immediate children)
+
 //console.log(" after parse", changes, 'toAdd:', newSections)
       this.contEdit = false
       this.state.text = doc.innerHTML		//Get possibly amended text
@@ -268,7 +302,6 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
 //      this.$nextTick(()=>{ev.target.innerHTML = this.titledText})
     },
     update() {
-//      this.$parent.$emit('submit', 'editor', {request:'update', data:this.state})
       this.$emit('submit', 'editor', {request:'update', data:this.state})
     },
 
@@ -316,21 +349,30 @@ console.log("Import file:", ans, resp)
       })
     },
 
-    deleteSub(idx) {					//Remove a sub-paragraph
-console.log('Got delete:', this.secNumber, 'level:', this.level, 'index:', idx)
+    deleteSub(idx) {				//Remove a sub-paragraph from my sections
+//console.log('Got delete:', this.index, 'level:', this.level, 'index:', idx)
       if (idx != null && idx >= 0) this.state.sections.splice(idx,1)
+      this.change()
     },
-    addSubs(idx, addArr, skip=0) {			//Add sub-paragraphs
-console.log("Got add:", this.secNumber, 'idx:', idx, addArr, 'skip:', skip)
+
+    addSubs(idx, addArr = [], skip=0) {			//Add sub-paragraphs
+//console.log("Got add:", this.secNumber, 'lev:', this.level, 'idx:', idx, addArr, 'skip:', skip)
       idx += skip
       addArr.forEach(el=>{
         if (typeof el == 'string') el = {text:el}	//Make state object if given a string
         this.state.sections.splice(idx++, 0, el)
       })
+      this.change()
     },
-    addChild(ev) {					//Add empty sub-paragraph at end
-console.log("Add child:", this.state)
-      this.state.sections.push(Object.assign({}, this.stateTpt))
+
+    addChild(ev) {					//When add section button pushed
+      let newSec = Object.assign({}, this.stateTpt)
+//console.log("Add child:", this.state, ev.shiftKey)
+      if (ev.shiftKey)
+        this.$emit('add', [newSec], 1)
+      else
+        this.state.sections.push(newSec)
+      this.change()
     },
 
     undo() {
@@ -338,50 +380,91 @@ console.log("Add child:", this.state)
     },
 
     dragStart(ev) {					//Event for the one being dragged
-//console.log("dragStart:", this.secNumber)
-      dragee = this
+console.log("dragStart:", this.index, this.secNumber)
+      dragee = this					//Global: who is getting dragged
+      this.dragOrigin = ev.clientX
     },
 
     zoneOver(ev) {					//Events for the one being dragged over
-      if (!dragee) dragee = this
+      let dType, iPoint
+      if (!dragee) return				//Ignore if no drag started
       this.dragOver = true				//Illuminate me (the drag target)
       dragTarget = this					//And remember who I am
-      if (this == dragee && !ev.shiftKey)
-        dragee.dragType = 'none'
-      else if (ev.shiftKey)
-        dragee.dragType = (this.iAmChief ? 'none' : 'copy')
-      else if (this.iAmChief)
-        dragee.dragType = 'trash'
-      else
-        dragee.dragType = 'move'
-//console.log("zoneOver:", this.secNumber, dragee.secNumber, dragee.dragType, this.dragCursor)
-//      this.$forceUpdate()
+      if (this.iAmChief) {
+        dType = 'trash'
+      } else {
+        let bBox = this.$refs.content.getBoundingClientRect()
+          , mid = bBox.y + bBox.height/2
+//console.log("Move where:", dragee.dragOrigin, ev.clientX, ev.clientY, parseInt(mid))
+        if ((ev.clientX - dragee.dragOrigin) > IndentOff)	//Appending to target's sections
+          iPoint = 'app'
+        else if (ev.clientY > mid)
+          iPoint = 'aft'					//Where we land in the target
+        else
+          iPoint = 'bef'
+        dType = ev.shiftKey ? 'copy' : 'move'
+        if (this == dragee && !ev.shiftKey) dType = null	//Can't move myself to myself
+      }
+      dragee.dragType = dType
+      dragee.inPoint = iPoint
+//console.log("zoneOver:", this.secNumber, dragee.secNumber, dragee.dragType, dragee.inPoint, this.dragCursor)
     },
 
-    zoneLeave(ev) {
-      if (ev.clientX == 0 && ev.clientY == 0) return	//Extra leave event fired at end of drag
+    zoneLeave(ev) {					//Fired for the zone being moved over
+//console.log("ZL:", ev.clientX, ev.clientY, ev)
+      if (!ev.buttons || (ev.clientX == 0 && ev.clientY == 0)) return	//Extra leave event fired at end of drag
 //console.log("zoneLeave:", this.secNumber, ev.clientX, ev.clientY, ev.shiftKey)
       this.dragOver = false
-      this.dragType = 'move'
+      dragee.dragType = null
+      dragee.dragPoint = null
       dragTarget = null
     },
 
     dragDrop(ev) {					//Fired for the one being dragged
+      let dType = this.dragType
+        , iPoint = this.inPoint
+      this.dragType = null
+      this.inPoint = null				//Restore default cursor
       dragee = null
+//console.log("ZD:", dragTarget)
       if (!dragTarget) return				//Aborted drag, not over a peer
-      let dragType = dragTarget.dragType
-      dragTarget.dragType = 'move'
+      if (this.$refs.text) this.$refs.text.blur()	//Don't keep focus, otherwise vue will reuse divs and leave focus on the slot we just moved from
+//console.log("ZDrop:", dragTarget, 'gee:', dType, 'to:', dragTarget.dragType)
+      dragTarget.dragType = null			//Restore default pointer (needed?)
       dragTarget.dragOver = false			//Clear target highlighting
-//console.log("Zone drop:", this.secNumber, dragTarget.secNumber, dragType)
-      if (dragTarget == this && dragType != 'copy')
+//console.log("Zone drop:", this.secNumber, dragTarget.secNumber, dType, iPoint)
+      if (dragTarget == this && dType != 'copy')
         return						//Aborted drag, over myself
-      let stateCopy = Com.clone(this.state)
-      if (dragType == 'trash' || dragType == 'move')
+      if (dType == 'trash') {
         this.$emit('delete')				//Delete me
-      if (dragType == 'copy' || dragType == 'move')
-        dragTarget.$emit('add', [stateCopy])
+        return
+      }
+      let stateCopy = Com.clone(this.state)
+//console.log("Clone:", JSON.stringify(stateCopy))
+      if (iPoint == 'app') {
+        dragTarget.$emit('append', [stateCopy])		//Tell drag target to append to its list
+      } else if (iPoint) {
+        let offset = (iPoint == 'bef') ? 0 : 1
+        dragTarget.$emit('add', [stateCopy], offset)	//Tell target's parent to insert
+      }
+      if (dType == 'move') {
+        let delIndex = (this.$parent === dragTarget.$parent && this.index > dragTarget.index ? this.index : this.index - 1)
+//console.log(" delete index:", delIndex)
+        this.$emit('delete', delIndex)			//Delete me under my new post-move index
+      }
     },
 
+    togSource(ev) {
+      let st = this.state
+//console.log("Toggle source:", this.secNumber, st.source, st.text)
+      if (st.source) {
+        st.text = st.source
+        st.source = null
+      } else {
+        st.source = st.text || ''
+        st.text = null
+      }
+    },
     togEdit(ev) {
 //console.log("Toggle edit:", this.secNumber, this.state.edit, ev.target, ev.currentTarget)
       if (this.editable && !ev.target.classList.contains('input')) {
@@ -389,6 +472,9 @@ console.log("Add child:", this.state)
         ev.stopPropagation()
       }
     },
+//    test(ev) {
+//console.log("Test!", ev)
+//    },
   },
 
   watch: {
@@ -404,7 +490,7 @@ console.log("Add child:", this.state)
 
   created() {
     if (this.bus) this.bus.register(this.id, msg =>{
-console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
+//console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
       if (msg == 'clear') {
         this.clear()
       } else if (msg == 'clean') {
@@ -426,6 +512,9 @@ console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
       this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
       this.$on('dirty', ()=>{this.dirty = true})
     }
+    this.$on('append', (subs)=>{
+      this.state.sections.push(...subs)
+    })
     if (this.subBus) this.subBus.register(this.id, (msg, data) => {	//Children (and parent) listen
 //console.log("Got bus message:", this.secNumber, msg, data, this.state)
       if (msg == 'edit') this.state.edit = true
@@ -443,11 +532,18 @@ console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
 </script>
 
 <style lang='less'>
+  .wylib-strdoc {
+//    filter: blur(0);			//Doesn't seem to help.  Where should this go?
+//    border: 1px solid blue;
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
   .wylib-strdoc .header {
-    position: relative;				//Fixed makes things go blurry in Chrome?
-//    top: -4px;
-//    left: -4px;
-    opacity: 0.24;
+    position: absolute;			//Should probably be 'fixed,' but that makes
+    top: 0.5em;				//things go blurry in Chrome?  Will workaround
+    left: 0.5em;			//with absolute and top,left
+    opacity: 0.26;
 //    transition: opacity 500ms ease-in;	//Also has problem with blur
   }
   .wylib-strdoc .header:hover {
@@ -455,31 +551,50 @@ console.log("Strdoc got msg", this.dirty, this.iAmChief, msg)
 //    transition: opacity 100ms ease-in;
   }
   .wylib-strdoc .header .menudock {		//Override menudock default outline
-    border: 0;
+    border: 1px;
   }
-
   @media print {
     .wylib-strdoc .header {
       display: none;
     }
   }
+//  .wylib-strdoc .content {
+//    margin: 0px;
+//  }
   .wylib-strdoc .preview .title {
     font-size: 120%;
     text-align: center;
     width: 100%;
     padding-bottom: 0.5em;
   }
-  .wylib-strdoc .edit .title {
-    width: 30%;
-  }
-  .wylib-strdoc div .text.input {
-    margin: 0px 1em 4px 0px;			//To see blue outline fully when editing
+  .wylib-strdoc .edit .editline {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    position: relative;			//A little wierd, but aligns the left sides
+    left: -1em;
 //    border: 1px solid purple;
   }
-  .wylib-strdoc .content {
-    cursor: move;
+  .wylib-strdoc .input.title {
+    flex-grow: 2;
   }
+  .wylib-strdoc .input.tag {
+    left: -1em;
+    flex-grow: 1;
+  }
+  .wylib-strdoc .sourceline {
+    width: 100%;
+    display: flex;
+  }
+  .wylib-strdoc .input.source {
+    flex-grow: 1;
+  }
+//  .wylib-strdoc div .text.input {
+//    margin: 0px 1em 4px 0px;			//To see blue outline fully when editing (but leaves trash space between objects)
+//    border: 1px solid purple;
+//  }
   .wylib-strdoc .content .input {
+    user-select: text;
     cursor: text;
   }
   .wylib-strdoc textarea {
