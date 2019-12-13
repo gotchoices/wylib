@@ -41,11 +41,11 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Interact from 'interactjs'
-import svgNode from './svgnode.vue'
-import vector from './vector.js'
+const Com = require('./common.js')
+const vector = require('./vector.js')
 const Icons = require('./icons.js')
+const Interact = require('interactjs')
+import svgNode from './svgnode.vue'
 
 export default {
   name: 'wylib-svg',

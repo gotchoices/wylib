@@ -22,9 +22,8 @@
 //- 
 
 <script>
-//import Wyseman from './wyseman.js'
-import Com from './common.js'
-import Bus from './bus.js'
+const Bus = require('./bus.js')
+const Com = require('./common.js')
 import Dew from './dew.vue'
 import InDate from './indate.vue'
 
@@ -37,7 +36,7 @@ export default {
     config:	{type: Array, default: () => ([])},
     bus:	null,
     height:	{type: Number, default: 300},		//Fixme: used?
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
     },
   data() { return {
 //    wm:		{},
@@ -113,9 +112,6 @@ export default {
   },
 
 //  created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
 //  },
 
   beforeMount: function() {

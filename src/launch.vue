@@ -28,8 +28,8 @@
 </template>
 
 <script>
-import Com from './common'
-import Wyseman from './wyseman'
+const Com = require('./common.js')
+const Wyseman = require('./wyseman.js')
 import Win from './win.vue'
 import Dbp from '../src/dbp.vue'
 
@@ -40,7 +40,7 @@ export default {
     state:	{type: Object, default: ()=>({})},
     view:	{type: String},
     tag:	{type: String},
-    env:	{type: Object},
+    env:	{type: Object, default: Com.envTpt},
   },
   inject: ['app','top'],
   data() { return {

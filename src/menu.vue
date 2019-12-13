@@ -60,9 +60,9 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Dew from './dew.vue'
+const Com = require('./common.js')
 const Icons = require('./icons.js')
+import Dew from './dew.vue'
 //import Win from './win.vue'		//Recursive, so defined in beforeCreate
 
 export default {
@@ -72,9 +72,9 @@ export default {
     state:	{type: Object, default: () => ({})},
     layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
     config:	Array,
-    lang:	{type: Object, default: Com.langTemplate},
+    lang:	{type: Object, default: Com.langTpt},
     top:	null,
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
 //    pr:		require('./prefs'),

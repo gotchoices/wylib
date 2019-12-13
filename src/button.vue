@@ -13,6 +13,7 @@
 
 <script>
 const Icons = require('./icons.js')
+const Com = require('./common.js')
 
 export default {
   name: 'wylib-button',
@@ -27,7 +28,7 @@ export default {
     toggled:		Boolean,
     disabled:		{type: Boolean, default: false},
     size:		{default: 1.2},
-    env:		Object,
+    env:		{type: Object, default: Com.envTpt},
   },
   data() { return {
 //    pr:		require('./prefs'),

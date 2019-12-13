@@ -27,10 +27,9 @@
 </template>
 
 <script>
-//import Wyseman from './wyseman.js'
+const Com = require('./common.js')
 import LogItem from './logitem.vue'
 import Button from './button.vue'
-import Com from './common.js'
 
 export default {
   name: 'wylib-loglist',
@@ -40,7 +39,7 @@ export default {
     config:	Object,
     index:	Number,
     defOper:	{type: String, default: '='},
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
 
   data() { return {
@@ -140,9 +139,6 @@ console.log("Insert:" + idx + " State:" + state)
     this.$emit('geometry', this, true)
   },
 //  created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
 //  },
   beforeMount: function() {
     Com.stateCheck(this)

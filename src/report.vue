@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import Com from './common.js'
+const Com = require('./common.js')
 
 export default {
   name: 'wylib-report',
@@ -33,7 +33,7 @@ export default {
     ready:	{type: Function},
     render:	{type: Boolean},
     bus:	{default: null},		//Communication from parent window
-    env:	null
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
     stateTpt:		{src: '', name: '', config:null},

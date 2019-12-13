@@ -56,18 +56,17 @@
 <script>
 const MenuLayer = 1000
 
-import Com from './common.js'
-import Local from './local.js'
-import Bus from './bus.js'
-import TopHandler from './top.js'
+const Bus = require('./bus.js')
+const Com = require('./common.js')
+const Local = require('./local.js')
+const State = require('./state.js')
+const TopHandler = require('./top.js')
+const Interact = require('interactjs')
 import Menu from './menu.vue'
 import Button from './button.vue'
-import Interact from 'interactjs'
-//import Wyseman from './wyseman.js'
 import Dialog from './dialog.vue'
 import Report from './report.vue'
 import Modal from './modal.vue'
-import State from './state.js'
 //console.log("Interact:", Interact)
 
 export default {
@@ -78,11 +77,9 @@ export default {
     topLevel:	{default: false},		//Full header and window menu
     fullHeader: {default: false},		//Full header only
     pinnable:	{default: false},		//Include pinning button/function
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:			require('./prefs'),
-//    wm:			{},
     lang:		{title: null, help: null},
     stateTag:		'win',
     top:		null,

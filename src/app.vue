@@ -47,18 +47,18 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Local from './local.js'
-import TopHandler from './top.js'
+const Com = require('./common.js')
+const Local = require('./local.js')
+const TopHandler = require('./top.js')
+const Wyseman = require('./wyseman.js')
+const State = require('./state.js')
 import Connect from './connect.vue'
-import Wyseman from './wyseman.js'
 import Button from './button.vue'
 import Menu from './menu.vue'
 import Dbp from '../src/dbp.vue'
 import Modal from './modal.vue'
 import Dialog from './dialog.vue'
 import Win from './win.vue'
-import State from './state.js'
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   appServer:	{title:'Server',	help:'Toggle menu for connecting to various servers'},
@@ -95,9 +95,7 @@ export default {
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
-//    wm:			WmDefs,
-//    pr:			require('./prefs')
-    env:		{wm: Wyseman.langDefs({}, WmDefs), pr: require('./prefs')}
+    env:		{wm: Wyseman.langDefs({}, WmDefs), pr: require('./prefs')},
   }},
   provide() { return {
     top: () => {return this.top},
@@ -195,7 +193,6 @@ export default {
         if (data.msg) Object.assign(this.env.wm, data.msg)	//Don't overwrite what might be in WmDefs
 //console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
-//        this.top.notifyEnv({wm:this.wm})
       })
 
       let savedState = Local.get(this.tagTitle)
@@ -293,7 +290,7 @@ export default {
   border-radius: 6px 6px 0 0;
   padding: 0.25em 0.5em 0 0.5em;
   margins: 0;
-  user-select: none;
+//  user-select: none;
   background-color: #e0e0e0;
   flex: 0 0 auto;
 }

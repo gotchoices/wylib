@@ -23,10 +23,10 @@
 </template>
 
 <script>
-import Com from './common.js'
+const Com = require('./common.js')
+const Wyseman = require('./wyseman.js')
 import Mdew from './mdew.vue'
 import Strdoc from './strdoc.vue'
-import Wyseman from './wyseman.js'
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   diaQuery:	{title:'Query', help:'Please provide your input'},
@@ -42,11 +42,11 @@ export default {
   components: {'wylib-mdew': Mdew, 'wylib-strdoc': Strdoc},
   props: {
     state:	{type: Object, default: () => ({})},
-    env:	{type: Object, default: () => ({wm: {}, pr: require('./prefs')})},
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
     valid:	true,
-    stateTpt:	{message: Com.langTemplate, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
+    stateTpt:	{message: Com.langTpt, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
 
   computed: {

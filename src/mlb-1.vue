@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import tableDragger from 'table-dragger'
+const tableDragger = require('table-dragger')
 
 export default {
   props: {

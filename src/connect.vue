@@ -55,13 +55,13 @@ const SignConfig = {
 }
 const SaltLength = 128		//For signing with RSA-PSS
 
-import Com from './common.js'
-import Local from './local.js'
-import Wyseman from './wyseman.js'
-import FileSaver from 'file-saver'
+const Com = require('./common.js')
+const Local = require('./local.js')
+const Wyseman = require('./wyseman.js')
+const Icons = require('./icons.js')
+const FileSaver = require('file-saver')
 import MenuDock from './menudock.vue'
 import Button from './button.vue'
-import Icons from './icons.js'
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   conmenu:    {title:'Connect Menu', help:'Functions controlling how you connect to server sites'},
@@ -86,11 +86,9 @@ export default {
   components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
   props: {
     db:		null,
-    env:	Object,
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:			require('./prefs'),
-//    wm:			WmDefs,		//Language data
     sites:		null,		//site keys we have in memory
     lastSelect:		null,		//index of the last one clicked on
     lastConnected:	null,		//site object we were last connected to

@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import math from 'mathjs'
+const math = require('mathjs')
 
 export default {
   props: {

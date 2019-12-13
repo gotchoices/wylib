@@ -10,6 +10,9 @@
 //X- How to include other documents by reference?
 //X- Call back to database with update command
 //X- Can edit contracts in database
+//- Make good default name on file export
+//- Generate/check digest on file export
+//- Strip null/empty fields on file export
 //- Double-click on section div now waits for mouse motion to transition
 //- Can mark a cross reference link from contenteditable view (insertHTML)
 //- 
@@ -67,14 +70,14 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Bus from './bus.js'
-import Interact from 'interactjs'
-import Icons from './icons.js'
+const Bus = require('./bus.js')
+const Com = require('./common.js')
+const Icons = require('./icons.js')
+const CrossRef = require('./crossref.js')
+const Interact = require('interactjs')
+//const DiffPatch = require('jsondiffpatch')
+const FileSaver = require('file-saver')
 import WylibButton from './button.vue'
-import FileSaver from 'file-saver'
-import CrossRef from './crossref.js'
-//import DiffPatch from 'jsondiffpatch'
 
 const IndentOff = 50
 const PtrString = ' 7 7, pointer'
@@ -110,7 +113,7 @@ export default {
     prefix:	{type: String,	default: null},
     index:	{type: Number,	default: 0},
     editable:	{type: Boolean,	default: true},
-    env:	{type: Object,	default: ()=>({wm:{h:{},t:{}}, pr:{}})},	//Dummy object for components that may live inside a pop
+    env:	{type: Object,	default: Com.envTpt},
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
   data() { return {

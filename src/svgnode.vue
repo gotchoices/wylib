@@ -18,9 +18,9 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Bus from './bus.js'
-import Interact from 'interactjs'
+const Com = require('./common.js')
+const Bus = require('./bus.js')
+const Interact = require('interactjs')
 const LinkColor = 'blue'
 var nodeBus = new Bus.eventBus(this)			//Discover vms by a given tag
 

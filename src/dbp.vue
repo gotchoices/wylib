@@ -41,9 +41,9 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Bus from './bus.js'
-import Wyseman from './wyseman.js'
+const Bus = require('./bus.js')
+const Com = require('./common.js')
+const Wyseman = require('./wyseman.js')
 import Menu from './menu.vue'
 import MenuDock from './menudock.vue'
 import Mlb from './mlb.vue'
@@ -57,7 +57,7 @@ export default {
     autoEdit:	{type: Boolean, default: true},
     bus:	null,				//My master dbe, if any
     master:	null,				//Current key info of my master, if any
-    env:	Object,
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
 //    pr:		require('./prefs'),

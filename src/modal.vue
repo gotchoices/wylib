@@ -13,14 +13,14 @@
 </template>
 
 <script>
-import Com from './common.js'
-import TopHandler from './top.js'
+const Com = require('./common.js')
+const TopHandler = require('./top.js')
 
 export default {
   name: 'wylib-modal',
   props: {
     state:	{type: Object, default: () => ({})},
-    env:	Object,
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
 //    pr:		require('./prefs'),

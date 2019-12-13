@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import Com from './common.js'
+const Com = require('./common.js')
 import Win from './win.vue'
 import Menu from './menu.vue'
 import Button from './button.vue'
@@ -33,9 +33,9 @@ export default {
   components: {'wylib-win': Win, 'wylib-menu': Menu, 'wylib-button': Button},
   props: {
     state:	{type: Object, default: () => ({})},
-    lang:	{type: Object, default: Com.langTemplate},
+    lang:	{type: Object, default: Com.langTpt},
     config:	Array,
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
     stateTpt:	{menu: {client: {}, posted: false}},

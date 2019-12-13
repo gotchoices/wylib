@@ -29,9 +29,9 @@
 </template>
 
 <script>
-import Com from './common.js'
-import Bus from './bus.js'
-import Wyseman from './wyseman.js'
+const Bus = require('./bus.js')
+const Com = require('./common.js')
+const Wyseman = require('./wyseman.js')
 import MenuDock from './menudock.vue'
 import Mdew from './mdew.vue'
 import Dbp from './dbp.vue'
@@ -44,7 +44,7 @@ export default {
     state:	{type: Object, default: () => ({})},
     bus:	null,			//Commands from my parent dbp
     master:	null,			//Key info for my master, if any
-    env:	Object,
+    env:	{type: Object, default: Com.envTpt},
   },
   inject: ['top'],		//My toplevel window
   data() { return {

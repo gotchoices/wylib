@@ -26,11 +26,11 @@
 </template>
 
 <script>
-import TopHandler from './top.js'
+const Bus = require('./bus.js')
+const TopHandler = require('./top.js')
 import Dialog from './dialog.vue'
 import Modal from './modal.vue'
 import StructDoc from './strdoc.vue'
-import Bus from './bus.js'
 
 export default {
   name: 'wylib-pop',
@@ -60,7 +60,7 @@ export default {
   },
   methods: {
     submit(request, data) {		//If the widget we contain emits 'submit'
-console.log("Pop got submit:", request, data)
+//console.log("Pop got submit:", request, data)
       this.top.momWin({request, data})
     },
   },

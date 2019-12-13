@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Flatpickr from 'flatpickr'
+const Flatpickr = require('flatpickr')
 import '../node_modules/flatpickr/dist/themes/light.css'
 
 export default {

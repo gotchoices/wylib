@@ -35,9 +35,9 @@
 //</template -->
 
 <script>
-import Com from './common.js'
+const Com = require('./common.js')
+const DatePicker = require('./date.js')
 //import InDate from './indate.vue'
-import DatePicker from './date.js'
 const shortHints = {
   date: 'YYYY-MM-DD',
 }
@@ -58,7 +58,7 @@ export default {
     field:	{default: null},			//column or field code
     nonull:	{type: Boolean, default: false},	//No nulls allowed
     bus:	null,					//message bus from parent
-    env:	Object,
+    env:	{type: Object, default: Com.envTpt},
   },
   inject: ['top'],
   data() { return {

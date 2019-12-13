@@ -81,9 +81,10 @@
 </template>
 
 <script>
+const Com = require('./common.js')
 const Icons = require('./icons.js')
+//const Math = require('mathjs')
 import InDate from './indate.vue'
-import math from 'mathjs'
 
 export default {
   name: 'wylib-trans',
@@ -91,7 +92,7 @@ export default {
   props: {
     config:	Array,
     state:	{type: Object, default: () => ({})},	//Fixme: use this
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
 //    pr:		require('./prefs'),
@@ -108,6 +109,8 @@ export default {
     memos: [],
   }},
   computed: {
+//    pr() {return this.env.pr},
+    wm() {return this.env.wm},
     pr() {return this.env.pr},
     fontStyle() {return {font: this.inputFont}},
     bordStyle() {return {border: '1px solid ' + this.pr.winBorderColor}},
@@ -134,7 +137,7 @@ export default {
         let debit = parseFloat(sp.debit || 0), credit = parseFloat(sp.credit || 0)
         sum += (debit - credit)
       })
-      return math.round(sum,2)
+      return Math.round(sum,2)
     },
   },
   methods: {
@@ -191,7 +194,7 @@ console.log("Delete Split:", idx)
     blur(idx, field) {			//When leaving a debit or credit field
 //console.log("Blur:", idx, field)
       let sp = this.trData.splits[idx]
-      if (sp[field]) sp[field] = math.round(math.eval(sp[field]), 2)
+      if (sp[field]) sp[field] = Math.round(Math.eval(sp[field]), 2)
     },
   },
 

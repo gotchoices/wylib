@@ -19,9 +19,9 @@
 </template>
 
 <script>
-import Com from './common.js'
-import { Grid, Data, Formatters, Plugins } from 'slickgrid-es6'
-import ElementResize from 'element-resize-detector'
+const { Grid, Data, Formatters, Plugins } = require('slickgrid-es6')
+const Com = require('./common.js')
+const ElementResize = require('element-resize-detector')
 var elementResize = ElementResize({strategy: 'scroll'})
 
 var options = {
@@ -45,7 +45,7 @@ export default {
     data:	{type: Array, default: () => []},
     config:	{type: Object, default: () => ({})},
     bus:	null,		//To receive commands from parent dbp
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data: function () {return {
 //    pr:		require('./prefs'),

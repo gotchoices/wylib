@@ -6,7 +6,10 @@
 //- 
 module.exports = {
 
-  langTemplate() {return {title: null, help: null}},
+  langTpt() {return {title: null, help: null}},
+  envTpt() {
+    return {wm: {t: null, h: null}, pr: require('./prefs.js')}
+  },
 
   stateCheck(context, st = context.state, prune = false, props = context.stateTpt) {		//Initialize any needed properties in a component's state
 //console.log("stateCheck:", context, props, st)

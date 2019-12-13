@@ -25,9 +25,9 @@
 </template>
 
 <script>
+const Com = require('./common.js')
+const Interact = require('interactjs')
 import WylibButton from './button.vue'
-//import Wyseman from './wyseman.js'
-import Interact from 'interactjs'
 var dragTarget = null		//Communicate with each other about drag/drop through this
 
 export default {
@@ -37,11 +37,9 @@ export default {
     state:	{type: Object, default: () => ({})},
     config:	Object,
     index:	Number,
-    env:	Object
+    env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:		require('./prefs'),
-//    wm:		{},
     dragOver: false,
   }},
   computed: {
@@ -100,9 +98,6 @@ export default {
     this.$nextTick(() => {this.$emit('geometry', this)})
   },
 //  created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
 //  },
   mounted: function() {
     this.$nextTick(() => {this.$emit('geometry', this)})
