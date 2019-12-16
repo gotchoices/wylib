@@ -50,10 +50,18 @@ export default {
     connectors() {				//Generate SVG code for connector lines to other objects
       var paths = {}
       this.state.links.forEach(lk => {			//For each node I point to
-        let link = lk, noDraw = false, reverse = false, ends = this.state.ends, center = this.cent, index, hub, radius = this.state.radius || this.state.width/2		//Assume node is a simple box
-        if (typeof lk == 'object') {({ index, link, noDraw, reverse, center, ends, hub } = lk)}	//But if it is not, get hub-specific data
+        let link = lk					//Assume node is a simple box
+          , noDraw = false
+          , reverse = false
+          , ends = this.state.ends
+          , center = this.cent
+          , index, hub
+          , radius = this.state.radius || this.state.width/2
+        if (typeof lk == 'object') {			//But if it is not, get hub-specific data
+          ({ index, link, noDraw, reverse, center, ends, hub } = lk)
+        }
         if (!index && typeof(link) == 'string') index = link		//If no separate index specified, use link value
-//console.log("Link:", link, typeof(link), "Index:", index)
+//console.log("SVG Link:", link, typeof(link), "Index:", index)
         
         if (!noDraw) {					//Draw a link line, in addition to any optional hub
           let d, refState, refPoint, refVM = nodeBus.notify(link)[0]

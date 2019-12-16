@@ -11,8 +11,8 @@
 //- Can pan view window around to display a desired view of the SVG
 //- 
 <template>
-  <div class="wylib wylib-svg">
-    <svg class="graph" :viewBox="viewCoords">
+  <div class="wylib wylib-svg" @wheel.prevent="zoom">
+    <svg class="graph" :viewBox="viewCoords" ref="svg">
       <defs>
         <marker id="marker-arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="strokeWidth" stroke=inherit fill=inherit>
           <path d="M0,0 L0,8 L12,4 z"/>
@@ -187,6 +187,26 @@ export default {
       this.state.maxX = maxX - minX + 60
       this.state.maxY = maxY - minY + 60
     },
+    zoom(ev) {
+      let delta = ev.deltaY				//Magnitude of zoom
+        , st = this.state
+        , bBox = this.$refs.svg.getBoundingClientRect()		//DOM coordinates of svg
+        , xRat = bBox.width / (st.maxX - st.minX)		//ratio of DOM scale to SVG scale
+        , yRat = bBox.height / (st.maxY - st.minY)
+        , wid = bBox.width || 1					//Control nulls
+        , hei = bBox.height || 1
+        , h1 = (ev.clientX - bBox.left)   || 1
+        , h2 = (bBox.right - ev.clientX)  || 1
+        , v1 = (ev.clientY - bBox.top)    || 1
+        , v2 = (bBox.bottom - ev.clientY) || 1
+      
+//console.log("zoom:", parseInt(st.minX), parseInt(st.minY), parseInt(st.maxX), parseInt(st.maxY), 'box:', parseInt(bBox.left), parseInt(bBox.top), parseInt(bBox.right), parseInt(bBox.bottom), 'cur:', ev.clientX, ev.clientY)
+//console.log("h1:", parseInt(h1), "v1:", parseInt(v1), "h2:", parseInt(h2), "v2:", parseInt(v2))
+      st.minX -= delta / xRat * h1 / wid		//Adjust SVG view coordinates
+      st.minY -= delta / yRat * v1 / hei
+      st.maxX += delta / xRat * h2 / wid
+      st.maxy += delta / yRat * v2 / hei
+    },
   },
 
   beforeMount: function() {
@@ -206,6 +226,11 @@ export default {
 </script>
 
 <style lang="less">
+  .wylib-svg {
+    height: auto;
+    background: blue;
+    touch-action: none;
+  }
   .wylib-svg .tools {
     position: absolute;
     right: 10px;
@@ -248,9 +273,5 @@ export default {
   }
   .wylib-svg .graph {
     position: absolute;
-  }
-  .wylib-svg {
-    height: auto;
-    background: blue;
   }
 </style>
