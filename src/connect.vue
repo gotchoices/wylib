@@ -291,37 +291,40 @@ console.log("Export file:", file.value, keyData.length, keyData)
       })
     },
 
+    installKey(obj) {					//Store a key or ticket object
+      var site
+console.log("  installKey:", obj)
+      for (let keyType in obj) {
+        site = obj[keyType]
+        if (keyType == 'ticket' || keyType == 'login') {
+          let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == site.user))
+          if (!site.user) site.user = null		//Empty stubs so user is reactive
+          site.priv = null
+          site.selected = null
+console.log("Adding:", oldIdx, oldIdx >= 0)
+          if (oldIdx >= 0)				//Is there already a key for this same connection?
+            this.sites.splice(oldIdx, 1, site)		//Replace old key
+          else
+            this.sites.splice(0, 0, site)		//Add in as a new one
+          if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
+            site.priv = priv
+            Local.set(SiteKey, this.sites)
+          }, (err)=>{
+console.log("Error installing Key:", err.message)
+            this.top().error(this.bwm('conCryptErr', err.message))
+          })
+        }
+      }
+      return site
+    },
+    
     importKeys(ev) {					//Set/get ticket value
       Com.fileReader(ev.target, 1500, (fileData) => {
 //console.log("Keys data:", fileData)
-        let eatObject = (obj) => {			//Import a key object
-//console.log("  eat:", obj)
-          for (let keyType in obj) {
-            let site = obj[keyType]
-            if (keyType == 'ticket' || keyType == 'login') {
-              let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == site.user))
-              if (!site.user) site.user = null		//Empty stubs so user is reactive
-              site.priv = null
-              site.selected = null
-console.log("Adding:", oldIdx)
-              if (oldIdx >= 0)
-                this.sites.splice(oldIdx, 1, site)	//Replace old key
-              else
-                this.sites.splice(0, 0, site)		//Add in new
-              if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
-                site.priv = priv
-                Local.set(SiteKey, this.sites)
-              }, (err)=>{
-console.log("Error in importKeys:", err.message)
-                this.top().error(this.bwm('conCryptErr', err.message))
-              })
-            }
-          }
-        }
         if (Array.isArray(fileData)) fileData.forEach(el => {
-          eatObject(el)
+          this.installKey(el)
         }); else if (typeof fileData == 'object')
-          eatObject(fileData)
+          this.installKey(fileData)
       })
     },
 
@@ -356,28 +359,43 @@ console.log("Error in importKeys:", err.message)
 
   mounted: function () {
     let last = Local.get(LastKey)
+      , parms = Com.urlParms()
+      , conSite
+
     this.sites = Local.get(SiteKey) || []		//Get our saved list of credentials
+
+    if (parms) {				//In case a ticket was specified in our URL
+      let ticket = (({token,host,port,user}) => ({token,host,port,user}))(parms)
+console.log("  URL ticket:", ticket)
+      if (!ticket.host) ticket.host = location.hostname
+      if (ticket.token && ticket.host && ticket.port) {
+        let conSite = this.installKey({ticket})
+        this.connectSite(conSite)		//Automatically connect
+       }
+    }
+
 //console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
       this.$set(site, 'selected', null)			//GUI needs to react to this
 //console.log("Processing saved key:", site)
       if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
-        if (site.host == last.host && site.port == last.port && site.user == last.user)
-          this.connectSite(site)			//Auto reconnect to last connected site
+        if (!conSite && site.host == last.host && site.port == last.port && site.user == last.user)
+          this.connectSite(site)			//Automatically connect
       }, (err)=>{
         this.top().error(this.bwm('conCryptErr', err.message))
       })
     })
-//console.log("Connect mounted:", this.sites)
 
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
-//console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
+console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
       this.$emit('site', this.currentSite = addr)	//Tell my parent about connection change
 
-      if (!addr && this.tryEvery && !this.tryTimer) {
+      if (!addr && this.tryEvery && !this.tryTimer) {		//Failed to connect
         this.retryConnect()
-      } else if (addr) {
+      } else if (addr) {					//Success
+//console.log("Success parms:", parms, "loc:", location)
+        if (parms) location.replace(location.origin + location.pathname)	//If loaded from a ticket, now reload without query fields
         this.status = null
         this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
         if (this.tryTimer) {clearTimeout(this.tryTimer); this.tryTimer = null}
