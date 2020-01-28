@@ -159,5 +159,17 @@ module.exports = {
       , match = longs.find(el=>(el.match(regex)))
 //console.log("Unabbrev:", short, longs, match)
     return match || short
-  }
+  },
+  
+  urlParms(url = location.search) {	//Return URL search parameters as an object
+    let obj				//Returns null if nothing found
+    url.substr(1).split("&").forEach(function(parm) {
+      let [ p, v ] = parm.split('=')
+      if (p) {				//Is this a real key (not leading gap before ?
+        if (!obj) obj = {}		//Initialize object
+        obj[p] = decodeURIComponent(v)
+      }
+    })
+    return obj
+  }  
 }
