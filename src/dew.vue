@@ -223,7 +223,7 @@ export default {
         optList.push(h('option', {
           attrs: {label: val.title, title: val.help},
           domProps: {value: val.value}
-        }))
+        }, val.title))
       }
       entry = h('select', conf, optList)
     } else if (st.input == 'button') {		//Action button
@@ -263,7 +263,7 @@ export default {
     border-radius: 3px;
 //border: 1px solid blue;
   }
-  .wylib-dew input.text {
+  .wylib-dew input.text, select {
     width: 100%;			//Make a preferences option
   }
   .wylib-dew button {
