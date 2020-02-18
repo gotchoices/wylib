@@ -12,6 +12,7 @@
 //X- Re-import on launch of any restored keys
 //X- Save last-connected site and auto-connect, if possible
 //X- Can store keys in browser localStorage
+//- Backend crash weakness; see Fixme in mounted:Wyseman.request call below
 //- 
 //- Do I need bwm() anymore if I use $set(this,'wm',msg)?
 //- Should only be able to store one key at a time with same host, port, user
@@ -365,7 +366,7 @@ console.log("Error installing Key:", err.message)
     this.sites = Local.get(SiteKey) || []		//Get our saved list of credentials
 
     if (parms) {				//In case a ticket was specified in our URL
-      let ticket = (({token,host,port,user}) => ({token,host,port,user}))(parms)
+      let ticket = (({token,host,port,user}) => ({token,host,port,user}))(parms)	//Reduce to object with only the allowed attributes
 console.log("  URL ticket:", ticket)
       if (!ticket.host) ticket.host = location.hostname
       if (ticket.token && ticket.host && ticket.port) {
@@ -395,7 +396,10 @@ console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
         this.retryConnect()
       } else if (addr) {					//Success
 //console.log("Success parms:", parms, "loc:", location)
-        if (parms) location.replace(location.origin + location.pathname)	//If loaded from a ticket, now reload without query fields
+        if (parms) {		//If loaded from a ticket, any reload should happen without query fields
+          history.replaceState(null, '', location.origin + location.pathname)
+//          location.replace(location.origin + location.pathname)	//Fixme: Can crash backend with this; how to make more resilient?
+        }
         this.status = null
         this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
         if (this.tryTimer) {clearTimeout(this.tryTimer); this.tryTimer = null}
