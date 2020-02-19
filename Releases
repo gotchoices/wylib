@@ -1,5 +1,10 @@
 Change Log:
 
+1.0.21	2020-Feb
+	- Grab ticket data info from SPA URL
+	- Handle zooming on SVG graphs
+	- Structured documents basic functionality
+
 1.0.20	2019-Dec
 	- Settable color on graph links
 	- More efficient distribution of prefs and metadata

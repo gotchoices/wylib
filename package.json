@@ -1,6 +1,6 @@
 {
   "name": "wylib",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "WyattERP Application Builder Library",
   "main": "dist/wylib-bundle.js",
   "scripts": {
