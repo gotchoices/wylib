@@ -26,11 +26,11 @@
       <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.h.dbpLoaded">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false" :env="env">
-        <wylib-dbe :state="state.edit.client" :env="env" @modified="modified" :bus="dbeBus" :master="master"/>
-      </wylib-win>
       <wylib-win :state="state.colMenu" :env="env" @close="state.colMenu.posted=false">
         <wylib-menu :state="state.colMenu.client" :env="env" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
+      </wylib-win>
+      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false" :env="env">
+        <wylib-dbe :state="state.edit.client" :env="env" @modified="modified" :bus="dbeBus" :master="master"/>
       </wylib-win>
       <wylib-win v-if="this.filtPosts" :state="state.filter" :env="env" topLevel=true @close="state.filter.posted=false">
         <wylib-dbs :fields="logicFields" :state="state.filter.client" :env="env" :bus="dbsBus" @search="search" @default="dbsDefault"/>
@@ -44,6 +44,7 @@
 const Bus = require('./bus.js')
 const Com = require('./common.js')
 const Wyseman = require('./wyseman.js')
+const FileSaver = require('file-saver')
 import Menu from './menu.vue'
 import MenuDock from './menudock.vue'
 import Mlb from './mlb.vue'
@@ -60,8 +61,6 @@ export default {
     env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:		require('./prefs'),
-//    wm:		{},
     viewMeta:	null,
     gridData:	[],
     lastMenu:	null,
@@ -106,6 +105,7 @@ export default {
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
       {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
       {idx: 'sum', lang: this.wm.dbpShowSum,  call: this.sumTog,       icon: 'circle',	  type: 'checkbox', toggled: this.state.showSum, input: this.showSumValue},
+      {idx: 'exp', lang: this.wm.dbpExport,   call: this.export,       icon: 'boxout'},
       {idx: 'prv', lang: this.wm.dbpPrev,     call: this.prev,         icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext,     call: this.next,         icon: 'arrowdown', shortcut: true},
       {idx: 'dec', lang: this.wm.dbpDefault,  call: this.defColumns,   icon: 'sun'},
@@ -210,6 +210,27 @@ export default {
 //        this.editPosts++
         this.$nextTick(()=>{this.dbeBus.notify('load', keyVal)})
       } else this.$emit('execute', row, this.viewMeta.pkey, keyVal)
+    },
+
+    selectWhere(selection) {		//Generate new where-clause based on selected records
+      if (!selection) selection = this.$refs.mlb.getSelection()
+      if (!this.viewMeta || !this.viewMeta.pkey) return 'false'
+      let keys=[]
+        , left = this.viewMeta.pkey
+        , oldWhere = this.state.lastLoad.where
+      if (selection.length <= 0 || selection.length >= this.state.loaded)
+        return oldWhere			//Including all loaded records
+console.log("selectWhere: ", this.viewMeta, oldWhere, left)
+      selection.forEach(idx=>{
+        let row = this.gridData[idx]
+          , keyVal = left.map(el=>(row[el]))
+        keys.push(keyVal)
+      })
+      let thisWhere = {left, oper: 'in', entry: keys}
+console.log("  in (" + keys.join(',') + ')')
+      if (oldWhere)
+        return {and:true, items: [oldWhere, thisWhere]}
+      return thisWhere
     },
 
     load(spec) {
@@ -329,6 +350,33 @@ export default {
         this.load({where})
       }
     },
+
+    export() {				//Export selected records
+      let resp = {file: (this.viewMeta.title || this.state.dbView || 'Document') + '.json'}
+        , dews = [
+            {field:'file', lang:this.wm.dbpExportAsk, styles:{style:'ent', focus:true}},
+            {field:'pretty', lang:this.wm.dbpExportFmt, styles:{input:'chk'}}]
+//console.log("Meta:", this.viewMeta)
+      this.top().query('!dbpExportAsk', dews, resp, (ans) => {
+        if (ans == 'diaYes' && resp.file) {
+          let selects = this.$refs.mlb.getSelection()
+            , where = this.selectWhere()
+            , spec = {view: this.state.dbView, fields: 'json', where}
+            , tag = (this.viewMeta.styles ? this.viewMeta.styles.export : null) || this.viewMeta.obj	//Identifies the record type on export
+//console.log("Export:", resp.file, selects, where)
+           
+          Wyseman.request('dbp_x_'+this._uid, 'select', spec, (data, err) => {
+//console.log("  err:", err, " data:", data)
+            if (err) {this.top().error(err); return}
+            let expData = data.map(el=>({[tag]:el.json}))
+              , blob = new Blob([JSON.stringify(expData,null,resp.pretty?2:null)], {type: "text/plain;charset=utf-8"})
+            FileSaver.saveAs(blob, resp.file)
+//console.log(" to file:", resp.file, expData)
+          })
+        }
+      })
+    },
+
   },
 
   watch: {
