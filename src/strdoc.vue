@@ -10,6 +10,8 @@
 //X- How to include other documents by reference?
 //X- Call back to database with update command
 //X- Can edit contracts in database
+//- Should call dbe/dbp to do export for us (to know proper record type tag)
+//- Ignore record tag on import?
 //- Make good default name on file export
 //- Generate/check digest on file export
 //- Strip null/empty fields on file export

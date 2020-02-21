@@ -76,8 +76,8 @@ export default {
     closeWin(idx, reopen) {Com.closeWindow(this.state.windows, idx, this, reopen)},
     importFile(ev) {
       Com.fileReader(ev.target, 1000, (data)=>{
-//console.log("Launch got file import:", data)
         let spec = {view: this.launchData.import + '(jsonb)', params: [data]}
+console.log("Launch got file import:", data, "spec:", spec)
         Wyseman.request('import.'+this.id, 'tuple', spec, (res, err) => {
           if (err) this.top().error(err)
         })

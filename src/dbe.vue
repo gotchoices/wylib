@@ -335,6 +335,7 @@ console.log("Perform action:", action, event.shiftKey)
   },
 
   created: function() {
+//console.log("Dbe created; top:", this.top())
     this.metaListen()
 //    this.subBus = new Bus.messageBus(this, (msg)=>{
 //console.log("Dbe got sub message:", msg)

@@ -389,7 +389,7 @@ console.log("  URL ticket:", ticket)
     })
 
     Wyseman.request('_main', 'connect', {stay: true}, addr => {
-console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
+//console.log("Connect callback addr:", addr, "retryIn:", this.retryIn)
       this.$emit('site', this.currentSite = addr)	//Tell my parent about connection change
 
       if (!addr && this.tryEvery && !this.tryTimer) {		//Failed to connect

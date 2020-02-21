@@ -311,9 +311,9 @@ console.log("Close regular report:", repTag)
   },
 
   created: function() {
-    this.$on('swallow', this.swallowMenu)
-
     if (this.topLevel) this.top = new TopHandler(this)
+//console.log("Win created; top:", this.id, this.topLevel, this.top)
+    this.$on('swallow', this.swallowMenu)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
