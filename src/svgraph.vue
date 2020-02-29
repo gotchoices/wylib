@@ -34,6 +34,7 @@
           <input type="range" min="0" max="100" v-model="state.pullForce" class="slider nodrag" title="How hard the links attract connected nodes (r^3)">Attract: {{state.pullForce}}</input>
           <input type="range" min="0" max="100" v-model="state.gravForce" class="slider nodrag" title="General linear attractive force">Gravity: {{state.gravForce}}</input>
           <input type="range" min="0" max="100" v-model="state.randForce" class="slider nodrag" title="How much random force to introduce">Random: {{state.randForce}}</input>
+          <input type="checkbox" v-model="state.autoBump" class="checkbox nodrag" title="Try to arrange nodes each time a change is registered">Auto Arrange:</input>
         </div>
       </div>
     </div>
@@ -61,7 +62,7 @@ export default {
     repeatTimer:	null,
     toolX:		0,
     toolY:		0,
-    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}, pushForce:50, pullForce:50, randForce:0, aspForce:1, gravForce:50},
+    stateTpt:		{minX:0, minY:0, maxX:400, maxY: 400, nodes: {}, pushForce:50, pullForce:50, randForce:0, aspForce:1, gravForce:50, autoBump:true},
   }},
   
   computed: {
@@ -221,6 +222,10 @@ export default {
       ignoreFrom: '.nodrag'
     })
     this.$on('bump', ()=>{this.bump()})
+    this.$on('change', ()=>{
+//console.log("Change:", this.state.autoBump)
+      if (this.state.autoBump) this.bump()
+    })
   },
 }
 </script>
