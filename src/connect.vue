@@ -171,9 +171,9 @@ export default {
       if (location.protocol == 'http:') {
         site.proto = 'ws:'			//Try to connect insecurely
         cb(site)
-      } else if (site.priv)			//We already have a private key
+      } else if (site.priv) {			//We already have a private key
         cb(site)
-      else if (Crypto) {			//Crypto API found
+      } else if (Crypto) {			//Crypto API found
 //console.log("  generating key:")
         Crypto.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
           site.priv = keyPair.privateKey
@@ -215,6 +215,7 @@ console.log("Error in keyCheck:", err.message)
           , { ip, cookie, userAgent, date } = data
           , message = JSON.stringify({ip, cookie, userAgent, date})	//Must rebuild in this same order in the backend!
 //console.log("  Client data:", data, date, site.priv, Crypto)
+//console.log("  Message:", message)
         if (site.proto == 'ws:') {
           cb(site)
         } else if (Crypto) {
@@ -239,7 +240,7 @@ console.log("Error in signCheck:", err.message)
           Wyseman.connect(site, (errCode)=>{
             this.top().error(this.bwm(errCode))
           })
-//          delete site.token				//No longer a connection token, now a credential
+          delete site.token				//No longer a connection token, now a credential
           Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
           this.exportList(this.sites, (keyData)=>{	//Save keys locally in exportable format
             Local.set(SiteKey, keyData)
@@ -396,9 +397,8 @@ console.log("  URL ticket:", ticket)
         this.retryConnect()
       } else if (addr) {					//Success
 //console.log("Success parms:", parms, "loc:", location)
-        if (parms) {		//If loaded from a ticket, any reload should happen without query fields
+        if (parms) {		//If loaded from a ticket, any reload should happen without query fields in the URL
           history.replaceState(null, '', location.origin + location.pathname)
-//          location.replace(location.origin + location.pathname)	//Fixme: Can crash backend with this; how to make more resilient?
         }
         this.status = null
         this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
