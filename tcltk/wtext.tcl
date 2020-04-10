@@ -244,16 +244,22 @@ proc wtext::wfind {w find args} {
         if {$ca(wrap)} {set si {}} else {set si {end}}
     }
     if {$ca(until) != {}} {set si $ca(until)}
+    set oldstate [$w cget -state]
+    $w configure -state normal
     if {[set beg [eval $w search $d $c $r -- \$find \$i $si]] == {}} {
         if {$ca(until) != {}} {$w mark set insert $ca(until); $w see insert}
-        return 0
+        set retval 0
+    } else {
+        set end [$w index "$beg + [string length $find] char"]
+#puts "oldstate:$oldstate new:[$w cget -state]"
+        $w tag remove sel 1.0 end
+        $w tag add sel $beg $end
+        $w mark set insert $end
+        $w see insert
+        set retval "$beg $end"
     }
-    set end [$w index "$beg + [string length $find] char"]
-    $w tag remove sel 1.0 end
-    $w tag add sel $beg $end
-    $w mark set insert $end
-    $w see insert
-    return "$beg $end"
+    after 500 "$w configure -state $oldstate"
+    return $retval
 }
 
 #Text-specific replace routine
