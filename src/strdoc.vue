@@ -4,12 +4,9 @@
 // Makes a document such as a manual or contract which is composed of nested
 // sections, paragraphs, and so forth.
 //TODO:
-//X- Chief contains readonly: title, author, language, version, released, hash
-//X- All are displayed, printable in preview mode
-//X- window blurry in chrome with position: fixed on menu
-//X- How to include other documents by reference?
-//X- Call back to database with update command
 //X- Can edit contracts in database
+//X- Can launch with no editing at all (preview only)
+//- Is sourceURL too MyCHIPs-centric?  Or will it work for other document inclusions
 //- Should call dbe/dbp to do export for us (to know proper record type tag)
 //- Ignore record tag on import?
 //- Make good default name on file export
@@ -158,11 +155,11 @@ export default {
     },
     sourceURL() {
       let [ domain, path ] = this.state.source ? this.state.source.split('/') : []
-//console.log("sourceURL:", domain, path)
-      if (domain)
-        return path + '?domain=' + domain
-      else
-        return this.state.source
+        , [ host, query ] = path ? path.split('?') : []
+        , qArray = query ? query.split('&') : []
+//console.log("sourceURL:", domain, "h:", host, "q:", query)
+      if (domain) qArray.push('domain=' + domain)
+      return [host, qArray.join('&')].join('?')
     },
     iconStyle() {return {
       fill:	this.pr.butIconfill,
