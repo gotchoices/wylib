@@ -1,35 +1,30 @@
 Wylib TODO
-X- Get basic dbe insert, update, delete working
-X- Dbp should save/restore state per table/view to wylib.data
-- Make a simple doc file showing how to init a basic database, launch wysegi
+- Wylib Mobile:
+-   Make linked data structure of linked views
+-   Each is associated with a vue component
+-   Each view can have one or more parents
+-   Maintain notion of creation order (top-to-bottom) of views in a single generation
+-   Maintain status of last viewed item of a generation
+-   
+-   Display ERD of related views on svgraph
+-   Can add/delete elements, graph updates and reorganizes itself
+-   Library adapts to switching desktop/mobile modes
+-   All menus are abstrated for use on desktop/mobile
 - 
+-   Wylib now mobile ready!
+- 
+- Old:
+- Make a simple doc file showing how to init a basic database, launch wysegi
 - Multiview delete doesn't delete entity--just user
 - 
-X- Login/validation facility (passport?)
-X-   Distributed symmetric keys to secure machine
-X-   Password access to database
-- 
 - Later Wylib:
-X- Fix language text in wylib/app, wylib/connect
-X- Generalize menu to work for window state: implement save/restore dialog
-X- Dbe grid layout working
 - Preferences UI editor component
-X- Save named state from toplevel win
 - Implement dbp row menu?
-X- Preference save/restore; use local storage, optional propagate to back end (wyseman)
-X-   Layout: Widget menu/window size/locations, sort order, searches, columns, summaries
-X-   Language: Widget text/helps, database text/helps
-X-   Snapshot: Application window layout, language, prefs
-X- Port wysegi; can browse and modify wyseman database tables
 - 
 - Port additional widgets:
-X-   Mdew: grid of dews
-X-   Calendar selector
 -   Time selector
 -   Spinners: spin integers
-X-   LoadBy/Loglist: query logic builder
 -   SCM Scrolled item selector with db lookups for data
-X-   Dia: Modal data queries using existing data editing widgets
 -   Edwin: Text editing window
 - 
 - Implement ledgers

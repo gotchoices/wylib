@@ -220,7 +220,7 @@ if (error) console.log("Error:", error, errView, code, cache)
 
   request(id, action, opt, cb) {			//Ask to receive specified information back asynchronously
     if (typeof opt === 'string') {opt = {view: opt}}	//Shortcut: just give view rather than full options object
-//console.log("Request ID: " + id + " action: " + action + " Opt: " + JSON.stringify(opt))
+//console.log("Request ID:", id, "Action:", action, "Opt", JSON.stringify(opt))
     let view = (opt ? opt.view : null)
     if (!this.address || this.address == '') {		//If connection not yet open
       this.sendQue.push([id,action,opt,cb])		//Queue the request for later
