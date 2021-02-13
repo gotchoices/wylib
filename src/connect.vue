@@ -3,21 +3,8 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//X- Has to be independent of database, wylib until connection made
-//X- Default language to english, but update to current language once connection made
-//X- Add icons to show if each connection has a key or a ticket
-//X- How to enter a username for a new connection (with ticket)
-//X- Kickstart generates a ticket for admin
-//X- Can't connect without ticket
-//X- Re-import on launch of any restored keys
-//X- Save last-connected site and auto-connect, if possible
-//X- Can store keys in browser localStorage
-//- Backend crash weakness; see Fixme in mounted:Wyseman.request call below
-//- 
-//- Do I need bwm() anymore if I use $set(this,'wm',msg)?
-//- Should only be able to store one key at a time with same host, port, user
-//- Can password-protect keys exported to a file
-//- Get automatic connect retry working again? (for example, after killing backend)
+//- Password-protect keys exported to a file (Crypto.wrapkey?)
+//- Key encryption must remain compatible with Client library
 //- 
 
 <template>
@@ -50,11 +37,10 @@ const KeyConfig = {
   publicExponent: new Uint8Array([1,0,1]),
   hash: 'SHA-256'
 }
-const SignConfig = {
+const SignConfig = {		//For signing with RSA-PSS
   name: 'RSA-PSS',
   saltLength: 128
 }
-const SaltLength = 128		//For signing with RSA-PSS
 
 const Com = require('./common.js')
 const Local = require('./local.js')
@@ -114,14 +100,6 @@ export default {
     ]},
   },
   methods: {
-    bwm(key, extend) {		//Get a string from hardcoded language, or from data dictionary if possible
-      let theLang =  this.wm[key] || WmDefs[key] || {}
-      if (extend) theLang.help += ` (${extend})`
-      return theLang
-    },
-//    lang(key, title, defVal='') {
-//      return this.bwm(key)[title ? 'title' : 'help'] || defVal
-//    },
     keyIcon(site) {		//What icon to display in the site list
       let icon = site.priv ? 'key' : (site.token ? 'ticket' : 'exclaim')
       return Icons(icon)
@@ -167,7 +145,7 @@ export default {
       }
     },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
-//console.log("Key check:")
+console.log("Key check:")
       if (location.protocol == 'http:') {
         site.proto = 'ws:'			//Try to connect insecurely
         cb(site)
@@ -184,10 +162,10 @@ console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
 console.log("Error in keyCheck:", err.message)
-          this.top().error(this.bwm('conCryptErr', err.message))
+          this.top().error(this.wm.conCryptErr, err.message)
         })
       } else {
-        this.top().error(this.bwm('conNoCrypto')) 
+        this.top().error(this.wm.conNoCrypto)
       }
     },
     userCheck(site, cb) {			//Make sure the key has a username
@@ -197,7 +175,7 @@ console.log("Error in keyCheck:", err.message)
       }
       if (site.user)
         cb()
-      else this.top().input(this.bwm('conUsername'), (ans, data)=>{	//Prompt for username
+      else this.top().input(this.wm.conUsername, (ans, data)=>{	//Prompt for username
         if (ans == 'diaYes' && data.value) {
           let oldIdx = this.sites.findIndex(el=>(el.host==site.host && el.port == site.port && el.user == data.value))
 //console.log("Delete old key:", oldIdx)
@@ -226,7 +204,7 @@ console.log("Error in keyCheck:", err.message)
             cb()
           }, (err)=>{
 console.log("Error in signCheck:", err.message)
-            this.top().error(this.bwm('conCryptErr', err.message))
+            this.top().error(this.wm.conCryptErr, err.message)
           })
         }
       })
@@ -238,7 +216,7 @@ console.log("Error in signCheck:", err.message)
           this.tryEvery = CountDown			//Retry if disconnected
           this.lastConnected = site			//Remember where we last connected to
           Wyseman.connect(site, (errCode)=>{
-            this.top().error(this.bwm(errCode))
+            this.top().error(this.wm[errCode])
           })
           delete site.token				//No longer a connection token, now a credential
           Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
@@ -261,15 +239,16 @@ console.log("Error in signCheck:", err.message)
 //console.log(" keys:", this.sites, expKeys)
       if (!Crypto) return				//Can't do this for insecure connections?
       for (let i = expKeys.length-1; i >= 0; i--) {
-        Crypto.exportKey('jwk', expKeys[i].priv).then(keyData=>{
-//console.log(" key data:", keyData)
+        Crypto.exportKey('pkcs8', expKeys[i].priv).then(keyData=>{
           let k = expKeys[i]
-          expData.unshift({host:k.host, port:k.port, user:k.user, jwk:keyData})
+            , keyStrg = Com.buf2hex(keyData)
+console.log(" key string:", keyStrg)
+          expData.unshift({host:k.host, port:k.port, user:k.user, key:keyStrg})
           expKeys.splice(i,1)				//remove this key from our list
           if (expKeys.length <= 0) cb(expData)		//when last one done, run callback
         },(err)=>{
 //console.log("Error in exportSites:", err.message)
-          this.top().error(this.bwm('conCryptErr', err.message))
+          this.top().error(this.wm.conCryptErr, err.message)
         })
       }
     },
@@ -281,7 +260,7 @@ console.log("Error in signCheck:", err.message)
         if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
       }
       this.exportList(expKeys, (keyData)=>{
-        if (keyData.length > 0) this.top().input(this.bwm('conExpFile'), (ans, file) => {	//Prompt for a filename
+        if (keyData.length > 0) this.top().input(this.wm.conExpFile, (ans, file) => {	//Prompt for a filename
           if (ans == 'diaYes' && file.value) {
 console.log("Export file:", file.value, keyData.length, keyData)
             keyData = keyData.map(el=>{return {login: el}})	//Prefix each element with a descriptor
@@ -308,12 +287,12 @@ console.log("Adding:", oldIdx, oldIdx >= 0)
             this.sites.splice(oldIdx, 1, site)		//Replace old key
           else
             this.sites.splice(0, 0, site)		//Add in as a new one
-          if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
+          if (site.key) Crypto.importKey('pkcs8', Buffer.from(site.key,'hex'), KeyConfig, true, ['sign']).then((priv)=>{
             site.priv = priv
             Local.set(SiteKey, this.sites)
           }, (err)=>{
 console.log("Error installing Key:", err.message)
-            this.top().error(this.bwm('conCryptErr', err.message))
+            this.top().error(this.wm.conCryptErr, err.message)
           })
         }
       }
@@ -379,13 +358,13 @@ console.log("  URL ticket:", ticket)
 //console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
       this.$set(site, 'selected', null)			//GUI needs to react to this
-//console.log("Processing saved key:", site)
-      if (site.jwk) Crypto.importKey('jwk', site.jwk, KeyConfig, true, ['sign']).then((priv)=>{
+console.log("Processing saved key:", site)
+      if (site.key) Crypto.importKey('pkcs8', Buffer.from(site.key,'hex'), KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
         if (!conSite && site.host == last.host && site.port == last.port && site.user == last.user)
           this.connectSite(site)			//Automatically connect
       }, (err)=>{
-        this.top().error(this.bwm('conCryptErr', err.message))
+        this.top().error(this.wm.conCryptErr, err.message)
       })
     })
 
