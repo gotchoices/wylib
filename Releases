@@ -1,5 +1,10 @@
 Change Log:
 
+1.0.22	2021-Feb
+	- Misc code cleanups in connection code
+	- Compatibility with new Wyseman connection keys
+	- Warning: not compatible with older keys (that used jwk format)
+
 1.0.21	2020-Feb
 	- Grab ticket data info from SPA URL
 	- Handle zooming on SVG graphs
