@@ -12,7 +12,6 @@ module.exports = {
     win:  './test/win.js',
     calc: './test/calc.js',
     icon: './test/icon.js',
-    views: './test/views.js'
   },
   output: {
     path: path.join(__dirname, '..', 'dist'),

@@ -107,8 +107,8 @@
     margin: 0;
     padding: 0;
 
-    overflow-x: scroll;
-    overflow-y: hidden;
+//    overflow-x: scroll;		//Obscures cell contents on Windows
+    overflow: hidden;
 //    text-overflow: ellipsis;
     vertical-align: middle;
 //    z-index: 1;

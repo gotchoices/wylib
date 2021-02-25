@@ -158,7 +158,7 @@ console.log("Key check:")
           return Crypto.exportKey('spki', keyPair.publicKey)
         }).then(pubKey => {
           site.pub = Com.buf2hex(pubKey)
-console.log("  pub:", site.pub)
+//console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
 console.log("Error in keyCheck:", err.message)

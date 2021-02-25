@@ -60,16 +60,17 @@ export default {
     slickColumns() {			//Convert wyseman column spec to what slickgrid expects
       let cols = []
 //console.log("SlickColumns cols:", this.state.columns)
-      
+      if (this.state.columns === undefined) return cols		//If we are too early in the lifecycle to have data yet
       for (let field in this.config) {
         let conf = this.config[field]
           , col = this.state.columns.find(e => (e.field == field))
+          , visible = (!conf || conf.visible === undefined) ? true : conf.visible	//visibility defaults to true
         if (!col) {					//Add any missing column using defaults
-          col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible:conf.visible}
+          col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible}
           this.state.columns.push(col)
         }
-//console.log("width:", col.field, col.width)
-        if (col.visible) cols.push({			//Create the missing column
+//console.log("field:", col.field, col.width, conf.title, visible)
+        if (visible) cols.push({	//Create the missing column
           id:		field,	field,		sortable:	true,	
           order:	col.order,		width:		col.width,
           name:		conf.title,		toolTip:	col.field + '\n' + conf.help,	
@@ -88,6 +89,7 @@ export default {
       return cols;
     },
     gridWidth() {
+      if (this.state.columns === undefined) return 0	//If we are too early to have data yet
       let wid = this.state.columns.reduce((acc, el)=>{return acc + (el.visible ? el.width : 0)}, 0)
 //console.log("Width: ", wid)
       return wid + 4 + 'px'
@@ -269,14 +271,16 @@ console.log("Footer:", this.state.footerOn, val)
   beforeMount: function() {
 //console.log("Mlb before, state:", this.id, this.state);
     Com.stateCheck(this)
+
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'advance') return this.advance(data)
       else if (msg == 'autosize') return this.autoSize(data)
     })
     for (let field in this.config) {
       let con = this.config[field]
+      let visible = con.visible === undefined ? true: con.visible
       if (!this.state.columns.find(e => (e.field == field)))	//Make sure we have a column for all known fields
-        this.state.columns.push({field, order:con.order, width:con.width || this.pr.mlbDefWidth, visible:con.visible})
+        this.state.columns.push({field, order:con.order, width:con.width || this.pr.mlbDefWidth, visible})
     }
   },
 
