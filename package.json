@@ -33,7 +33,7 @@
     "flatpickr": "^4.6.9",
     "interactjs": "^1.10.3",
     "jsondiffpatch": "^0.4.1",
-    "mathjs": "^6.6.5",
+    "mathjs": "^7.5.1",
     "slickgrid-es6": "^3.0.1",
     "webcola": "^3.4.0"
   },
