@@ -6,7 +6,8 @@ package provide wylib 0.35
 #TODO:
 #- 
 
-package require Tclx
+#package require Tclx
+source "$wylib_library/tclx.tcl"	;#Replace certain Tclx functionality
 if {[info exists ::env(WYLIB_SITELIB)] && $::env(WYLIB_SITELIB) != {}} {package require $::env(WYLIB_SITELIB)}
 
 namespace eval lib {
@@ -15,7 +16,7 @@ namespace eval lib {
     set cfig(resdir)	"/usr/etc/wyatt"	;#find local resources here
     set cfig(sharedir)	"/usr/etc/wyatt/share"	;#all shared files here
     set cfig(appdir)	"$::env(HOME)/.wyatt"
-    set cfig(workdir)	"/tmp/wyatt-[id user]"
+    set cfig(workdir)	"/tmp/wyatt-$::tcl_platform(user)"
     set cfig(imgdir)	"$wylib_library/images"
     set cfig(bugrpt)	"/bin/mail -s Bug_Report wyatt@localhost"
 
@@ -77,7 +78,7 @@ proc bgerror {err} {
         dia::brief {You need to type an explanation before sending}
     }
     set fp [open "|$lib::cfig(bugrpt)" w]
-    puts $fp "Bug report from [id user] in [. cget -class]:\nUser Comment:\n$msg\nError Message:$err\nInfo:$info"
+    puts $fp "Bug report from $::tcl_platform(user) in [. cget -class]:\nUser Comment:\n$msg\nError Message:$err\nInfo:$info"
     close $fp
     dia::brief {The error has been reported}
 }

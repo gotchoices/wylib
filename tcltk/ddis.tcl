@@ -199,7 +199,7 @@ proc ddis::do_dist_old {car args} {
         } elseif {$ca(eval)} {
             write_file $tfile {}			;#text is empty file
         }
-        if {$ca(emreturn) == {}} {set ca(emreturn) "[id user]@$cfig(domain)"}
+        if {$ca(emreturn) == {}} {set ca(emreturn) "$::tcl_platform(user)@$cfig(domain)"}
         set mcmd "/usr/bin/metasend -t \"[join $ca(emlist) ,]\" -F \"$ca(emreturn)\""	;#start email command
         if {$ca(emclist) != {}} {append mcmd " -c \"[join $ca(emclist) ,]\""}
         write_file $lib::cfig(workdir)/preamble.mm "This is a multi-part message in MIME format."
@@ -336,7 +336,7 @@ proc ddis::do_dist {car args} {
             lout::parse $srcfile $pfile		;#format the lout file
         }
 	
-        if {$ca(emreturn) == {}} {set ca(emreturn) "[id user]@$cfig(domain)"}
+        if {$ca(emreturn) == {}} {set ca(emreturn) "$::tcl_platform(user)@$cfig(domain)"}
 		  if {$ca(edit)} {
 		      set mcmd "/bin/thunderbird -compose \"to=[join '$ca(emlist)' ,],subject='$ca(subject)',preselectid='$ca(emreturn)'"
 			} else {

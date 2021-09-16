@@ -50,7 +50,7 @@ proc passwd::ok {} {
     variable v
 
     if {$v(pwdok)} {return 1}
-    if {$cfig(uname) == {}} {set cfig(uname) [id user]}
+    if {$cfig(uname) == {}} {set cfig(uname) $::tcl_platform(user)}
     if {[checkpwd $cfig(uname) {dia::pquery "Please input %s"}]} {
         set v(pwdok) 1
         if {$v(aid) != {}} {after cancel $v(aid)}

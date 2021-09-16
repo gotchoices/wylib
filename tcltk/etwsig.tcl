@@ -134,7 +134,7 @@ proc etwsig::save {w {export 0}} {
     if {$export} {
         if {[sfile::dia {Export To} -mask "*.es" -dest sigfile -extension .es -wait 1] == {}} return
     } else {
-        if {[set stag [$w.d get stag]] == {}} {set stag [id user]}
+        if {[set stag [$w.d get stag]] == {}} {set stag $::tcl_platform(user)}
         if {[dia::query "Save this signature by the tag name:" stag 0 OK Cancel] < 0} {return}
         $w.d set stag $stag
         set sigfile [file join [lib::cfig appdir] $stag$cfig(sigext)]

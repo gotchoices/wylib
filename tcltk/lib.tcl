@@ -181,7 +181,7 @@ proc lib::mail_to {addr args} {
     }
 
     if {$signature} {
-	lappend tlist [mime::initialize -canonical text/html -file /home/[id user]/.sigfile.html]
+	lappend tlist [mime::initialize -canonical text/html -file /home/$::tcl_platform(user)/.sigfile.html]
     }
     if {[llength $tlist] > 1} {
         set tok [mime::initialize -canonical multipart/mixed -parts $tlist]
@@ -198,7 +198,7 @@ proc lib::mail_to {addr args} {
     if {$origin != {}} {
 	set sender $origin
     } else {
-	set sender [id user]
+	set sender $::tcl_platform(user)
     }
 
 #debug tolist
