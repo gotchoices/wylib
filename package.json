@@ -1,6 +1,6 @@
 {
   "name": "wylib",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "WyattERP Application Builder Library",
   "main": "dist/wylib-bundle.js",
   "scripts": {
@@ -33,7 +33,7 @@
     "flatpickr": "^4.6.9",
     "interactjs": "^1.10.3",
     "jsondiffpatch": "^0.4.1",
-    "mathjs": "^6.6.5",
+    "mathjs": "^9.4.5",
     "slickgrid-es6": "^3.0.1",
     "webcola": "^3.4.0"
   },
@@ -47,7 +47,7 @@
     "file-loader": "^2.0.0",
     "less": "^3.13.1",
     "less-loader": "^4.1.0",
-    "node-sass": "^4.14.1",
+    "node-sass": "^6.0.1",
     "npm-run-all": "^4.1.5",
     "sass": "^1.32.8",
     "sass-loader": "^7.1.0",
