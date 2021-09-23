@@ -1,6 +1,13 @@
 #Substitute for various tclx commands
 package provide wylib 0.35
 
+#Execute a command in the shell
+#------------------------------------------
+proc system {command} {
+#This was previously implemented via Tclx.  Can we reimplement using exec?
+    puts "System command not yet implemented in this wylib version"
+}
+
 #Tell if a list contains an element
 #------------------------------------------
 proc lcontain {list element} {

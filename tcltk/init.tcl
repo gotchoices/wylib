@@ -36,8 +36,8 @@ if {[info exists auto_path] && [string compare {} $wylib_library] && [lsearch -e
 
 #puts "auto_path:$auto_path"
 source $wylib_library/lib.tcl		;#always load lib module
-if {![file exists $lib::cfig(appdir)]}  {system "mkdir $lib::cfig(appdir)"}
-if {![file exists $lib::cfig(workdir)]} {system "mkdir $lib::cfig(workdir)"}
+if {![file exists $lib::cfig(appdir)]}  {file mkdir "$lib::cfig(appdir)"}
+if {![file exists $lib::cfig(workdir)]} {file mkdir "$lib::cfig(workdir)"}
 
 # Run the rest of the file only if in TK
 #------------------------------------------
