@@ -322,9 +322,10 @@ console.log("    remove:", idx, name, node.childNodes, 'last:', lastNode)
 
     export() {
       let resp = {file:'document.json'}
-        , dews = [
-            {field:'file', lang:this.wm.sdcExportAsk, styles:{style:'ent', focus:true}},
-            {field:'pretty', lang:this.wm.sdcExportFmt, styles:{input:'chk'}}]
+        , dews = this.top().dewArray([['file', this.wm.sdcExportAsk], ['pretty', this.wm.sdcExportFmt, 'chk']])
+//        , dews = [
+//            {field:'file', lang:this.wm.sdcExportAsk, styles:{focus:true}},
+//            {field:'pretty', lang:this.wm.sdcExportFmt, styles:{input:'chk'}}]
       this.top().query('!sdcExportAsk', dews, resp, (ans) => {
         if (ans == 'diaYes' && resp.file) {
 //console.log("Export file:", resp.file)

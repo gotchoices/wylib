@@ -30,7 +30,7 @@
 
 <script>
 const CountDown = 7
-const Crypto = window.crypto.subtle
+const Subtle = window.crypto.subtle
 const KeyConfig = {
   name: 'RSA-PSS',
   modulusLength: 2048,
@@ -62,6 +62,8 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   conNoCrypto: {title:'No Crypto', help:'No crypto library found in browser.  Make sure you are connected by https.'},
   conCryptErr: {title:'Generating Key', help:'There was an error generating a connection key pair'},
   conExpFile: {title:'Export Filename', help:'The name of the file the browser will export keys to in your download area'},
+  conExpPass: {title:'Passphrase', help:'A secret passphrase used to encrypt/decrypt saved private keys'},
+  conExpPass2: {title:'Retype Passphrase', help:'Enter passphrase again'},
   conConErr: {title:'Connection Error', help:'Your connection credentials may be invalid'},
 }
 //  conDiscon: {title:'Server Disconnected', help:'The backend server disconnected unexpectedly'},	Not used?
@@ -151,13 +153,14 @@ console.log("Key check:")
         cb(site)
       } else if (site.priv) {			//We already have a private key
         cb(site)
-      } else if (Crypto) {			//Crypto API found
+      } else if (Subtle) {			//Subtle API found
 //console.log("  generating key:")
-        Crypto.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
+        Subtle.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
           site.priv = keyPair.privateKey
-          return Crypto.exportKey('spki', keyPair.publicKey)
+          return Subtle.exportKey('jwk', keyPair.publicKey)
         }).then(pubKey => {
-          site.pub = Com.buf2hex(pubKey)
+//console.log("  jwk:", Object.keys(pubKey), pubKey, JSON.stringify(pubKey))
+          site.pub = btoa(JSON.stringify(pubKey))	//Transmit base64 version of jwk
 //console.log("  pub:", site.pub)
           cb(site)
         }).catch(err => {
@@ -171,7 +174,7 @@ console.log("Error in keyCheck:", err.message)
     userCheck(site, cb) {			//Make sure the key has a username
 //console.log("User check:", site, this.db)
       if (this.db) {				//Pass db config info to connect query
-        site.db = Com.buf2hex(Buffer(JSON.stringify(this.db)))
+        site.db = Com.buf2b64url(Buffer.from(JSON.stringify(this.db)))
       }
       if (site.user)
         cb()
@@ -192,14 +195,14 @@ console.log("Error in keyCheck:", err.message)
         let encoder = new TextEncoder()
           , { ip, cookie, userAgent, date } = data
           , message = JSON.stringify({ip, cookie, userAgent, date})	//Must rebuild in this same order in the backend!
-//console.log("  Client data:", data, date, site.priv, Crypto)
+//console.log("  Client data:", data, date, site.priv, Subtle)
 //console.log("  Message:", message)
         if (site.proto == 'ws:') {
           cb(site)
-        } else if (Crypto) {
-          Crypto.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
-//console.log("  signed:", sign, date)
-            site.sign = Com.buf2hex(sign)
+        } else if (Subtle) {
+          Subtle.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
+//console.log("  signed:", sign, typeof sign, date)
+            site.sign = Com.buf2b64url(Buffer.from(sign))
             site.date = date
             cb()
           }, (err)=>{
@@ -234,16 +237,15 @@ console.log("Error in signCheck:", err.message)
       Local.set(SiteKey, this.sites)
     },
 
-    exportList(sites, cb) {				//Create exportable array of sites/keys
+    exportList(sites, cb) {			//Create exportable array of sites/keys
       let expData = [], expKeys = sites.slice()		//Make local copy
-//console.log(" keys:", this.sites, expKeys)
-      if (!Crypto) return				//Can't do this for insecure connections?
+console.log(" exportList:", this.sites, expKeys)
+      if (!Subtle) return				//Can't do this for insecure connections?
       for (let i = expKeys.length-1; i >= 0; i--) {
-        Crypto.exportKey('pkcs8', expKeys[i].priv).then(keyData=>{
+        Subtle.exportKey('jwk', expKeys[i].priv).then(keyData=>{
           let k = expKeys[i]
-            , keyStrg = Com.buf2hex(keyData)
-console.log(" key string:", keyStrg)
-          expData.unshift({host:k.host, port:k.port, user:k.user, key:keyStrg})
+console.log(" key data:", keyData)
+          expData.unshift({host:k.host, port:k.port, user:k.user, key:keyData})
           expKeys.splice(i,1)				//remove this key from our list
           if (expKeys.length <= 0) cb(expData)		//when last one done, run callback
         },(err)=>{
@@ -254,21 +256,36 @@ console.log(" key string:", keyStrg)
     },
 
     exportKeys(ev) {					//Write selected keys to a file
-//console.log("Export:", ev)
+console.log("Export:", ev)
       let expKeys = []					//Make local copy of the keys
       for (let i = this.sites.length-1; i >= 0; i--) {		//Get just the selected ones, in reverse order
         if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
       }
-      this.exportList(expKeys, (keyData)=>{
-        if (keyData.length > 0) this.top().input(this.wm.conExpFile, (ans, file) => {	//Prompt for a filename
-          if (ans == 'diaYes' && file.value) {
-console.log("Export file:", file.value, keyData.length, keyData)
-            keyData = keyData.map(el=>{return {login: el}})	//Prefix each element with a descriptor
-            if (keyData.length == 1) keyData = keyData[0]	//Write 1 element long array as a single object rather than an array
-            let blob = new Blob([JSON.stringify(keyData)], {type: "text/plain;charset=utf-8"})
-            FileSaver.saveAs(blob, file.value)		//File saved as a browser download
-          }
-        }, 'keys.json')
+      if (expKeys.length <= 0) expKeys = this.sites.slice().reverse()	//Export all keys
+      if (expKeys.length <= 0) return			//Nothing to export
+      
+      let resp = {file: 'keys.json'}			//Prepare to prompt user
+        , inp = 'password'
+        , dews = this.top().dewArray([['file',this.wm.conExpFile], ['p1',this.wm.conExpPass,inp], ['p2',this.wm.conExpPass2,inp]])
+//console.log("ExportList:", dews)
+      this.top().query(this.wm.conExport, dews, resp, (ans) => {	//Prompt for a filename, passphrase
+        if (ans != 'diaYes' || !resp.file) return
+        this.exportList(expKeys, (keyData)=>{
+console.log("Export file:", resp.file, resp.p1, keyData.length, keyData)
+          keyData = keyData.map(el=>{return {login: el}})	//Prefix each element with a descriptor
+          if (keyData.length == 1) keyData = keyData[0]		//Write 1 element long array as a single object rather than an array
+          let keysString = JSON.stringify(keyData)
+            , saveIt = (data) => {
+              let blob = new Blob([data], {type: "text/plain;charset=utf-8"})
+              FileSaver.saveAs(blob, resp.file)		//File saved as a browser download
+            }
+          if (resp.p1)					//User provided a password
+            Com.encrypt(resp.p1, keysString).then(saveIt)	//So encrypt the file
+          else
+            saveIt(keysString)				//Save unencrypted
+        })
+      }, d=>{				//Validity check callback
+        return (d.file && (d.p1 == d.p2)) || (!d.p1 && !d.p2)	//Passwords must match
       })
     },
 
@@ -287,7 +304,7 @@ console.log("Adding:", oldIdx, oldIdx >= 0)
             this.sites.splice(oldIdx, 1, site)		//Replace old key
           else
             this.sites.splice(0, 0, site)		//Add in as a new one
-          if (site.key) Crypto.importKey('pkcs8', Buffer.from(site.key,'hex'), KeyConfig, true, ['sign']).then((priv)=>{
+          if (site.key) Subtle.importKey('jwk', site.key, KeyConfig, true, ['sign']).then((priv)=>{
             site.priv = priv
             Local.set(SiteKey, this.sites)
           }, (err)=>{
@@ -301,11 +318,26 @@ console.log("Error installing Key:", err.message)
     
     importKeys(ev) {					//Set/get ticket value
       Com.fileReader(ev.target, 1500, (fileData) => {
-//console.log("Keys data:", fileData)
-        if (Array.isArray(fileData)) fileData.forEach(el => {
-          this.installKey(el)
-        }); else if (typeof fileData == 'object')
-          this.installKey(fileData)
+//console.log("Keys data:", typeof fileData, fileData)
+        let installEm = (jsonData) => {
+          if (Array.isArray(jsonData)) jsonData.forEach(el => {
+            this.installKey(el)
+          }); else if (typeof jsonData == 'object')
+            this.installKey(jsonData)
+        }
+        if (!fileData.s || !fileData.i || !fileData.d) {	//Doesn't appear to be encrypted
+          installEm(fileData)
+        } else {					//Will try decrypting
+          let resp = {}
+            , dews = this.top().dewArray([['p',this.wm.conExpPass, 'password']])
+          this.top().query('!diaQuery', dews, resp, (ans) => {	//Prompt for password
+            if (ans != 'diaYes' || !resp.p) return
+            Com.decrypt(resp.p, JSON.stringify(fileData)).then(d => {
+//console.log("Decrypted::", d)
+              installEm(JSON.parse(d))
+            })
+          })
+        }
       })
     },
 
@@ -359,7 +391,7 @@ console.log("  URL ticket:", ticket)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
       this.$set(site, 'selected', null)			//GUI needs to react to this
 console.log("Processing saved key:", site)
-      if (site.key) Crypto.importKey('pkcs8', Buffer.from(site.key,'hex'), KeyConfig, true, ['sign']).then((priv)=>{
+      if (site.key) Subtle.importKey('jwk', site.key, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
         if (!conSite && site.host == last.host && site.port == last.port && site.user == last.user)
           this.connectSite(site)			//Automatically connect

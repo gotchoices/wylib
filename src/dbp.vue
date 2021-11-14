@@ -354,7 +354,7 @@ console.log("  in (" + keys.join(',') + ')')
     export() {				//Export selected records
       let resp = {file: (this.viewMeta.title || this.state.dbView || 'Document') + '.json'}
         , dews = [
-            {field:'file', lang:this.wm.dbpExportAsk, styles:{style:'ent', focus:true}},
+            {field:'file', lang:this.wm.dbpExportAsk, styles:{focus:true}},
             {field:'pretty', lang:this.wm.dbpExportFmt, styles:{input:'chk'}}]
 //console.log("Meta:", this.viewMeta)
       this.top().query('!dbpExportAsk', dews, resp, (ans) => {

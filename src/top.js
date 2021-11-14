@@ -104,13 +104,13 @@ module.exports = function topHandler(context, amSlave) {
 
   this.dewArray = function(arg1, arg2, arg3 = 'ent') {	//Make an array of objects suitable for mdew configuration
     let retArr = []						//Call as: field,lang,style or [[field,lang,style] [field,lang,style]]
-    if (typeof arg1 == 'string') arg1 = [[arg1, arg2, arg3]]
+    if (typeof arg1 == 'string') arg1 = [[arg1, arg2, arg3]]	//array of prompt fields
     if (Array.isArray(arg1)) {
       let focus = true;
       arg1.forEach((el)=>{
-        let [ field, lang, style ] = el
-        if (!style) style = arg3
-        retArr.push({field, lang:this.wmCheck(lang), styles:{style, focus}})
+        let [ field, lang, input ] = el
+        if (!input) input = arg3
+        retArr.push({field, lang:this.wmCheck(lang), styles:{input, focus}})
         focus = false
       })
     }
@@ -166,7 +166,7 @@ module.exports = function topHandler(context, amSlave) {
   }
   this.input = function(lang, cb, defVal) {		//Ask for one value in an entry
     let data = {value:defVal}
-      , dews = [{field:'value', lang, styles:{style:'ent', focus:true}}]
+      , dews = [{field:'value', lang, styles:{focus:true}}]
     this.postModal(lang, {reason:'diaQuery', buttons: this.diaButs2, dews, data, cb})
     return data						//Caller can also get reference to data here, in addition to callback
   }

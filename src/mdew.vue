@@ -66,7 +66,7 @@ export default {
         , noSpecs = []
         , nextRow = 0
       for (let con of this.config) {
-//console.log("Config rec:", con)
+//console.log("Mdew config rec:", con)
         let styles = con.styles
         if (styles && styles.hide != null && styles.hide) continue
         if (styles && styles.subframe) {		//Does this field have any placement styling

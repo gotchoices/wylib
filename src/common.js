@@ -4,6 +4,8 @@
 //- TODO:
 //X- Add a trim option to stateCheck to remove obsolete properties?
 //- 
+const Crypto = window.crypto
+const Subtle = Crypto.subtle
 module.exports = {
 
   langTpt() {return {title: null, help: null}},
@@ -106,32 +108,19 @@ module.exports = {
     xmlhttp.send()
   },
 
-  buf2hex(buffer) {			//Convert ArrayBuffer to hex string
-    var s = '', h = '0123456789ABCDEF'
-    ;(new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; })
-    return s
-  },
-
-  hex2buf(hexStr) {
-    return Buffer(hexStr, 'hex')
-//    return new Uint8Array(hexStr.match(/.{2}/g).map(h => parseInt(h, 16)));
-  },
-
-  str2buf(str) {
-    return new TextEncoder("utf-8").encode(str);
+  buf2b64url(buf) {			//Convert ArrayBuffer to base64 url-safe
+    return Buffer.from(buf).toString('base64')
+      .replace(/\+/g,'-').replace(/\//g,'_')
+      .replace(/=+$/,'')
   },
   
-  buf2str(buffer) {
-    return new TextDecoder("utf-8").decode(buffer);
-  },
-    
   deriveKey: function(password, salt) {
-    salt = salt || crypto.getRandomValues(new Uint8Array(8))
-    return crypto.subtle.importKey("raw", this.str2buf(password), "PBKDF2", false, ["deriveKey"])
-      .then(key => crypto.subtle.deriveKey({
+    salt = salt || Crypto.getRandomValues(new Uint8Array(8))
+    return Subtle.importKey("raw", Buffer.from(password), "PBKDF2", false, ["deriveKey"])
+      .then(key => Crypto.subtle.deriveKey({
         name: "PBKDF2", 
         salt, 
-        iterations: 1000, 
+        iterations: 10000,
         hash: "SHA-256"
       }, key, {
         name: "AES-GCM",
@@ -139,19 +128,26 @@ module.exports = {
       }, false, ["encrypt", "decrypt"])).then(key => [key, salt])
   },
   
-  encrypt: function(password, plain) {
-    let iv = crypto.getRandomValues(new Uint8Array(12))
-      , data = this.str2buf(plain);
+  encrypt: function(password, plain) {		//Encrypt a string to a JSON-encoded string
+    let iv = Crypto.getRandomValues(new Uint8Array(12))
+      , data = Buffer.from(plain)
     return this.deriveKey(password).then(([key, salt]) =>
-      crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data).then(ciphertext => 
-        this.buf2hex(salt) +':'+ this.buf2hex(iv) +':'+ this.buf2hex(ciphertext)))
+      Subtle.encrypt({ name: "AES-GCM", iv }, key, data).then(ciphertext => (
+           '{"s":"' + Buffer.from(salt).toString('hex')
+        + '","i":"' + Buffer.from(iv).toString('hex')
+        + '","d":"' + Buffer.from(ciphertext).toString('base64')
+        + '"}'
+      )))
   },
 
-  decrypt: function(password, encrypted) {
-    let [salt, iv, data] = encrypted.split(':').map(this.hex2buf)
+  decrypt: function(password, encrypted) {	//Decrypt a JSON-encoded string to a string
+    let { s, i, d } = JSON.parse(encrypted)
+      , salt = Buffer.from(s, 'hex')
+      , iv = Buffer.from(i, 'hex')
+      , data = Buffer.from(d, 'base64')
     return this.deriveKey(password, salt).then(([key]) => 
-      crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data)).then(v => 
-        this.buf2str(new Uint8Array(v)))
+      Subtle.decrypt({ name: "AES-GCM", iv }, key, data)).then(v => 
+        Buffer.from(new Uint8Array(v)).toString())
   },
   
   unabbrev(short, longs) {		//Turn an abbreviated string into one of a set of full strings

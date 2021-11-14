@@ -207,7 +207,7 @@ export default {
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-//console.log("render:", this.field, st)
+//console.log("Dew render:", this.field, st)
     if (st.other) attrs = Object.assign(attrs, st.other)
     if (st.input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})

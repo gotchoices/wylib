@@ -43,6 +43,7 @@ module.exports = {
       let dewDat = {q: 'Passphrase'}
         , p = 'password'
         , dews = top.dewArray([['q','!appLocalPrompt'], ['p1','!appLocalP1',p], ['p2','!appLocalP2',p]])
+//console.log("Dews:", dews)
       top.query('!appLocalAsk', dews, dewDat, (ans) => {	//Ask if user wants storage password protected
         if (ans != 'diaYes') this.appInfo = null
         else this.appInfo = dewDat.p1 ? dewDat.q : ''
