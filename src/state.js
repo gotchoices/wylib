@@ -7,7 +7,7 @@
 //- How to report errors to the correct toplevel? (See Fixme below)
 //- 
 
-import Wyseman from './wyseman.js'
+const Wyseman = require('./wyseman')
 
 const StateManager = {
   itemCache: {},

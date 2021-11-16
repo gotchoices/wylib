@@ -12,9 +12,9 @@
 //- Allow a child window to move behind its parent?
 //- Re-normalize all registered window layers after raise
 //- 
-import Com from './common.js'
-import WinCom from './wincom.js'
-import Wyseman from './wyseman.js'
+const Com = require('./common')
+const WinCom = require('./wincom')
+const Wyseman = require('./wyseman')
 const ReportFile = '/report.html'
 const zLevelMod = 10
 var topWins = {}		//Keep the state of all toplevel windows

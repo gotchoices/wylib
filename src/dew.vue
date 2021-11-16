@@ -250,7 +250,7 @@ export default {
 }
 </script>
 
-<style lang="less">
+<style lang="scss">
   .wylib-dew {
 //    padding: 1px 7px 1px 1px;
 //    position: relative;
@@ -277,4 +277,6 @@ export default {
 //border: 3px solid blue;
     margin: 0 0 2px 4px;;
   }
+  
+  @import '../node_modules/flatpickr/dist/themes/light.css'
 </style>

@@ -11,10 +11,12 @@
 //- 
 //- 
 const Com = require('./common')
+const Encrypt = require('./encrypt')
 
 const LocalTag = 'wylib_'
 const LocalInfo = LocalTag + 'info'
 var localCache = {}
+var encrypt = new Encrypt(window.crypto)
 
 module.exports = {
   init: function(context, pwState, appTag, cb) {
@@ -54,9 +56,9 @@ module.exports = {
         return (dat.q && (dat.p1 == dat.p2)) || (!dat.p1 && !dat.p2)	//Passwords must match
       })
     }
-//  Com.encrypt("hello", "world")
+//  Enc.encrypt("hello", "world")
 //    .then(v => console.log("Encrypted:", v) || v)
-//    .then(v => Com.decrypt("hello", v) || v)
+//    .then(v => Enc.decrypt("hello", v) || v)
 //    .then(v => console.log("Decrypted:", v) || v)
   },
 
@@ -81,7 +83,7 @@ module.exports = {
     let idx = LocalTag + this.appTag
     if (this.appInfo) {
       let strVal = JSON.stringify(localCache)
-      Com.encrypt(this.passPhrase, strVal).then(v=>{
+      Enc.encrypt(this.passPhrase, strVal).then(v=>{
         localStorage.setItem(idx, v)
       })
     } else {
@@ -99,7 +101,7 @@ module.exports = {
     let idx = LocalTag + this.appTag
       , strVal = localStorage.getItem(idx)
     if (strVal && strVal != 'undefined') {
-      Com.decrypt(this.passPhrase, strVal).then(v=>{
+      Enc.decrypt(this.passPhrase, strVal).then(v=>{
         localCache = JSON.parse(v)
 //console.log("Got app data:", localCache)
         if (this.readyCB) this.readyCB(true)

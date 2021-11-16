@@ -4,15 +4,15 @@
 //TODO:
 //- 
 
-import Flatpickr from 'flatpickr'
-import '../node_modules/flatpickr/dist/themes/light.css'
+const Flatpickr = require('flatpickr/dist/flatpickr.js')
+//import '../node_modules/flatpickr/dist/themes/light.css'
 
 module.exports = function(selector = '.date', defaultValue = 'today', container) {
   this.picker = Flatpickr(selector, {
     allowInput: true,
+    onClose: this.closeHandler
 //    defaultDate: defaultValue,
 //    appendTo: container || window.body,
-    onClose: this.closeHandler
   })
 
   this.closeHandler = function() {

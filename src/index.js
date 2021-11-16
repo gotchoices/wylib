@@ -7,6 +7,7 @@ module.exports = {
   DataView:	require('./dbp.vue').default,
   DataEdit:	require('./dbe.vue').default,
   Dialog:	require('./dialog.vue').default,
+  Encrypt:	require('./encrypt.js'),
   MultiView:	require('./mlb.vue').default,
   MultiEdit:	require('./mdew.vue').default,
   Launcher:	require('./launch.vue').default,

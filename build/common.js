@@ -5,10 +5,11 @@ module.exports = {
   resolve: {
     alias: {
       vue: 'vue/dist/vue.js'
-    }
+    },
+//    mainFields: ['main', 'module'],	prefer CJS over ESM
   },
   plugins: [
-    new VueLoaderPlugin()
+    new VueLoaderPlugin(),
   ],
   module: {
     rules: [
@@ -18,11 +19,8 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            plugins: ['transform-custom-element-classes','transform-es2015-classes'],	//ES5
-            presets: [
-//              ["env", {"targets": {browsers: "chrome 68"}}]		//ES6
-              ["env", {"targets": "last 1 versions, > 2%, not dead"}]
-            ]
+            plugins: ['@babel/plugin-transform-classes',],
+            presets: ['@babel/preset-env'],
           }
         }
       },

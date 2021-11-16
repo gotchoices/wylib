@@ -30,7 +30,6 @@
 
 <script>
 const CountDown = 7
-const Subtle = window.crypto.subtle
 const KeyConfig = {
   name: 'RSA-PSS',
   modulusLength: 2048,
@@ -41,14 +40,19 @@ const SignConfig = {		//For signing with RSA-PSS
   name: 'RSA-PSS',
   saltLength: 128
 }
+const Crypto = window.crypto
+const Subtle = Crypto.subtle
 
 const Com = require('./common.js')
+const Encrypt = require('./encrypt.js')
 const Local = require('./local.js')
 const Wyseman = require('./wyseman.js')
 const Icons = require('./icons.js')
 const FileSaver = require('file-saver')
+const Buffer = require('buffer/').Buffer
 import MenuDock from './menudock.vue'
 import Button from './button.vue'
+var encrypt = new Encrypt(Crypto)
 
 const WmDefs = {		//English defaults, as we may not yet be connected
   conmenu:    {title:'Connect Menu', help:'Functions controlling how you connect to server sites'},
@@ -280,7 +284,7 @@ console.log("Export file:", resp.file, resp.p1, keyData.length, keyData)
               FileSaver.saveAs(blob, resp.file)		//File saved as a browser download
             }
           if (resp.p1)					//User provided a password
-            Com.encrypt(resp.p1, keysString).then(saveIt)	//So encrypt the file
+            encrypt.encrypt(resp.p1, keysString).then(saveIt)	//So encrypt the file
           else
             saveIt(keysString)				//Save unencrypted
         })
@@ -332,7 +336,7 @@ console.log("Error installing Key:", err.message)
             , dews = this.top().dewArray([['p',this.wm.conExpPass, 'password']])
           this.top().query('!diaQuery', dews, resp, (ans) => {	//Prompt for password
             if (ans != 'diaYes' || !resp.p) return
-            Com.decrypt(resp.p, JSON.stringify(fileData)).then(d => {
+            encrypt.decrypt(resp.p, JSON.stringify(fileData)).then(d => {
 //console.log("Decrypted::", d)
               installEm(JSON.parse(d))
             })

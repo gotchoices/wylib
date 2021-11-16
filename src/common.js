@@ -4,8 +4,8 @@
 //- TODO:
 //X- Add a trim option to stateCheck to remove obsolete properties?
 //- 
-const Crypto = window.crypto
-const Subtle = Crypto.subtle
+const Buffer = require('buffer/').Buffer
+
 module.exports = {
 
   langTpt() {return {title: null, help: null}},
@@ -112,42 +112,6 @@ module.exports = {
     return Buffer.from(buf).toString('base64')
       .replace(/\+/g,'-').replace(/\//g,'_')
       .replace(/=+$/,'')
-  },
-  
-  deriveKey: function(password, salt) {
-    salt = salt || Crypto.getRandomValues(new Uint8Array(8))
-    return Subtle.importKey("raw", Buffer.from(password), "PBKDF2", false, ["deriveKey"])
-      .then(key => Crypto.subtle.deriveKey({
-        name: "PBKDF2", 
-        salt, 
-        iterations: 10000,
-        hash: "SHA-256"
-      }, key, {
-        name: "AES-GCM",
-        length: 256
-      }, false, ["encrypt", "decrypt"])).then(key => [key, salt])
-  },
-  
-  encrypt: function(password, plain) {		//Encrypt a string to a JSON-encoded string
-    let iv = Crypto.getRandomValues(new Uint8Array(12))
-      , data = Buffer.from(plain)
-    return this.deriveKey(password).then(([key, salt]) =>
-      Subtle.encrypt({ name: "AES-GCM", iv }, key, data).then(ciphertext => (
-           '{"s":"' + Buffer.from(salt).toString('hex')
-        + '","i":"' + Buffer.from(iv).toString('hex')
-        + '","d":"' + Buffer.from(ciphertext).toString('base64')
-        + '"}'
-      )))
-  },
-
-  decrypt: function(password, encrypted) {	//Decrypt a JSON-encoded string to a string
-    let { s, i, d } = JSON.parse(encrypted)
-      , salt = Buffer.from(s, 'hex')
-      , iv = Buffer.from(i, 'hex')
-      , data = Buffer.from(d, 'base64')
-    return this.deriveKey(password, salt).then(([key]) => 
-      Subtle.decrypt({ name: "AES-GCM", iv }, key, data)).then(v => 
-        Buffer.from(new Uint8Array(v)).toString())
   },
   
   unabbrev(short, longs) {		//Turn an abbreviated string into one of a set of full strings
