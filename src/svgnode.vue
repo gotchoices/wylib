@@ -2,8 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Consolidate first two parameters of closest()?
-//- Should parameter of connection() be a point, rather than two parms?
+//- Old version, deprecated
 //- 
 <template>
     <g :transform="transform">

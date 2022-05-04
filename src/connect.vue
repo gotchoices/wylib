@@ -151,7 +151,7 @@ export default {
       }
     },
     keyCheck(site, cb) {			//Check for, and possibly generate connection keys
-console.log("Key check:")
+//console.log("Key check:")
       if (location.protocol == 'http:') {
         site.proto = 'ws:'			//Try to connect insecurely
         cb(site)
@@ -243,12 +243,12 @@ console.log("Error in signCheck:", err.message)
 
     exportList(sites, cb) {			//Create exportable array of sites/keys
       let expData = [], expKeys = sites.slice()		//Make local copy
-console.log(" exportList:", this.sites, expKeys)
+//console.log(" exportList:", this.sites, expKeys)
       if (!Subtle) return				//Can't do this for insecure connections?
       for (let i = expKeys.length-1; i >= 0; i--) {
         Subtle.exportKey('jwk', expKeys[i].priv).then(keyData=>{
           let k = expKeys[i]
-console.log(" key data:", keyData)
+//console.log(" key data:", keyData)
           expData.unshift({host:k.host, port:k.port, user:k.user, key:keyData})
           expKeys.splice(i,1)				//remove this key from our list
           if (expKeys.length <= 0) cb(expData)		//when last one done, run callback
@@ -260,7 +260,7 @@ console.log(" key data:", keyData)
     },
 
     exportKeys(ev) {					//Write selected keys to a file
-console.log("Export:", ev)
+//console.log("Export:", ev)
       let expKeys = []					//Make local copy of the keys
       for (let i = this.sites.length-1; i >= 0; i--) {		//Get just the selected ones, in reverse order
         if (this.sites[i].selected && this.sites[i].priv) expKeys.push(this.sites[i])
@@ -394,7 +394,7 @@ console.log("  URL ticket:", ticket)
 //console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
       this.$set(site, 'selected', null)			//GUI needs to react to this
-console.log("Processing saved key:", site)
+//console.log("Processing saved key:", site)
       if (site.key) Subtle.importKey('jwk', site.key, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv
         if (!conSite && site.host == last.host && site.port == last.port && site.user == last.user)

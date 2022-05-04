@@ -11,6 +11,7 @@ module.exports = {
   MultiView:	require('./mlb.vue').default,
   MultiEdit:	require('./mdew.vue').default,
   Launcher:	require('./launch.vue').default,
+  SvGraph1:	require('./svgraph1.vue').default,
   SvGraph:	require('./svgraph.vue').default,
   StructDoc:	require('./strdoc.vue').default,
   Window:	require('./win.vue').default,
