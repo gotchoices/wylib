@@ -1,6 +1,6 @@
 {
   "name": "wylib",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "WyattERP Application Builder Library",
   "main": "dist/wylib-bundle.js",
   "scripts": {
@@ -35,6 +35,7 @@
     "interactjs": "^1.10.3",
     "jsondiffpatch": "^0.4.1",
     "mathjs": "^9.4.5",
+    "regenerator-runtime": "^0.13.9",
     "slickgrid-es6": "^3.0.1",
     "webcola": "^3.4.0"
   },
