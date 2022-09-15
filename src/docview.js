@@ -2,7 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //- 
-import Wyseman from './wyseman.js'
+const Wyseman = require('./wyseman.js')
 var counter = 0
 
 module.exports = function(view, options) {

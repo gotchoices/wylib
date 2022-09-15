@@ -11,7 +11,7 @@
 //- 
 //- 
 const Com = require('./common')
-const Encrypt = require('./encrypt')
+const Encrypt = require('wyseman/lib/encrypt')
 
 const LocalTag = 'wylib_'
 const LocalInfo = LocalTag + 'info'

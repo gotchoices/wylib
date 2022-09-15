@@ -3,8 +3,9 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//- Password-protect keys exported to a file (Crypto.wrapkey?)
-//- Key encryption must remain compatible with Client library
+//- Move import/export functions to wyseman/lib/client_ws.js
+//-   Password-protect keys exported to a file (Crypto.wrapkey?)
+//-   Key encryption must remain compatible with Client library
 //- 
 
 <template>
@@ -40,16 +41,19 @@ const SignConfig = {		//For signing with RSA-PSS
   name: 'RSA-PSS',
   saltLength: 128
 }
+const httpPort = 8000
 const Crypto = window.crypto
 const Subtle = Crypto.subtle
 
-const Com = require('./common.js')
-const Encrypt = require('./encrypt.js')
-const Local = require('./local.js')
-const Wyseman = require('./wyseman.js')
-const Icons = require('./icons.js')
+const Com = require('./common')
+const Local = require('./local')
+const Icons = require('./icons')
+const Wyseman = require('./wyseman')
 const FileSaver = require('file-saver')
 const Buffer = require('buffer/').Buffer
+const Encrypt = require('wyseman/lib/encrypt')
+const Message = require('wyseman/lib/client_msg')
+const ClientWs = require('wyseman/lib/client_ws')
 import MenuDock from './menudock.vue'
 import Button from './button.vue'
 var encrypt = new Encrypt(Crypto)
@@ -91,6 +95,8 @@ export default {
     tryEvery:		CountDown,	//Fixme: reimplement auto retry
     retryIn:		CountDown,
     tryTimer:		null,
+    ws:			null,		//Websocket to backend
+    conn:		null,		//Connection handler
   }},
   inject: ['top'],
   computed: {
@@ -150,36 +156,8 @@ export default {
         this.retryIn = this.tryEvery = CountDown		//Retry if disconnected again
       }
     },
-    keyCheck(site, cb) {			//Check for, and possibly generate connection keys
-//console.log("Key check:")
-      if (location.protocol == 'http:') {
-        site.proto = 'ws:'			//Try to connect insecurely
-        cb(site)
-      } else if (site.priv) {			//We already have a private key
-        cb(site)
-      } else if (Subtle) {			//Subtle API found
-//console.log("  generating key:")
-        Subtle.generateKey(KeyConfig, true, ['sign','verify']).then(keyPair => {
-          site.priv = keyPair.privateKey
-          return Subtle.exportKey('jwk', keyPair.publicKey)
-        }).then(pubKey => {
-//console.log("  jwk:", Object.keys(pubKey), pubKey, JSON.stringify(pubKey))
-          site.pub = btoa(JSON.stringify(pubKey))	//Transmit base64 version of jwk
-//console.log("  pub:", site.pub)
-          cb(site)
-        }).catch(err => {
-console.log("Error in keyCheck:", err.message)
-          this.top().error(this.wm.conCryptErr, err.message)
-        })
-      } else {
-        this.top().error(this.wm.conNoCrypto)
-      }
-    },
     userCheck(site, cb) {			//Make sure the key has a username
 //console.log("User check:", site, this.db)
-      if (this.db) {				//Pass db config info to connect query
-        site.db = Com.buf2b64url(Buffer.from(JSON.stringify(this.db)))
-      }
       if (site.user)
         cb()
       else this.top().input(this.wm.conUsername, (ans, data)=>{	//Prompt for username
@@ -192,46 +170,39 @@ console.log("Error in keyCheck:", err.message)
         }
       })
     },
-    signCheck(site, cb) {			//Add a current signature with the key
-//console.log("Sign check:", site)
-      if (site.token) cb()			//Don't need to sign if our credential is a connection token
-      else Com.ajax(window.location.origin + '/clientinfo', (data)=>{
-        let encoder = new TextEncoder()
-          , { ip, cookie, userAgent, date } = data
-          , message = JSON.stringify({ip, cookie, userAgent, date})	//Must rebuild in this same order in the backend!
-//console.log("  Client data:", data, date, site.priv, Subtle)
-//console.log("  Message:", message)
-        if (site.proto == 'ws:') {
-          cb(site)
-        } else if (Subtle) {
-          Subtle.sign(SignConfig, site.priv, encoder.encode(message)).then((sign)=>{
-//console.log("  signed:", sign, typeof sign, date)
-            site.sign = Com.buf2b64url(Buffer.from(sign))
-            site.date = date
-            cb()
-          }, (err)=>{
-console.log("Error in signCheck:", err.message)
-            this.top().error(this.wm.conCryptErr, err.message)
-          })
-        }
-      })
-    },
     connectSite(site = this.selectedSite) {		//Make connection to a specified site
 //console.log("Connecting to:", site, window.location.origin)
-      this.keyCheck(site, ()=>this.userCheck(site, ()=>{
-        this.signCheck(site, ()=>{
-          this.tryEvery = CountDown			//Retry if disconnected
-          this.lastConnected = site			//Remember where we last connected to
-          Wyseman.connect(site, (errCode)=>{
-            this.top().error(this.wm[errCode])
+
+      this.userCheck(site, ()=>{
+        this.conn.uri(site).then(wsURI => {
+          let address = site.host + ':' + site.port
+          this.ws = new WebSocket(wsURI)
+          this.ws.addEventListener('close', event => {
+            Wyseman.onClose()
+            this.top().error(this.wm.conConErr)
           })
-          delete site.token				//No longer a connection token, now a credential
-          Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
-          this.exportList(this.sites, (keyData)=>{	//Save keys locally in exportable format
-            Local.set(SiteKey, keyData)
+          this.ws.addEventListener('error', event => {
+            Wyseman.onClose()
+            this.top().error(this.wm.conConErr + ': ' + event.error)
           })
-        })
-      }))
+          this.ws.addEventListener('message', event => {
+            let m = event.data
+            Wyseman.onMessage(m)}
+          )
+          this.ws.addEventListener('open', () => {
+//console.log("OPEN!")
+            delete site.token				//No longer a connection token, now uses a key
+            Local.set(LastKey, {host:site.host, port:site.port, user:site.user})
+            this.exportList(this.sites, (keyData)=>{	//Save keys locally in exportable format
+              Local.set(SiteKey, keyData)
+            })
+            Wyseman.onOpen(address, m => {
+//console.log("Sending:", m)
+              this.ws.send(m)
+            })
+          })	//on open
+        })	//uri
+      })	//userCheck
     },
     delSites(ev) {					//Remove site from our favorites list
       for (let i = this.sites.length-1; i >= 0; i--) {
@@ -253,7 +224,7 @@ console.log("Error in signCheck:", err.message)
           expKeys.splice(i,1)				//remove this key from our list
           if (expKeys.length <= 0) cb(expData)		//when last one done, run callback
         },(err)=>{
-//console.log("Error in exportSites:", err.message)
+console.log("Error in exportList:", err.message)
           this.top().error(this.wm.conCryptErr, err.message)
         })
       }
@@ -348,7 +319,7 @@ console.log("Error installing Key:", err.message)
     disconnect() {
 //console.log("Disconnect:")
       this.tryEvery = null		//And don't retry connect
-      Wyseman.close()
+      this.ws.close()
     },
 
     retryConnect() {
@@ -368,10 +339,18 @@ console.log("Error installing Key:", err.message)
   },
 
   created: function() {
+    this.conn = new ClientWs({
+      webcrypto: Crypto,			// debug: console.log,
+      httpPort,
+      fetch: u => fetch(u),
+      listen: this.db,
+      saveKey: jKey => {
+        Local.set(LastKey, {host:jKey.host, port:jKey.port, user:jKey.user})
+console.log("saveKey:", jKey, JSON.stringify(jKey.priv))
+      }
+    })		//Websocket connection handler
+//    this.mess = new Message(Local, console.log)		//Message handler/cache
     Wyseman.langDefs(this.env.wm, WmDefs)
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
   },
 
   mounted: function () {
@@ -400,6 +379,7 @@ console.log("  URL ticket:", ticket)
         if (!conSite && site.host == last.host && site.port == last.port && site.user == last.user)
           this.connectSite(site)			//Automatically connect
       }, (err)=>{
+console.log("Error importing key:", site)
         this.top().error(this.wm.conCryptErr, err.message)
       })
     })
