@@ -1,5 +1,8 @@
 Change Log:
 
+1.0.29	2022-Sep
+	- Adapt to wyseman platform independent client API
+
 1.0.27	2021-Nov
 	- Update webpack and other dependencies
 	- Improve UI encrypted connection
