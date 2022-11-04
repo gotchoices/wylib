@@ -287,11 +287,11 @@ console.log("Clone to popup:", popId)
     },
 
     closeRep(repTag, reopen) {
-console.log("Close regular report:", repTag)
       let oldState = this.state.reports[repTag]
+console.log("Close regular report:", repTag, oldState)
       this.$delete(this.state.reports, repTag)
       if (reopen) this.reportWin(repTag, oldState.src, oldState.client.config)
-      if (oldState.popWin) oldState.popWin.close()
+      if (oldState && oldState.popWin) oldState.popWin.close()
     },
   },
 
