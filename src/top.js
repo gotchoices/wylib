@@ -151,7 +151,7 @@ module.exports = function topHandler(context, amSlave) {
 
   this.diaButs1 = ['diaOK'],
   this.diaButs2 = ['diaCancel','diaYes'],
-  this.diaButs3 = ['diaCancel','diaApply','diaYes'],
+  this.diaButs3 = ['diaCancel','diaApply','diaOK'],
   this.error = function(lang, cb) {
     this.postModal(lang, {reason:'diaError', buttons: this.diaButs1, dews:[], data:{}, cb})
   }
