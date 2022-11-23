@@ -7,7 +7,6 @@
 //-   Password-protect keys exported to a file (Crypto.wrapkey?)
 //-   Key encryption must remain compatible with Client library
 //- 
-
 <template>
   <div class="wylib-connect">
     <div class="header">
@@ -37,11 +36,6 @@ const KeyConfig = {
   publicExponent: new Uint8Array([1,0,1]),
   hash: 'SHA-256'
 }
-const SignConfig = {		//For signing with RSA-PSS
-  name: 'RSA-PSS',
-  saltLength: 128
-}
-const httpPort = 8000
 const Crypto = window.crypto
 const Subtle = Crypto.subtle
 
@@ -52,7 +46,6 @@ const Wyseman = require('./wyseman')
 const FileSaver = require('file-saver')
 const Buffer = require('buffer/').Buffer
 const Encrypt = require('wyseman/lib/encrypt')
-const Message = require('wyseman/lib/client_msg')
 const ClientWs = require('wyseman/lib/client_ws')
 import MenuDock from './menudock.vue'
 import Button from './button.vue'
@@ -341,7 +334,7 @@ console.log("Error installing Key:", err.message)
   created: function() {
     this.conn = new ClientWs({
       webcrypto: Crypto,			// debug: console.log,
-      httpPort,
+      httpPort: location.port,
       fetch: u => fetch(u),
       listen: this.db,
       saveKey: jKey => {
@@ -349,7 +342,6 @@ console.log("Error installing Key:", err.message)
 console.log("saveKey:", jKey, JSON.stringify(jKey.priv))
       }
     })		//Websocket connection handler
-//    this.mess = new Message(Local, console.log)		//Message handler/cache
     Wyseman.langDefs(this.env.wm, WmDefs)
   },
 
