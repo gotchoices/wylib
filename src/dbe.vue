@@ -68,7 +68,7 @@ export default {
       let acts = []
 //console.log("actMenu:", this.metaStyles)
       if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
-        let name = act.name
+        let name = act.name			//;console.log("  act:", name, act)
         acts.push({idx: name, icon: 'wand', lang: this.viewMeta.msg[name] || {title:name}, call: (ev)=>{this.perform(ev, act)}})
       })
       return acts
@@ -293,7 +293,7 @@ console.log("Update data:", ev, JSON.stringify(fields))
     },
     
     perform(event, action) {
-console.log("Perform action:", action, event.shiftKey)
+//console.log("Perform action:", action, event.shiftKey)
       let data = {}
         , view = this.state.dbView
         , diaTag = ['action', view, action.name].join(':')

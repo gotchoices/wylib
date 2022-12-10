@@ -4,15 +4,14 @@
 // TODO:
 //X- Behaves analogously to a popup window as far as report module needs
 //- Can this auto size its popup window based on content size?
-//- Reinstate report menu?
-//- Make "run" button work
-//- Report options editable from report menu
+//- Can reports/popups remember their geometry from previous runs?
+//- Is a report menu needed for anything?
 //- Reports with options launched in internal window don't need dialog box
 //- 
 
 <template>
   <div class="wylib-rep">
-<!-- Do we really need a menu here?
+<!-- Do we need a menu here?
     <div ref="header" class="header">
       <wylib-menudock ref="headMenu" :state="state.dock" :config="dockConfig" :env="env" :lang="wm.repMenu"/>
       <div class="headerfill"/>
@@ -45,9 +44,9 @@ export default {
     wm() {return this.env.wm},
     pr() {return this.env.pr},
 //    tagTitle() {return this.tag || this.title},
-    dockConfig() { return [
-      {idx: 'run', lang: this.wm.repRun,     call: this.run,     icon: 'wand',   shortcut: true},
-    ]},
+//    dockConfig() { return [
+//      {idx: 'run', lang: this.wm.repRun,     call: this.run,     icon: 'wand',   shortcut: true},
+//    ]},
   },
   methods: {
     run(ev) {
@@ -76,7 +75,7 @@ console.log("Run report:", ev)
   mounted: function () {
     let action = this.state.config ? this.state.config.action : null
       , actTag = this.state.config ? this.state.config.actTag : null
-//console.log("Report mounted:", this.ready, this.state.config, actTag)
+//console.log("Report mounted:", this.ready, this.state.config, actTag, this.render)
     if (actTag)
       this.$parent.$emit('customize', action.lang, actTag, true, ()=>{return this.dirty})
 //    this.$parent.$emit('swallow', this.$refs.header)		//Only if we re-enable a report menu
@@ -93,6 +92,7 @@ console.log("Run report:", ev)
   },
 
 //  beforeDestroy: function() {
+//    this.bus.master.$emit('destroy', this.state.config)		;console.log('Report destroy')
 //  },
 }
 </script>

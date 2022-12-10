@@ -103,6 +103,7 @@ export default {
     },
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
       let isValid = false
+//console.log("Valid top:", this.field, this.state.input)
       if (this.state.input == 'chk' || this.state.input == 'inf') {
         isValid = true
       } else if (this.state.input == 'pdm') {
@@ -116,7 +117,7 @@ export default {
         else
           isValid = RegExp(this.template).test(this.userValue)
       }
-//console.log("Valid:", this.field, this.userValue, this.template, this.disabled, isValid)
+//console.log(" valid res:", this.field, this.userValue, this.template, this.disabled, isValid)
       return isValid
     },
     genStyle() { return {			//Generate style, based on data state
@@ -174,7 +175,7 @@ export default {
     this.userValue = this.mapValue
   },
   beforeMount: function() {
-//console.log("Dew state:", this.field, this.value, this.userValue, JSON.stringify(this.state))
+//console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
     Com.stateCheck(this)
     
 //    if (!('initial' in this.state)) this.state.initial = null

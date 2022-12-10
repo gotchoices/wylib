@@ -169,7 +169,7 @@ export default {
 //console.log("Found iframe:", frame)
       if (frame) frame.contentWindow.print()
     },
-    popup() {
+    popup() {			// Generate printable version of a window
       let pop = this.popWin, body, style, popId = this.id+'popUp'
 console.log("Clone to popup:", popId)
       if (!pop || pop.closed) {
@@ -256,23 +256,21 @@ console.log("Clone to popup:", popId)
         , ready = (iframe) => {}	//Dummy function can't survive reload in state
         , wasPosted = winState ? winState.posted : null
         , foundState = false
-//console.log("Report win state:", winState, repTag, this.state.reports)
+//console.log("ReportWin state:", winState, repTag, Object.keys(this.state.reports))
       if (!winState) {
         winState = {posted: false, x:25, y:25, client:{src, name:repTag}, ready}
         this.$set(this.state.reports, repTag, winState)	//Create new report record
       } else {
-        if (!winState.ready) winState.ready = ready	//Will have been lost in any reload
+        if (!winState.ready) winState.ready = ready	//Function will have been lost in any reload
         foundState = true				//Found existing report status
       }
-      winState.client.config = config
+      winState.client.config = config			//;console.log("Report config:", config, popUp)
       if (popUp) {			//Generate browser popup
         winState.posted = false
         this.$nextTick(()=>{		//Let any report iframe die before launching the popup
-//console.log("!pop:")
-          let win = window.open(src, repTag, 'height=600,width=600').onbeforeunload = () => {
-//console.log("Pop closed:", repTag, winState.posted)
-            if (!winState.posted) this.closeRep(repTag)			//If user closed the window
-          }
+//console.log("!pop:", src, "tag:", repTag, winState.posted)
+          if (!window.open(src, repTag, 'height=600,width=600'))
+            this.top.error(this.wm.dbePopupErr)
         })
       } else {				//Regular internal report window
 //console.log("!regular:", winState, winState.posted)
@@ -288,7 +286,7 @@ console.log("Clone to popup:", popId)
 
     closeRep(repTag, reopen) {
       let oldState = this.state.reports[repTag]
-console.log("Close regular report:", repTag, oldState)
+//console.log("closeRep:", repTag, oldState, reopen)
       this.$delete(this.state.reports, repTag)
       if (reopen) this.reportWin(repTag, oldState.src, oldState.client.config)
       if (oldState && oldState.popWin) oldState.popWin.close()
@@ -344,7 +342,7 @@ console.log("Close regular report:", repTag, oldState)
 
     this.$on('report', (config)=>{
       let { action, repTag, info } = config
-//console.log("Win got message to launch report: ", config)
+//console.log("Win got message to relaunch report: ", config)
       this.top.submitDialog(repTag, info)
     })
   },
@@ -376,6 +374,7 @@ console.log("Close regular report:", repTag, oldState)
 //console.log("Win state template:", this.id, this.stateTag, this.state.fresh, savedState)
       if (savedState) {
         delete savedState.x; delete savedState.y	//So window doesn't land right on top of the last one
+        delete savedState.posted			//Honor current intent as whether visible
         Object.assign(this.state, savedState)		//Comment line for debugging from default state
 //console.log("Win restoring state:", this.id, savedState)
       }

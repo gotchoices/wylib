@@ -174,8 +174,8 @@ module.exports = function topHandler(context, amSlave) {
   this.dialog = function(message, dews, data, cb, tag='dialog', buttons=this.diaButs2) {
     if (this.context.state && this.context.state.dialogs) {
 //console.log("Dialog launch", tag, dews, data)
-      dews.forEach(dew=>{
-        if (!(dew.field in data)) data[dew.field] = null
+      dews.forEach(dew=>{			//;console.log(" dialog dew", dew)
+        if (!(dew.field in data)) data[dew.field] = dew.styles?.initial || dew.values?.[0]?.value
       })
       let client = {message, reason:'diaQuery', buttons, dews, data, tag, cb}
         , newState = {posted: true, client, x:50, y:50}
@@ -198,14 +198,17 @@ module.exports = function topHandler(context, amSlave) {
     }
     let { buttonTag, options, dialogIndex, popUp} = info
       , name = action.name
-      , actTag = ['action', view, name].join(':')
+      , actTag = ['action', view, name].join(':')	//tag unique to this action
       , getKeys = () => {				//Try to get keys from dbe message bus, or fall back to key value in info
         let fromFunc = (bus && bus.mom) ? bus.mom() : null	//Will fail if restoring from saved state
 //console.log("Get keys:", fromFunc || info.keys)
         return fromFunc || info.keys			//We will have to rely on stored key from last session
       }
-      , repTag = (dialogIndex != null) ? (actTag + ':' + dialogIndex) : (action.single ? actTag : WinCom.unique(actTag))
+      , repTag = (dialogIndex != null)			//Tag unique to this report window
+        ? (actTag + ':' + dialogIndex) 			//link report to its option dialog
+        : (action.single ? actTag : WinCom.unique(actTag))
       , config = {repTag, view, action, info, actTag}	//Will save this for restore purposes
+
     info.keys = getKeys()				//Remember the last key values too
 //console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
 //console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp, "bus:", bus)
@@ -226,9 +229,16 @@ module.exports = function topHandler(context, amSlave) {
     
     let perform = (target, message, win) => {		//Respond to messages from report window
       let {request, data} = message ? message : {}
-//console.log("Report query:", repTag, 'tgt:', target, message)
+//console.log("Report perform:", repTag, 'tgt:', target, message)
 
-      if (target == 'report') {
+      if (target == 'unload') {				//Window could be closing
+//console.log("Got unload from window:", repTag, "dirty:", data)
+        setTimeout(() => {				//;console.log("  3 closed:", win.closed)
+          if (win.closed)				//If user closed popup window
+            this.context.closeRep(repTag)		//Remove the control record
+        }, 500)
+
+      } else if (target == 'report') {
 //console.log("Report:", repTag, "dirty:", data)
         this.context.repBus.notify(repTag, request, data)
 
@@ -240,7 +250,7 @@ module.exports = function topHandler(context, amSlave) {
 //console.log("DB answers:", content, "error:", error)
           if (error) {this.error(error); return}
           if (win && content)
-            win.postMessage({request:'populate', data:{format:action.format, content, config}}, location.origin)	//send content to report window
+            win.postMessage({request:'populate', data:{render:action.render, content, config}}, location.origin)	//send content to report window
         })
 
       } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
@@ -258,7 +268,7 @@ module.exports = function topHandler(context, amSlave) {
       }
     }
     
-    if (action.format) {				//This action is a report, has a window
+    if (action.render) {				//This action is a report, has a window
       WinCom.listen(repTag, perform)			//Get ready to communicate with it
       this.context.reportWin(repTag, ReportFile, config)	//Create the window
     } else {						//Immediate query, execute it

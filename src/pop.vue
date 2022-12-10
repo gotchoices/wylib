@@ -18,7 +18,7 @@
       </wylib-modal>
     </div>
     <div class="pop-content">
-      <div v-if="state.format == 'html'" v-html="state.content"/>
+      <div v-if="state.render == 'html'" v-html="state.content"/>
       <component v-else :is="compName" :env="env" :state="state.content" :bus="compBus" @submit="submit"/>
 <!--      <slot></slot> -->
     </div>
@@ -39,7 +39,7 @@ export default {
 //    tag:	{type: String},
 //  },
   data() { return {
-    state:	{format: 'dialog', content: {}},
+    state:	{render: 'dialog', content: {}},
     modal:	{posted: false, client: {}},
     top:	null,
     env:	{wm: {h:{}, t:{}}, pr: require('./prefs')},
@@ -53,9 +53,9 @@ export default {
   computed: {
     id() {return 'pop_' + this._uid + '_'},
     compName() {		//What standard component we will use
-      if (!this.state.format || this.state.format == 'html') return null
-      if (this.state.format.includes('-')) return this.state.format
-      return 'wylib-' + this.state.format
+      if (!this.state.render || this.state.render == 'html') return null
+      if (this.state.render.includes('-')) return this.state.render
+      return 'wylib-' + this.state.render
     },
   },
   methods: {
@@ -75,15 +75,16 @@ export default {
 
     this.top.listenWin('', (request, data) => {		//Listen for messages from '' (master window)
 //console.log("Popup got message:", request, "Data:", data)
-      if (request == 'populate' && data.format) {
-//console.log("Popup got populate:", format, content, config)
-        let { format, content, config } = data
+      if (request == 'populate' && data.render) {
+//console.log("Popup got populate:", data)
+        let { render, content, config } = data
           , { action } = config || {}
-        this.state.format = format
+        this.state.render = render
         this.state.content = content
 //        this.config = config				//Save original report configuration
         if (window.opener && action) window.document.title = action.lang.title
-        if (format != 'html') this.top.momWin({request:'env'})	//Components will need language and prefs
+        if (render != 'html')			//Not straight html, some vue component will interpret content
+          this.top.momWin({request:'env'})	//Vue components will need language and prefs
 
       } else if (request == 'env' && data) {
         Object.assign(this.env, data)
