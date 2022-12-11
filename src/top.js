@@ -118,7 +118,7 @@ module.exports = function topHandler(context, amSlave) {
     return retArr
   },
 
-  this.wmCheck = function(msg) {		//Is this a shortcut wyseman language code?
+  this.wmCheck = function(msg) {		//Is the message a shortcut wylib language code?
     if (msg[0] == '!' && ('env' in this.context)) {
       let tag = msg.slice(1)
         , wm = this.context.env.wm
@@ -128,22 +128,38 @@ module.exports = function topHandler(context, amSlave) {
   },
 
   this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
-//console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
-    if (typeof msg == 'string') {
+console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
+    if (typeof msg == 'string')
       return this.wmCheck(msg)
-    } else if (typeof msg == 'object') {
-      if (msg.title && msg.help) return msg
-      else if (msg.lang && msg.lang.title && msg.lang.help)	//reports may use this format
-        return msg.lang
-      else if (msg.message) return msg.message
-      else if (msg.code) return this.context.wm.winUnCode.title + ": " + msg.code
-      else return this.makeMessage('!winUnknown')
-    } else return msg
+    if (typeof msg == 'object') {
+      if (msg.title && msg.help)
+        return msg
+      if (msg.lang?.title && msg.lang?.help) {
+        if (msg.detail || msg.message)		//DB errors
+          return {
+            title: msg.lang.title + '; ' + msg.lang.help,
+            help: msg.message ?? msg.detail
+          }
+        return msg.lang				//reports
+      }
+      if (msg.message && msg.detail)
+        return {
+          title: msg.message,
+          help: msg.detail
+        }
+      if (msg.code)
+        return {
+          title: this.context.wm.winUnCode.title + ": " + msg.code,
+          help: msg.message ?? msg.detail ?? this.context.wm.winUnCode.help
+        }
+      return this.makeMessage('!winUnknown')
+    }
+    return msg
   }
     
   this.postModal = function(message, conf) {
     if (this.context.modal) {
-      let client = Object.assign({message: this.makeMessage(message)}, conf)
+      let client = Object.assign({message: this.makeMessage(message, conf)}, conf)
 //console.log("Modal:", this.context.modal, client)
       Object.assign(this.context.modal, {posted: true, client})
     }

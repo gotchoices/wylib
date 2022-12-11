@@ -2,12 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Implement auto-execute option: execute the current (or first) row on each load/reload
-//X- Should be able to reset to default column specs
-//X- Reload should retain sort fields
-//X- An initial load should respect existing sort fields, and the autoexecute flag
-//X- Toggle display of footers
-//X- Display the number of loaded records
 //- Initial sort order comes from wyseman, apply to indicators
 //- If up/down button takes selection off screen, adjust to show highlighted record
 //- Retain previous scroll position after reload

@@ -18,7 +18,7 @@
       </wylib-modal>
     </div>
     <div class="pop-content">
-      <div v-if="state.render == 'html'" v-html="state.content"/>
+      <div v-if="state.render == 'html'" v-html="parseContent"/>
       <component v-else :is="compName" :env="env" :state="state.content" :bus="compBus" @submit="submit"/>
 <!--      <slot></slot> -->
     </div>
@@ -57,6 +57,16 @@ export default {
       if (this.state.render.includes('-')) return this.state.render
       return 'wylib-' + this.state.render
     },
+    parseContent() {		//Does content have language codes in it?
+      let cont = this.state.content
+      if (typeof cont == 'string')
+        return cont
+      else if (Array.isArray(cont))
+        return cont.map(el => {
+          let m = el.match(/^!/)
+          return el
+        }).join('')
+    }
   },
   methods: {
     submit(request, data) {		//If the widget we contain emits 'submit'

@@ -15,7 +15,7 @@ window.addEventListener('message', function (ev) {	//Listen for messages from re
 //if (!ev.data.payload) console.log("WinCom got message:", ev.source, "Data:", ev.data, "wins:", Object.keys(winCBs).length)
 
   if (request && winCBs[name]) {			//If this window is registered
-//console.log("Got window request:", request, "from:", name)
+//console.log("Got window request:", request, "from:", name, "data:", data)
     if (!(name in repWins)) repWins[name] = ev.source	//Remember how to call this child
     winCBs[name](request, data, ev.source)		//call its handler
   }

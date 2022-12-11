@@ -2,9 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Implement togglable "not" button before operator
-//X- Can save/restore searches from database
-//X- Implement full suite of matching operators (see old TCL wylib)
 //- Implement case-independent matches
 //- Adjust window size to content, unless/until window has been manually sized
 //- 
