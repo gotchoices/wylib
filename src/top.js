@@ -128,7 +128,7 @@ module.exports = function topHandler(context, amSlave) {
   },
 
   this.makeMessage = function(msg) {		//Make a dialog message, possibly from a message object
-console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
+//console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
     if (typeof msg == 'string')
       return this.wmCheck(msg)
     if (typeof msg == 'object') {
@@ -245,7 +245,7 @@ console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
     
     let perform = (target, message, win) => {		//Respond to messages from report window
       let {request, data} = message ? message : {}
-//console.log("Report perform:", repTag, 'tgt:', target, message)
+//console.log("Report perform:", repTag, 't:', target, 'm:', message)
 
       if (target == 'unload') {				//Window could be closing
 //console.log("Got unload from window:", repTag, "dirty:", data)
@@ -255,7 +255,7 @@ console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
         }, 500)
 
       } else if (target == 'report') {
-//console.log("Report:", repTag, "dirty:", data)
+//console.log("Report report:", repTag, "dirty:", data)
         this.context.repBus.notify(repTag, request, data)
 
       } else if (target == 'control') {			//Report window content is mounted and asking for content from the control layer on the backend
@@ -269,7 +269,7 @@ console.log("makeMessage:", msg, typeof msg, msg[0], this.context.wm)
             win.postMessage({request:'populate', data:{render:action.render, content, config}}, location.origin)	//send content to report window
         })
 
-      } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
+      } else if (target == 'editor') {				//Content is a record editor and asking for an editing sub-command to be performed
 //console.log("Command for Dbe:", request, "data:", data, "keys:", info.keys)
         if (bus && bus.mom) bus.mom(request, data, info.keys[0], ()=>{
           win.postMessage({request:'child', data:'clean'}, location.origin)	//Confirm update with report window

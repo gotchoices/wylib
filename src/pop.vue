@@ -59,13 +59,13 @@ export default {
     },
     parseContent() {		//Does content have language codes in it?
       let cont = this.state.content
+//console.log("Pop content:", typeof cont)
       if (typeof cont == 'string')
         return cont
       else if (Array.isArray(cont))
-        return cont.map(el => {
-          let m = el.match(/^!/)
-          return el
-        }).join('')
+        return cont.join('')
+      else if (typeof cont == 'object')
+        return JSON.stringify(cont)
     }
   },
   methods: {

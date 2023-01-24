@@ -280,12 +280,12 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
         , changes = false
         , newSections = []
         , lastNode = null
-console.log("Left direct edit", doc, doc.childNodes)
+//console.log("Left direct edit", doc, doc.childNodes)
       for (let idx = doc.childNodes.length - 1; idx >= 0; idx--) {	//Did the edit produce multiple nodes
         let node = doc.childNodes[idx], name = node.nodeName.toLowerCase()
-console.log("  node:", idx, node, name)
+//console.log("  node:", idx, node, name)
         if (node.nodeName != '#text' && name && !LegalTags.includes(name)) {
-console.log("    remove:", idx, name, node.childNodes, 'last:', lastNode)
+//console.log("    remove:", idx, name, node.childNodes, 'last:', lastNode)
           if (name == 'div') {
             newSections.unshift(node.innerHTML)
           }

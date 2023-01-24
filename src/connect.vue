@@ -44,7 +44,6 @@ const Local = require('./local')
 const Icons = require('./icons')
 const Wyseman = require('./wyseman')
 const FileSaver = require('file-saver')
-const Buffer = require('buffer/').Buffer
 const Encrypt = require('wyseman/lib/encrypt')
 const ClientWs = require('wyseman/lib/client_ws')
 import MenuDock from './menudock.vue'
