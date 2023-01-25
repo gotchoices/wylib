@@ -30,12 +30,6 @@
 
 <script>
 const CountDown = 7
-const KeyConfig = {
-  name: 'RSA-PSS',
-  modulusLength: 2048,
-  publicExponent: new Uint8Array([1,0,1]),
-  hash: 'SHA-256'
-}
 const Crypto = window.crypto
 const Subtle = Crypto.subtle
 
@@ -46,6 +40,7 @@ const Wyseman = require('./wyseman')
 const FileSaver = require('file-saver')
 const Encrypt = require('wyseman/lib/encrypt')
 const ClientWs = require('wyseman/lib/client_ws')
+const { KeyConfig } = require('wyseman/lib/crypto')
 import MenuDock from './menudock.vue'
 import Button from './button.vue'
 var encrypt = new Encrypt(Crypto)
