@@ -10,7 +10,7 @@
 <template>
   <div class="wylib-app">
     <div class="header">
-      <div class="title" :title="appLang.help">{{ appLang.title }}</div>
+      <div class="title" :title="appLang?.help">{{ appLang?.title }}</div>
       <div v-if="pw.ready" class="status">
         <button @click="conMenuPosted=!conMenuPosted" :title="wm.h.appServer">{{wm.t.appServer || 'Server'}}:</button>
         <span :title="wm.h.appServerURL">{{ siteConnected }}</span>
@@ -21,8 +21,8 @@
     <label v-if="!pw.ready">{{pw.prompt}}:<input type='password' @keyup.enter="submitPW" autofocus/></label>
     <div v-if="pw.ready" class="appbody" @click="appClick">
       <div class="tabset">
-        <div v-for="tab in tabs" class="tab" :title="tab.lang?tab.lang.help:null" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
-          {{ (tab.lang ? tab.lang.title : null) || tab.title }}
+        <div v-for="tab in tabs" class="tab" :title="tab?.lang?.help" @click="tabSelect(tab.tag)" :class="tabClass(tab.tag)">
+          {{ tab?.lang?.title || tab.title }}
         </div>
         <div class="tab-filler">
           <wylib-button icon="menu" :env="env" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>

@@ -18,13 +18,13 @@
   <div class="wylib wylib-menu">
     <div class="menu" title=''>
       <table>
-        <tr v-for="item in config" :key="item.idx" @click.stop="execute(item.call, $event, item)" v-on:mouseenter="enterItem($event, item)" :title="(item.lang?item.lang.help:null)">
+        <tr v-for="item in config" :key="item.idx" @click.stop="execute(item.call, $event, item)" v-on:mouseenter="enterItem($event, item)" :title="item?.lang?.help">
           <td v-for="fld in layout" :key="fld">
             <svg v-if="fld=='icon'" class="icon" 
               style="height:1em; width:1em" :style="iconStyle(item.toggled)" v-html="iconSvg(item.icon)">
             </svg>
             <div v-else-if="fld=='lang'">
-              {{ (item.lang?item.lang.title:null) || item.lang || item.idx }}
+              {{ item?.lang?.title ?? item?.lang ?? item.idx }}
             </div>
             <svg v-else-if="fld=='input' && item.menu" class="icon" 
               style="height: 1em; width: 1em" v-html="iconSvg('play3')">

@@ -137,7 +137,7 @@ module.exports = function topHandler(context, amSlave) {
       if (msg.lang?.title && msg.lang?.help) {
         if (msg.detail || msg.message)		//DB errors
           return {
-            title: msg.lang.title + '; ' + msg.lang.help,
+            title: msg.lang?.title + '; ' + msg.lang?.help,
             help: msg.message ?? msg.detail
           }
         return msg.lang				//reports

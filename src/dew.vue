@@ -21,13 +21,13 @@
 //- 
 
 //<!-- template>		Changed to render function below
-//  <div class="wylib wylib-dew" :title="lang ? lang.help : null">
+//  <div class="wylib wylib-dew" :title="lang?.help">
 //    <div v-if="state.input == 'chk'" class="check" :style="genStyle">
 //      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
 //    </div>
 //    <textarea ref="input" v-else-if="state.input == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
 //    <select ref="input" v-else-if="state.input == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
-//      <option v-for="val in pdmValues" :label="val.title" :value="val.value" :title="val.help"/>
+//      <option v-for="val in pdmValues" :label="val?.title" :value="val?.value" :title="val?.help"/>
 //    </select>
 //    <input ref="input" v-else-if="state.input == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
 //    <input ref="input" v-else :type="state.input" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
@@ -136,13 +136,13 @@ export default {
     },
     height() {					//Specified height in characters
 //console.log("Height:", this.state.size, this.dims)
-      return this.dims[1] || this.pr.dewMleHeight || 1
+      return this.dims[1] ?? this.pr.dewMleHeight ?? 1
     },
     width() {					//In characters
 //console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth)
-      return this.dims[0] || (
-        this.state.input == 'mle' ? (this.pr.dewMleWidth || 40) : 
-          (this.state.input != 'chk' ? (this.pr.dewEntWidth || 4) : 2)
+      return this.dims[0] ?? (
+        this.state.input == 'mle' ? (this.pr.dewMleWidth ?? 40) : 
+          (this.state.input != 'chk' ? (this.pr.dewEntWidth ?? 4) : 2)
     )},
   },
 
@@ -222,14 +222,14 @@ export default {
       let optList = []
       for (let val of this.pdmValues) {
         optList.push(h('option', {
-          attrs: {label: val.title, title: val.help},
+          attrs: {label: val.title, title: val?.help},
           domProps: {value: val.value}
         }, val.title))
       }
       entry = h('select', conf, optList)
     } else if (st.input == 'button') {		//Action button
 //console.log("button lang:", this.lang)
-      let txt = (this.lang ? this.lang.title || this.lang : 'Reset')
+      let txt = (this.lang?.title ?? this.lang ?? 'Reset')
         , innerHTML = txt.split(' ')[0]
       Object.assign(on, {click: ev=>this.input(ev, true)})
       Object.assign(conf, {domProps: {innerHTML}})
@@ -245,7 +245,7 @@ export default {
     }
     return h('div', {
       class: "wylib wylib-dew",
-      attrs: {title: this.lang ? this.lang.help || this.lang.title || this.lang : null},
+      attrs: {title: this.lang?.help ?? this.lang?.title ?? this.lang},
     }, [entry])
   },
 }

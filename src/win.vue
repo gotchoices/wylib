@@ -17,7 +17,7 @@
 //- 
 <template>
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
-    <div class="header" :title="lang.help" :style="headerStyle" @click.stop="headerClick">
+    <div class="header" :title="lang?.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
         <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.h.winMenu"/>
         <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.h.winPinned"/>
@@ -25,7 +25,7 @@
       </div>
       <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
         <div class="label" :style="{'font-size': (headerHeight < 16) ? (headerHeight-2) + 'px' : '1em'}">
-          {{ lang.title }}
+          {{ lang?.title }}
         </div>
       </div>
       <div class="headerbar operations">

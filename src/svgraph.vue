@@ -34,10 +34,10 @@
           </div>
         <div class="sliders">
           <span v-for="set,idx in settings" :key="idx">
-            {{set.lang.title}}: {{state.setting[set.tag]}}
+            {{set.lang?.title}}: {{state.setting[set.tag]}}
             <input type="range"
               :min="set.min" :max="set.max" :step="set.step" v-model="state.setting[set.tag]"
-              class="slider nodrag" :title="set.lang.help" @input="e=>$emit('input',e,state)">
+              class="slider nodrag" :title="set.lang?.help" @input="e=>$emit('input',e,state)">
             </input>
           </span>
         </div>

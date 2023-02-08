@@ -17,7 +17,7 @@
 -->
     <wylib-mdew v-if="state.dews" :config="state.dews" :env="env" :data="state.data" @input="change" @submit="submit"/>
     <div v-if="buttons" class="buttons">
-      <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but.lang ? but.lang.title : '?'" :title="but.lang ? but.lang.help : 'Confirm'"/>
+      <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but?.lang?.title ?? '?'" :title="but?.lang?.help ?? 'Confirm'"/>
     </div>
   </div>
 </template>
@@ -61,7 +61,7 @@ export default {
     },
     reason() {
       let wmReason = this.wm[this.state.reason]
-      return (wmReason ? wmReason.title : this.state.reason) || 'Notice'
+      return (wmReason ? wmReason.title : this.state.reason) ?? 'Notice'
     },
     help() {
       if (typeof this.state.message == 'object') return this.state.message.help

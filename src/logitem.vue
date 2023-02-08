@@ -56,8 +56,8 @@ export default {
     }
   },
   methods: {
-    help(opt) {return opt.lang ? opt.lang.help : opt.help},
-    title(opt) {return opt.lang ? opt.lang.title : opt.title},
+    help(opt) {return opt?.lang?.help ?? opt.help},
+    title(opt) {return opt?.lang?.title ?? opt.title},
     wMsg(msg, sub = 'help') {return(this.wm[msg] ? this.wm[msg][sub] : null)},
     submit(ev) {this.$emit('submit', ev)},
     drop(ev) {						//Event for the one being dragged
