@@ -164,9 +164,10 @@ export default {
         this.conn.uri(site).then(wsURI => {
           let address = site.host + ':' + site.port
           this.ws = new WebSocket(wsURI)
+          this.lastConnected = site			//;console.log("Connected to:", site)
           this.ws.addEventListener('close', event => {
             Wyseman.onClose()
-            this.top().error(this.wm.conConErr)
+//            this.top().error(this.wm.conConErr)	//Obvious enough without this
           })
           this.ws.addEventListener('error', event => {
             Wyseman.onClose()
@@ -313,7 +314,8 @@ console.log("Error installing Key:", err.message)
 //console.log("Retry connect", this.lastConnected, this.tryEvery, this.retryIn, this.currentSite)
       if (this.retryIn <= 0) {			//If we counted down to zero
 //console.log("  try connect:", this.lastConnected, "retryIn:", this.retryIn)
-        if (this.lastConnected) this.connectSite(this.lastConnected)	//Try a reconnect
+        if (this.lastConnected)
+          this.connectSite(this.lastConnected)	//Try a reconnect
         this.retryIn = this.tryEvery + CountDown	//next time we'll wait longer
       } else {
         this.retryIn--				//Else keep counting down
