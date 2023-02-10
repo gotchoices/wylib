@@ -73,22 +73,28 @@ console.log("Run report:", ev)
   },
 
   mounted: function () {
-    let action = this.state.config ? this.state.config.action : null
-      , actTag = this.state.config ? this.state.config.actTag : null
-//console.log("Report mounted:", this.ready, this.state.config, actTag, this.render)
-    if (actTag)
-      this.$parent.$emit('customize', action.lang, actTag, true, ()=>{return this.dirty})
+    let conf = this.state.config 
+      , action = conf?.action
+      , actTag = conf?.actTag
+//console.log("Report mounted:", this.ready, 'aTag:', actTag, 'rTag:', conf?.repTag, this.render)
+    if (actTag) {
 //    this.$parent.$emit('swallow', this.$refs.header)		//Only if we re-enable a report menu
-
+      this.$parent.$emit('customize', action.lang, actTag, true, ()=>{return this.dirty})
+      this.$nextTick(() => {					//customize will wipe out our saved config
+        this.state.config = conf				//So restore it here
+      })
+    }
     if (this.ready && (typeof this.ready == 'function')) {
       this.ready(this.$refs.iframe)
 
-    } else if (!this.ready && this.state.config) {
-//console.log("Report restoring from config:", this.state.config, this.bus)
+    } else if (!this.ready && conf) {
+//console.log("Report restoring from config:", conf, 'rt:', conf.repTag)
       if (this.bus) this.$nextTick(()=>{
-        this.bus.master.$emit('report', this.state.config)
+        this.bus.master.$emit('report', conf)
       })
     }
+//console.log("Report now:", this.state?.config?.repTag)
+//setTimeout(() => {console.log("Report later:", this.state?.config?.repTag)}, 500)
   },
 
 //  beforeDestroy: function() {

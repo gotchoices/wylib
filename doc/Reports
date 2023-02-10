@@ -1,6 +1,6 @@
 Design Concepts for Report Module
 
-Some Examples of Reports to Generate:
+Here are some examples of reports user may want to generate:
 - Financial Reports (Balance Sheet, Income Statement, Trial Balance)
   This category is limited to tabular data.  Such reports would derive their
   information from a database view which produces the exact data, given 
@@ -20,8 +20,8 @@ Some Examples of Reports to Generate:
   wanted.
   
 - Financial Analysis (Charts, Graphs, Dashboard)
-  This would likely contain a header or title explaining what is being
-  presented.  Then it would contain one or more embedded objects, presumably
+  This might contain a header or title explaining what is being presented.
+  Then it would inclue one or more embedded objects, presumably
   in a graphics format such as gif, jpg, svg, etc.  Each embedded object
   would likely have its own labeling above, below, or both.
 
@@ -44,6 +44,9 @@ Some Examples of Reports to Generate:
   This could be an employee directory with pictures, a collection of pictures
   of a product or the like.
 
+- Live WEB Page
+  This could be any arbitrary html/javascript/CSS page.
+
 Format:
 Most report generation will be done with Vue in order to make things simpler 
 and to facilitate live updating.  However, there should also be an option for
@@ -51,13 +54,13 @@ displaying a raw HTML page, or other media such as PDF, which may be created
 entirely in the backend, and is merely fetched from an express-driven URL 
 provided by the control layer.
 
-Reports will typically be generated inside a wylib-win.  This would make it
-pretty easy to generate a control dashboard with multiple report views open on 
-a single tab or page.  However if the shift key is held down while launching
-the report, it will open instead in a separate popup window.
+By default, reports will be rendered inside a wylib-win.  This will facilitate
+generating a control dashboard with multiple report views open on a single tab 
+or page.  However if the shift key is held down while launching a report, it 
+should open instead in a separate popup window.
 
-In either case, the report is in its own document (window or iframe) so it
-can be printed by regular means supplied by the browser.
+In either case, the report is in its own document context (window or iframe) 
+so itcan be printed by regular means supplied by the browser.
 
 Approach:
 Implement reports within the context of general control-layer actions, which 
@@ -78,7 +81,7 @@ fall into the following categories:
     they had been invoked normally.  An interactive report should also be
     capable of initiating regular table/view inserts, updates and so forth.
     
-    The data dictionary indicate to the UI, by the presence of a format key,
+    The data dictionary indicates to the UI, by the presence of a render key,
     that a report window should be generated, and of what variety.
   
   - Polled UI Report
@@ -98,3 +101,43 @@ fall into the following categories:
     - OK: Perform the action and then close the dialog (but not the report).
     - Cancel: do not perform the action, or open a report.  In fact, if any
       existing reports are open, associated with this dialog, close them.
+
+Report Object Structure:
+  Native report windows are nested as follows:
+  - wylib-win			General Wylib window, contains dialogs and reports
+    \_ wylib-dialog		Option dialog associated with the report
+    \_ wylib-report (iframe)	Simple component containing an iframe
+       src=/report.html		If report will run in a wylib-pop
+       \_ wylib-pop
+          \_ <div>		content can be any html fragment (render: html)
+          \_ wylib-strdoc	content is json structured document (render: strdoc)
+          \_ wylib-???		any other special content handler
+       src=http://any_other_page.html	(render: http; not yet implemented in wylib)
+    
+    \_ window			Popup report windows differ in that there is no iframe
+       src=report.html
+
+Embedding a full web page:
+The current code forces the wylib-report or popup window to load /report.html
+with no other option.  This can be a problem if the application needs to display
+a complete web page because wylib-pop can only insert fragments of html inside
+a div.  This process (setting innerHTML) does not allow the injection of a <script>
+containing javascript, for example.
+
+As a workaround, the report can supply a snippet of html that includes a second
+iframe.  This iframe can specify any src property, including a link to a fully
+functional web page.  This offers the additional benefit of creating a title or
+frame around the iframe to give context to what is being displayed in the iframe.
+It also allows multiple such iframes to be displayed in a single report.
+
+Reloading:
+The thing that makes reports so complicated is trying to get them to retain their
+context when the browser is reloaded.  Ideally a report (and any associated option
+dialog) will get reinstantiated and reloaded with the same report it was showing
+before the reload.  The app state must retain enough information to accomplish 
+this.
+
+This is made more complicated by the fact that windows store their state in
+local storage.  When a window is instantiated, it attempts to configure itself
+from its last stored state.  This is pretty messy in the existing code and could
+benefit from reorganization.

@@ -38,7 +38,10 @@ module.exports = function topHandler(context, amSlave) {
 
   this.registerDialog = function(dialogTag, cb) {	//Register handlers for our standard dialog actions
 //console.log("Top register:", dialogTag)		//so callbacks are persistent across reloads
-    if (cb) this.dialogCB[dialogTag] = cb; else delete this.dialogCB[dialogTag]
+    if (cb)
+      this.dialogCB[dialogTag] = cb
+    else
+      delete this.dialogCB[dialogTag]
   }
     
   this.submitDialog = function(dialogTag, ...args) {
@@ -220,9 +223,9 @@ module.exports = function topHandler(context, amSlave) {
 //console.log("Get keys:", fromFunc || info.keys)
         return fromFunc || info.keys			//We will have to rely on stored key from last session
       }
-      , repTag = (dialogIndex != null)			//Tag unique to this report window
+      , repTag = (dialogIndex != undefined && dialogIndex != null)
         ? (actTag + ':' + dialogIndex) 			//link report to its option dialog
-        : (action.single ? actTag : WinCom.unique(actTag))
+        : (action.single ? actTag : WinCom.unique(actTag))	//Make tag unique to this action
       , config = {repTag, view, action, info, actTag}	//Will save this for restore purposes
 
     info.keys = getKeys()				//Remember the last key values too
@@ -285,8 +288,10 @@ module.exports = function topHandler(context, amSlave) {
     }
     
     if (action.render) {				//This action is a report, has a window
+//console.log("Report render", repTag)
       WinCom.listen(repTag, perform)			//Get ready to communicate with it
       this.context.reportWin(repTag, ReportFile, config)	//Create the window
+//setTimeout(() => {console.log("Way after:", config.repTag)}, 1000)
     } else {						//Immediate query, execute it
       perform('control')
     }

@@ -256,15 +256,15 @@ console.log("Clone to popup:", popId)
         , ready = (iframe) => {}	//Dummy function can't survive reload in state
         , wasPosted = winState ? winState.posted : null
         , foundState = false
-//console.log("ReportWin state:", winState, repTag, Object.keys(this.state.reports))
-      if (!winState) {
-        winState = {posted: false, x:25, y:25, client:{src, name:repTag}, ready}
-        this.$set(this.state.reports, repTag, winState)	//Create new report record
-      } else {
+//console.log("ReportWin state:", winState, 'repTag:',repTag, 'reps:', Object.keys(this.state.reports))
+      if (winState) {
         if (!winState.ready) winState.ready = ready	//Function will have been lost in any reload
         foundState = true				//Found existing report status
+        winState.client.config = config		//;console.log("Report config:", config, popUp)
+      } else {
+        winState = {posted: false, x:25, y:25, client:{src, config, name:repTag}, ready}
+        this.$set(this.state.reports, repTag, winState)	//Create new report record
       }
-      winState.client.config = config			//;console.log("Report config:", config, popUp)
       if (popUp) {			//Generate browser popup
         winState.posted = false
         this.$nextTick(()=>{		//Let any report iframe die before launching the popup
@@ -273,12 +273,12 @@ console.log("Clone to popup:", popId)
             this.top.error(this.wm.dbePopupErr)
         })
       } else {				//Regular internal report window
-//console.log("!regular:", winState, winState.posted)
+//console.log("!regular:", winState, foundState, winState.posted)
         winState.posted = true
         if (foundState) {
           if (wasPosted)						//If existing internal window
             this.repBus.notify(repTag, 'reload')			//reload it
-          else								//If there was a popup open
+          else								//If there was a previous popup open
             window.open('', repTag, 'height=600,width=600').close()	//find it and close it
         }
       }
@@ -288,7 +288,8 @@ console.log("Clone to popup:", popId)
       let oldState = this.state.reports[repTag]
 //console.log("closeRep:", repTag, oldState, reopen)
       this.$delete(this.state.reports, repTag)
-      if (reopen) this.reportWin(repTag, oldState.src, oldState.client.config)
+      if (reopen)
+        this.reportWin(repTag, oldState.src, Com.clone(oldState.client.config))
       if (oldState && oldState.popWin) oldState.popWin.close()
     },
   },

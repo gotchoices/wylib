@@ -2,11 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//- Build webpack page that has basic, configurable page
-//- Talk to my opener on load, ask for my contents
-//- Build version with a dialog in it as a report widget
-//- Can display in a popup
-//- Can display in an iframe
 //- 
 
 <template>
@@ -57,7 +52,7 @@ export default {
       if (this.state.render.includes('-')) return this.state.render
       return 'wylib-' + this.state.render
     },
-    parseContent() {		//Does content have language codes in it?
+    parseContent() {
       let cont = this.state.content
 //console.log("Pop content:", typeof cont)
       if (typeof cont == 'string')

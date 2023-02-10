@@ -316,6 +316,7 @@ console.log("Update data:", ev, JSON.stringify(fields))
         this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
         
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
+//console.log("Dbe register Dialog callback:", act)
           this.top().registerDialog(['action',this.state.dbView,act.name].join(':'), (dia, info)=>{
 //console.log("Dbe got action callback:", dia, act, info)
             return this.top().actionLaunch(this.state.dbView, act, info, this.subBus)
