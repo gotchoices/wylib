@@ -254,7 +254,7 @@ module.exports = function topHandler(context, amSlave) {
 //console.log("Got unload from window:", repTag, "dirty:", data)
         setTimeout(() => {				//;console.log("  3 closed:", win.closed)
           if (win.closed)				//If user closed popup window
-            this.context.closeRep(repTag)		//Remove the control record
+            this.context.closeRep(repTag, false, true)	//Remove the control record
         }, 500)
 
       } else if (target == 'report') {

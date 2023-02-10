@@ -254,7 +254,7 @@ console.log("Clone to popup:", popId)
       let winState = this.state.reports[repTag]
         , popUp = config.info ? config.info.popUp : null
         , ready = (iframe) => {}	//Dummy function can't survive reload in state
-        , wasPosted = winState ? winState.posted : null
+        , wasPosted = winState?.posted
         , foundState = false
 //console.log("ReportWin state:", winState, 'repTag:',repTag, 'reps:', Object.keys(this.state.reports))
       if (winState) {
@@ -273,7 +273,7 @@ console.log("Clone to popup:", popId)
             this.top.error(this.wm.dbePopupErr)
         })
       } else {				//Regular internal report window
-//console.log("!regular:", winState, foundState, winState.posted)
+//console.log("!regular:", winState, foundState, winState.posted, wasPosted)
         winState.posted = true
         if (foundState) {
           if (wasPosted)						//If existing internal window
@@ -284,9 +284,10 @@ console.log("Clone to popup:", popId)
       }
     },
 
-    closeRep(repTag, reopen) {
+    closeRep(repTag, reopen, notPosted) {
       let oldState = this.state.reports[repTag]
-//console.log("closeRep:", repTag, oldState, reopen)
+console.log("closeRep:", repTag, oldState, reopen, notPosted)
+      if (notPosted && oldState.posted) return		//Ignore if a regular report is currently posted
       this.$delete(this.state.reports, repTag)
       if (reopen)
         this.reportWin(repTag, oldState.src, Com.clone(oldState.client.config))
