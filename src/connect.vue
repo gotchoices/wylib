@@ -29,7 +29,7 @@
 </template>
 
 <script>
-const CountDown = 7
+const CountDown = 2
 const Crypto = window.crypto
 const Subtle = Crypto.subtle
 
@@ -79,7 +79,7 @@ export default {
     dock:		{},		//State for menu dock
     currentSite:	null,		//URL we are connected to, if any
     status:		null,		//Status message to display in window
-    tryEvery:		CountDown,	//Fixme: reimplement auto retry
+    tryEvery:		CountDown,
     retryIn:		CountDown,
     tryTimer:		null,
     ws:			null,		//Websocket to backend
@@ -316,7 +316,8 @@ console.log("Error installing Key:", err.message)
 //console.log("  try connect:", this.lastConnected, "retryIn:", this.retryIn)
         if (this.lastConnected)
           this.connectSite(this.lastConnected)	//Try a reconnect
-        this.retryIn = this.tryEvery + CountDown	//next time we'll wait longer
+        this.tryEvery *= 2;			//next time we'll wait longer
+        this.retryIn = this.tryEvery
       } else {
         this.retryIn--				//Else keep counting down
 //console.log("  decrement", this.retryIn)
