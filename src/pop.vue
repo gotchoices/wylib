@@ -12,11 +12,8 @@
         <wylib-dialog :state="ws.state" :env="env"/>
       </wylib-modal>
     </div>
-    <div class="pop-content">
-      <div v-if="state.render == 'html'" v-html="parseContent"/>
-      <component v-else :is="compName" :env="env" :state="state.content" :bus="compBus" @submit="submit"/>
-<!--      <slot></slot> -->
-    </div>
+    <div class="pop-content" v-if="state.render == 'html'" v-html="parseContent"/>
+    <component v-else :is="compName" :env="env" :state="state.content" :bus="compBus" @submit="submit"/>
   </div>
 </template>
 
@@ -113,11 +110,14 @@ export default {
 .wylib-pop * {
   box-sizing: border-box;
 }
-//.wylib-pop > .header {
-//  width: 100%;
-//}
-//.wylib-pop .pop-content {
-//  width: 100%;
-//  border: 1px solid #c0c0c0;
-//}
+.wylib-pop {
+  height: 100vh;
+  border: 0;
+//  border: 4px solid tan;
+}
+.wylib-pop .pop-content {
+  width: 100%;
+  height: 100%;
+//  border: 4px solid purple;
+}
 </style>
