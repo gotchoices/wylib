@@ -133,10 +133,11 @@ export default {
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
         let defWidth
           , key = meta.col
-        if (meta.styles && ('size' in meta.styles) && meta.styles.size) {
-          defWidth = meta.styles.size.split(' ')[0] * this.pr.mlbCharWidth
+        if (meta?.styles?.size) {
+          let size = meta.styles.size		//console.log('size:', meta?.styles?.size)
+          defWidth = (size.x ?? size) * this.pr.mlbCharWidth
         }
-        if ('display' in meta.styles) foundDisplay = true
+        if (meta.styles && 'display' in meta.styles) foundDisplay = true
         let config = {
           field:	key,
           title:	meta.title || key,

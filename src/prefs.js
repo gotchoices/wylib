@@ -28,7 +28,7 @@ const Config = {
 
   butHoverColor:	{def: '#88ff88',	mod:'app', inp:'color',	lang: 'Button Hover'},
   butActiveColor:	{def: '#55cc55',	mod:'app', inp:'color',	lang: 'Button Active Color'},
-  butToggledColor:	{def: '#66aa66',	mod:'app', inp:'color',	lang: 'Button Tottled Color'},
+  butToggledColor:	{def: '#66aa66',	mod:'app', inp:'color',	lang: 'Button Toggled Color'},
   butBackground:	{def: '#f4f6f0',	mod:'app', inp:'color',	lang: 'Button Background'},
   butIconFill:		{def: '#2482a4',	mod:'app', inp:'color',	lang: 'Button Icon Fill'},
   butIconStroke:	{def: '#222222',	mod:'app', inp:'color',	lang: 'Button Icon Stroke'},
@@ -78,6 +78,7 @@ if (v) console.log("Restore:", v)
             if (mod == module) this[idx] = def
           }
         }}]
+//console.log('Prefs menu')
     for (let idx in Config) {				//For each configuration item
       let {def, mod, inp, lang} = Config[idx]
       if (mod != module) continue			//Include only the ones in the desired module (win, dbe, etc)

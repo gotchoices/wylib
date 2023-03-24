@@ -254,7 +254,7 @@ console.log("Export file:", resp.file, resp.p1, keyData.length, keyData)
 
     installKey(obj) {					//Store a key or ticket object
       var site
-console.log("  installKey:", obj)
+//console.log("  installKey:", obj)
       for (let keyType in obj) {
         site = obj[keyType]
         if (keyType == 'ticket' || keyType == 'login') {
@@ -262,7 +262,7 @@ console.log("  installKey:", obj)
           if (!site.user) site.user = null		//Empty stubs so user is reactive
           site.priv = null
           site.selected = null
-console.log("Adding:", oldIdx, oldIdx >= 0)
+//console.log("Adding:", oldIdx, oldIdx >= 0)
           if (oldIdx >= 0)				//Is there already a key for this same connection?
             this.sites.splice(oldIdx, 1, site)		//Replace old key
           else

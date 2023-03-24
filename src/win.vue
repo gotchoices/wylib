@@ -286,7 +286,7 @@ console.log("Clone to popup:", popId)
 
     closeRep(repTag, reopen, notPosted) {
       let oldState = this.state.reports[repTag]
-console.log("closeRep:", repTag, oldState, reopen, notPosted)
+//console.log("closeRep:", repTag, oldState, reopen, notPosted)
       if (notPosted && oldState.posted) return		//Ignore if a regular report is currently posted
       this.$delete(this.state.reports, repTag)
       if (reopen)

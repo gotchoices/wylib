@@ -37,7 +37,6 @@
 <script>
 const Com = require('./common.js')
 const DatePicker = require('./date.js')
-//import InDate from './indate.vue'
 const shortHints = {
   date: 'YYYY-MM-DD',
 }
@@ -49,7 +48,6 @@ const shortTpts = {
 
 export default {
   name: 'wylib-dew',
-//  components: {'wylib-indate': InDate},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     lang:	null,
@@ -64,14 +62,15 @@ export default {
   data() { return {
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: {}, initial:null},
+    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, initial:null},
   }},
 
   computed: {
     pr() {return this.env.pr},
+
     pdmValues() {
       let vals = []
-      this.values.forEach(el=>{
+      this.values?.forEach(el=>{
         if (typeof el != 'object') {
           el = {value: el, title: el, help:null}
         } else if ('value' in el && !('title' in el)) {
@@ -81,26 +80,32 @@ export default {
       })
       return vals
     },
+
     hint() {
       let hint = this.state ? this.state.hint : null
       if (hint in shortHints) return shortHints[hint]; else return hint
     },
+
     template() {
       let temp = this.state ? this.state.template : null
       if (temp in shortTpts) return shortTpts[temp]; else return temp
     },
+
     disabled() {				//No user data entry, just for looking at
       return (this.state.input == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
     },
+
     mapValue() {
 //console.log("mapValue", this.field, this.value, typeof this.value)
       return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value,null,2) : this.value
     },
+
     dirty() {						//The user has changed the value
       let dirty = (this.userValue != this.mapValue)
 //console.log("dirty:", this.field, this.mapValue, this.userValue, dirty)
       return dirty
     },
+
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
       let isValid = false
 //console.log("Valid top:", this.field, this.state.input)
@@ -120,6 +125,7 @@ export default {
 //console.log(" valid res:", this.field, this.userValue, this.template, this.disabled, isValid)
       return isValid
     },
+
     genStyle() { return {			//Generate style, based on data state
       borderLeftColor: this.disabled ? this.pr.dataBackground : (this.valid ? this.pr.dewBorderColor : this.pr.dewInvalidColor),
       borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
@@ -130,17 +136,30 @@ export default {
 //x:console.log("width:", this.field, this.width),
       minWidth: this.width/2 + 'em',		//Better way to compare to actual text size?
     }},
+
     dims() {
-      if (typeof this.state.size == 'string') return this.state.size.split(' ')
-      return (typeof this.state.size == 'number') ? [this.state.size] : []
+      if (Array.isArray(this.state.size)) {
+        let [x, y] = this.state.size
+        return {x, y}
+      } else if (typeof this.state.size == 'object') {
+        return this.state.size
+      } else if (typeof this.state.size == 'string') {
+        let [x, y] = this.state.size.split(' ')
+        return {x, y}
+      } else if (typeof this.state.size == 'number') {
+        return {x: this.state.size}
+      }
+      return {}
     },
+
     height() {					//Specified height in characters
 //console.log("Height:", this.state.size, this.dims)
-      return this.dims[1] ?? this.pr.dewMleHeight ?? 1
+      return this.dims?.y ?? this.pr.dewMleHeight ?? 1
     },
+
     width() {					//In characters
-//console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth)
-      return this.dims[0] ?? (
+//console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth, this.dims)
+      return this.dims?.x ?? (
         this.state.input == 'mle' ? (this.pr.dewMleWidth ?? 40) : 
           (this.state.input != 'chk' ? (this.pr.dewEntWidth ?? 4) : 2)
     )},
@@ -192,7 +211,8 @@ export default {
 
   mounted: function() {
 //console.log(" Dew mounted:", this.field, this.state, this.mapValue, typeof this.mapValue)
-    if (this.state.special == 'cal') this.datePicker = new DatePicker(this.$refs.input)
+    if (this.state.special == 'cal')
+      this.datePicker = new DatePicker(this.$refs.input)
     if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
   beforeDestroy: function() {
@@ -200,7 +220,7 @@ export default {
   },
   
   render: function(h, context) {
-    let entry
+    let entry, kids
       , st = this.state
       , domProps = {value: this.userValue}
       , attrs = {autofocus: st.focus, disabled: this.disabled}
@@ -208,8 +228,10 @@ export default {
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-//console.log("Dew render:", this.field, st)
-    if (st.other) attrs = Object.assign(attrs, st.other)
+      , other = typeof st.other == 'string' ? JSON.stringify(st.other) : st.other
+//console.log("Dew render:", this.field, st, 'O:', st.other)
+    if (typeof st.other == 'object')
+      attrs = Object.assign(attrs, st.other)
     if (st.input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)
@@ -235,26 +257,35 @@ export default {
       Object.assign(conf, {domProps: {innerHTML}})
       entry = h('button', conf)
     } else {					//Text or other input type
-      Object.assign(attrs, {type: st.input == 'ent' ? 'text' : st.input, placeholder: this.hint})
-      Object.assign(conf, {class: 'text'})
+      let type = Com.unabbrev(st.input, ['text', 'number'])
+      Object.assign(attrs, {type: st.input == 'ent' ? 'text' : type, placeholder: this.hint})
+      Object.assign(conf, {class: 'text' + (!st.special ? '' : ' special')})
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
-//console.log("Render:", this.field, attrs, conf, on)
+//console.log("Render:", this.field, 'A:', attrs, conf, on)
       entry = st.input ? h('input', conf) : null
     }
+    kids = [entry]
+console.log("R:", this.field, typeof st.special, st.special)
+//    if (!!st.special) {
+//      let attrs = {type: 'button'}
+//        , spButton = h('input', {attrs, class: 'button special'})
+//      kids.push(spButton)
+//    }
     return h('div', {
       class: "wylib wylib-dew",
       attrs: {title: this.lang?.help ?? this.lang?.title ?? this.lang},
-    }, [entry])
+    }, kids)
   },
 }
 </script>
 
 <style lang="scss">
   .wylib-dew {
+    position: relative;
+    display: inline-block;
 //    padding: 1px 7px 1px 1px;
-//    position: relative;
 //border: 1px solid black;
   }
   .wylib-dew input.text, .wylib-dew div.check {
@@ -267,6 +298,14 @@ export default {
   .wylib-dew input.text, select {
     width: 100%;			//Make a preferences option
   }
+//  .wylib-dew button.special {
+//    background: purple;
+//    position: absolute;
+//    top: 50%;
+//    right: 0;
+//    transform: translateY(-50%);
+//    display: none;
+//  }
   .wylib-dew button {
     height: 1.5em;
     width: 100%;

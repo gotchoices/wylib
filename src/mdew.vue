@@ -68,10 +68,10 @@ export default {
       for (let con of this.config) {
 //console.log("Mdew config rec:", con)
         let styles = con.styles
-        if (styles && styles.hide != null && styles.hide) continue
-        if (styles && styles.subframe) {		//Does this field have any placement styling
-          let [ x, y, xSpan, ySpan ] = styles.subframe.split(' ').map(el=>{return parseInt(el)})
-          con.grid = {x, y, xSpan, ySpan}
+        if (styles?.hide != null && styles.hide) continue
+        if (styles?.subframe) {			//Does this field have any placement styling
+          let { x, y, xspan, yspan } = styles.subframe
+          con.grid = {x, y, xspan, yspan}
 //console.log("  grid:", y, con.grid)
           if (x == null) x = 0
           if (y == null) y = nextRow
@@ -90,7 +90,8 @@ export default {
       })
 //console.log("  noSpecs:", noSpecs)
       noSpecs.forEach(con=>{				//Handle any columns with no explicit grid info
-        if (nextRow > 0) Object.assign(con, {grid: {x:minX, y:nextRow++, xSpan:maxX-minX}})
+        if (nextRow > 0)
+          Object.assign(con, {grid: {x:minX, y:nextRow++, xspan:maxX-minX}})
         rows.push([con])
       })
 //console.log("  rows:", rows)
@@ -152,8 +153,8 @@ export default {
 //console.log("  item:", item)
         let item = row[x]
           , col = item && item.grid ? item.grid.x : null
-          , xSpan = (item && item.grid ? item.grid.xSpan : null) || 1
-          , ySpan = (item && item.grid ? item.grid.ySpan : null) || 1
+          , xspan = (item && item.grid ? item.grid.xspan : null) || 1
+          , yspan = (item && item.grid ? item.grid.yspan : null) || 1
 //console.log("    row:", y, "item:", x, col, colCount, item)
         if (item) {
           if (item.styles && item.styles.optional != null && item.styles.optional) rowOptional = true
@@ -163,12 +164,12 @@ export default {
             on: {input: this.input, submit: this.submit},
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang.title + ':' : null))
-          tabItems.push(h('td', {attrs: {colspan:(xSpan*2-1), rowspan:ySpan}}, [dew]))
+          tabItems.push(h('td', {attrs: {colspan:(xspan*2-1), rowspan:yspan}}, [dew]))
         } else if (colCount < col) {			//Assuming prior columns haven't spanned available space
           tabItems.push(h('td'))			//pad it with dead cells
           tabItems.push(h('td'))
         }
-        colCount += xSpan
+        colCount += xspan
       }
       if (rowOpts == null && rowOptional) {		//Time for the 'optional' button?
         let optButton = h('div', {

@@ -63,7 +63,7 @@ export default {
     id() {return 'dbe_' + this._uid + '_'},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
-    metaStyles() {return this.viewMeta && this.viewMeta.styles ? this.viewMeta.styles : {}},
+    metaStyles() {return this.viewMeta?.styles ?? {}},
     actMenu() {
       let acts = []
 //console.log("actMenu:", this.metaStyles)
@@ -109,7 +109,7 @@ export default {
         fieldArray.push({
           field:	meta.col,
           lang:		{title:	meta.title || meta.col, help: meta.title + ' (' + meta.col + '):\n' + meta.help},
-          styles:	meta.styles,
+          styles:	meta.styles ?? {},
           values:	meta.values,
           nonull:	meta.nonull
         })
