@@ -4,18 +4,17 @@
 //TODO:
 //X- Fill in default text descriptions
 //X- Build object of preferences when launched
-//- Defer building Prefs until init explicitly called (which includes saved prefs)
+//X- Make routine to build menu items for editing prefs
 //- Generate pull-down to select supported languages from menu
-//- Language changes in one swoop--not a character at a time
-//- Call wyseman.newLanguage with new language setting, app updates reactively
+//-   Language changes in one step--not a character at a time
+//-   Call wyseman.newLanguage with new language setting, app updates reactively
+//-   How does prefs call to refill wyseman cache when language changes?
+//- Can the pref field descriptions pull from the database?
+//- Defer building Prefs until init explicitly called (which includes saved prefs)
 //- Create initialize routine
 //-   Fills in any missing properties from default structure
-//- Make routine to build menu items for editing prefs
-//- How does prefs call to refill wyseman cache when language changes?
-//- We should start with an empty config
+//- Should start with an empty config
 //-   Modules should supply their own prefs for the array (including app)
-//- This makes a mobile/alternate version more able to use wyseman.js as-is
-//- 
 
 const Config = {
   language:		{def: 'eng',		mod:'app', inp:'text',	lang: 'Language'},
@@ -71,7 +70,7 @@ Object.defineProperty(Preferences, 'menu', {
   enumerable: false,
   value: function(module) {
     let rest = 'Restore Defaults'
-      , conf = [{idx: 'restore', lang:rest, state:{input:'button'}, input:(v)=>{
+      , conf = [{idx: 'restore', lang:rest, config:{input:'button'}, input:(v)=>{
 if (v) console.log("Restore:", v)
           if (v != undefined) for (let idx in Config) {
             let {def, mod} = Config[idx]
@@ -88,9 +87,9 @@ if (v) console.log("Restore:", v)
         other = Object.assign({}, inp); delete other.type	//Other properties to apply to the input
       }
       let size = input == 'text' ? 20 : 10		//Better way to do this?
-        , state = {input, lang, other, size}		//dew configuration
-//console.log("Pref state:", JSON.stringify(state))
-        , elem = {idx, lang, state, input:(va, ix, d, v)=>{	//Menu configuration
+        , config = {input, lang, other, size}		//dew configuration
+//console.log("Pref config:", JSON.stringify(config))
+        , elem = {idx, lang, config, input:(va, ix, d, v)=>{	//Menu configuration
 //console.log("Pref input:", idx, va, ix, this[idx])
         if (ix == 'language') {
 console.log("Prefs detects language change:", va)

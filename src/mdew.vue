@@ -148,13 +148,24 @@ export default {
 //console.log("  item:", item)
 //console.log("    row:", y, "item:", x, col, colCount, 'xs:', xspan)
         if (item) {
-          if (item.styles && item.styles.optional != null && item.styles.optional) rowOptional = true
+          let field = item.field
+          if (item.styles?.optional) rowOptional = true
+          if (!this.state.fields[field]) this.state.fields[field] = {}
           let dew = h('wylib-dew', {			//Make our data editing widget
-            attrs: {value: this.data[item.field]},
-            props: {field: item.field, state: item.styles, lang: item.lang, values: item.values, nonull:item.nonull, bus:this.dewBus, env:this.env},
+            attrs: {value: this.data[field]},
+            props: {
+              field,
+              config: item.styles, 
+              state: this.state.fields[field],
+              lang: item.lang, 
+              values: item.values, 
+              nonull: item.nonull, 
+              bus: this.dewBus, 
+              env: this.env
+            },
             on: {input: this.input, submit: this.submit},
           })
-          tabItems.push(h('td', {class: "label"}, item.lang ? item.lang.title + ':' : null))
+          tabItems.push(h('td', {class: "label"}, item.lang ? item.lang?.title + ':' : null))
           tabItems.push(h('td', {attrs: {colspan:(xspan * 2 - 1), rowspan:yspan}}, [dew]))
         } else if (colCount < col) {			//Assuming prior columns haven't spanned available space
           tabItems.push(h('td'))			//pad it with dead cells

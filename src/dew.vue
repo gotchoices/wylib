@@ -2,12 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Emit event when data changed
-//X- Validity doesn't show on first load
-//X- Why do fields show changed after a clear?
-//X- Allow arbitrary misc attributes to be added to an input
-//X- Honor -justify field from wyseman wmd files
-//X- Display special function indicator on right side of entry
+//X- Split out configuration from state prop
 //- Handlers for each kind of special function
 //X-   Calendar
 //X-   Calculator
@@ -37,6 +32,7 @@ export default {
   components: {'wylib-calc': Calc},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
+    config:	{type: Object, default: () => ({input: 'ent'})},
     lang:	null,
     value:	{default: null},			//value to compare dirty to
     values:	{type: Array, default: () => ([])},	//valid values for select
@@ -49,7 +45,8 @@ export default {
   data() { return {
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, menu: {}, initial:null},
+//    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, menu: {}, initial:null},
+    stateTpt:	{menu: {}},
   }},
 
   computed: {
@@ -69,17 +66,17 @@ export default {
     },
 
     hint() {
-      let hint = this.state ? this.state.hint : null
+      let hint = this.config ? this.config.hint : null
       if (hint in shortHints) return shortHints[hint]; else return hint
     },
 
     template() {
-      let temp = this.state ? this.state.template : null
+      let temp = this.config ? this.config.template : null
       if (temp in shortTpts) return shortTpts[temp]; else return temp
     },
 
     disabled() {				//No user data entry, just for looking at
-      return (this.state.input == 'inf' || this.state.state == 'readonly' || this.state.hide || false)
+      return (this.config.input == 'inf' || this.config.state == 'readonly' || this.config.hide || false)
     },
 
     mapValue() {
@@ -95,10 +92,10 @@ export default {
 
     valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
       let isValid = false
-//console.log("Valid top:", this.field, this.state.input)
-      if (this.state.input == 'chk' || this.state.input == 'inf') {
+//console.log("Valid top:", this.field, this.config.input)
+      if (this.config.input == 'chk' || this.config.input == 'inf') {
         isValid = true
-      } else if (this.state.input == 'pdm') {
+      } else if (this.config.input == 'pdm') {
 //console.log(' values:', this.userValues ? this.values.map(e=>(e.value)) : null)
         isValid = this.values ? this.pdmValues.map(e=>(e.value)).includes(this.userValue || '') : true
       } else if (this.template == null) {
@@ -117,46 +114,46 @@ export default {
       borderLeftColor: this.disabled ? this.pr.dataBackground : (this.valid ? this.pr.dewBorderColor : this.pr.dewInvalidColor),
       borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
       borderBottomColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor),
-      background: ('background' in this.state) ? this.state.background : this.pr.dataBackground,
+      background: ('background' in this.config) ? this.config.background : this.pr.dataBackground,
       borderLeftWidth: this.pr.dewFlagWidth + 'px',
       borderRightWidth: this.pr.dewFlagWidth + 'px',
 //x:console.log("width:", this.field, this.width),
       minWidth: this.width/2 + 'em',		//Better way to compare to actual text size?
-      textAlign: Com.unabbrev(this.state?.justify?.toLowerCase(), ['left','center','right'])
+      textAlign: Com.unabbrev(this.config?.justify?.toLowerCase(), ['left','center','right'])
     }},
 
     dims() {
-      if (Array.isArray(this.state.size)) {
-        let [x, y] = this.state.size
+      if (Array.isArray(this.config.size)) {
+        let [x, y] = this.config.size
         return {x, y}
-      } else if (typeof this.state.size == 'object') {
-        return this.state.size
-      } else if (typeof this.state.size == 'string') {
-        let [x, y] = this.state.size.split(' ')
+      } else if (typeof this.config.size == 'object') {
+        return this.config.size
+      } else if (typeof this.config.size == 'string') {
+        let [x, y] = this.config.size.split(' ')
         return {x, y}
-      } else if (typeof this.state.size == 'number') {
-        return {x: this.state.size}
+      } else if (typeof this.config.size == 'number') {
+        return {x: this.config.size}
       }
       return {}
     },
 
     height() {					//Specified height in characters
-//console.log("Height:", this.state.size, this.dims)
+//console.log("Height:", this.config.size, this.dims)
       return this.dims?.y ?? this.pr.dewMleHeight ?? 1
     },
 
     width() {					//In characters
-//console.log("Width:", this.field, this.state.size, this.pr.dewEntWidth, this.dims)
+//console.log("Width:", this.field, this.config.size, this.pr.dewEntWidth, this.dims)
       return this.dims?.x ?? (
-        this.state.input == 'mle' ? (this.pr.dewMleWidth ?? 40) : 
-          (this.state.input != 'chk' ? (this.pr.dewEntWidth ?? 4) : 2)
+        this.config.input == 'mle' ? (this.pr.dewMleWidth ?? 40) : 
+          (this.config.input != 'chk' ? (this.pr.dewEntWidth ?? 4) : 2)
     )},
   },
 
   methods: {
     input(ev, value = ev.target.value) {
 //console.log("Dew input:", ev, this.nonull, value)
-      if (this.state.input == 'file' && ev.target.files) {	//Special handler for file selectors
+      if (this.config.input == 'file' && ev.target.files) {	//Special handler for file selectors
         value = ev.target.files
       } else {
         if (!this.nonull && !value) value = null		//Map '' to null if allowed
@@ -173,19 +170,19 @@ export default {
       return({value: this.userValue = val, field: this.field, dirty: this.dirty, valid: this.valid})
     },
     clear() {
-      return this.set(this.state.initial)
+      return this.set(this.config.initial)
     },
 
     special: function() {
-      let spec = this.state.special
-console.log("Dew special:", this.field, 'st:', this.state, spec)
+      let spec = this.config.special
+console.log("Dew special:", this.field, 'st:', this.config, spec)
       if (spec == 'cal') {			//Calendar not handled in regular wylib window
         this.datePicker?.toggle()
         return
       }
 
-      if (!this.state.menu)			//menu doesn't get populated from mdew
-        this.$set(this.state, 'menu', {posted: false})
+//      if (!this.state.menu)			//menu doesn't get populated from mdew
+//        this.$set(this.state, 'menu', {posted: false})
       let menu = this.state.menu
       
       menu.posted = !menu.posted
@@ -205,9 +202,8 @@ console.log("  posted:", menu)
   },
 
   beforeMount: function() {
-console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
+//console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
     Com.stateCheck(this)
-console.log("dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
     
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
@@ -220,9 +216,9 @@ console.log("dew state:", this.field, this.value, this.userValue, this.values, J
 
   mounted: function() {
 //console.log(" Dew mounted:", this.field, this.state, this.mapValue, typeof this.mapValue)
-    if (this.state.special == 'cal')
+    if (this.config.special == 'cal')
       this.datePicker = new DatePicker(this.$refs.input)
-    if (this.state.focus && this.top) this.top().onPosted(() => {this.focus()})
+    if (this.config.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
   beforeDestroy: function() {
     if (this.datePicker) this.datePicker.destroy()
@@ -231,25 +227,26 @@ console.log("dew state:", this.field, this.value, this.userValue, this.values, J
   render: function(h, context) {
     let entry, kids
       , st = this.state
+      , cf = this.config
       , domProps = {value: this.userValue}
-      , attrs = {autofocus: st.focus, disabled: this.disabled}
+      , attrs = {autofocus: cf.focus, disabled: this.disabled}
       , on = {input: this.input}
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-      , other = typeof st.other == 'string' ? JSON.stringify(st.other) : st.other
-//console.log("Dew render:", this.field, st, 'O:', st.other)
-    if (typeof st.other == 'object')
-      attrs = Object.assign(attrs, st.other)
-    if (st.input == 'mle') {			//Multi-line entry / textarea
+      , other = typeof cf.other == 'string' ? JSON.stringify(cf.other) : cf.other
+//console.log("Dew render:", this.field, cf, 'O:', cf.other)
+    if (typeof cf.other == 'object')
+      attrs = Object.assign(attrs, cf.other)
+    if (cf.input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)
-    } else if (st.input == 'chk') {		//Checkbox
+    } else if (cf.input == 'chk') {		//Checkbox
       Object.assign(attrs, {type: 'checkbox'})
       entry = h('div', {class: 'check', style}, [h('input',
         {ref, attrs, domProps:{checked: this.userValue}, on: {change: ev=>this.input(ev, ev.target.checked)}}
       )])
-    } else if (st.input == 'pdm') {		//Pull-down menu
+    } else if (cf.input == 'pdm') {		//Pull-down menu
       let optList = []
       for (let val of this.pdmValues) {
         optList.push(h('option', {
@@ -259,7 +256,7 @@ console.log("dew state:", this.field, this.value, this.userValue, this.values, J
       }
       entry = h('select', conf, optList)
 
-    } else if (st.input == 'button') {		//Action button
+    } else if (cf.input == 'button') {		//Action button
 //console.log("button lang:", this.lang)
       let txt = (this.lang?.title ?? this.lang ?? 'Reset')
         , innerHTML = txt.split(' ')[0]
@@ -268,24 +265,24 @@ console.log("dew state:", this.field, this.value, this.userValue, this.values, J
       entry = h('button', conf)
 
     } else {					//Text or other input type
-      let type = Com.unabbrev(st.input, ['text', 'number'])
-      Object.assign(attrs, {type: st.input == 'ent' ? 'text' : type, placeholder: this.hint})
-      Object.assign(conf, {class: ['text', !st.special ? '' : 'special']})
+      let type = Com.unabbrev(cf.input, ['text', 'number'])
+      Object.assign(attrs, {type: cf.input == 'ent' ? 'text' : type, placeholder: this.hint})
+      Object.assign(conf, {class: ['text', !cf.special ? '' : 'special']})
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
 //console.log("Render:", this.field, 'A:', attrs, conf, on)
-      entry = st.input ? h('input', conf) : null
+      entry = cf.input ? h('input', conf) : null
     }
     kids = [entry]
-//console.log("R:", this.field, typeof st.special, st.special)
-    if (!!st.special) {
+//console.log("R:", this.field, typeof cf.special, cf.special)
+    if (!!cf.special) {
       let attrs = {type: 'button'}
         , on = {click: this.special}
         , spButton = h('input', {attrs, on, class: 'special button'})
       kids.push(spButton)
     }
-console.log("M:", st, st.menu)
+//console.log("M:", st, st.menu)
     if (st.menu?.posted) {		//Is the special menu posted?
       let client = h(st.menu.component, {
             props: {

@@ -36,7 +36,7 @@
               :type="item.type" :value="item.input()" @input="item.input($event.target.value, item.idx)"
             />
             <wylib-dew v-else-if="fld=='dew'" :env="env"
-              :field="item.idx" :state="item.state" :values="item.values" :lang="item.lang"
+              :field="item.idx" :config="item.config" :values="item.values" :lang="item.lang"
               :value="item.input()" @input="(va,ix,d,v)=>{item.input(va, ix, d, v)}"
             />
 <!-- Just use a dew for file?  Input code below looks invalid anyway!
