@@ -15,6 +15,7 @@
 <script>
 import Win from './win.vue'
 import Calc from './calc.vue'
+import Scm from './scm.vue'
 
 const Com = require('./common.js')
 const DatePicker = require('./date.js')
@@ -29,7 +30,7 @@ const shortTpts = {
 
 export default {
   name: 'wylib-dew',
-  components: {'wylib-calc': Calc},
+  components: {'wylib-calc': Calc, 'wylib-scm': Scm},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     config:	{type: Object, default: () => ({input: 'ent'})},
@@ -46,7 +47,7 @@ export default {
     userValue:	null,					//Value, as modified by user
     datePicker: null,
 //    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, menu: {}, initial:null},
-    stateTpt:	{menu: {}},
+    stateTpt:	{menu: {posted: false}},
   }},
 
   computed: {
@@ -175,27 +176,25 @@ export default {
 
     special: function() {
       let spec = this.config.special
-console.log("Dew special:", this.field, 'st:', this.config, spec)
+        , menu = this.state.menu
+console.log("Dew special:", this.field, 'st:', this.state, spec)
       if (spec == 'cal') {			//Calendar not handled in regular wylib window
         this.datePicker?.toggle()
         return
       }
-
-//      if (!this.state.menu)			//menu doesn't get populated from mdew
-//        this.$set(this.state, 'menu', {posted: false})
-      let menu = this.state.menu
-      
       menu.posted = !menu.posted
       if (spec == 'calc') {
-        if (!menu.posted) {
-          menu.component = 'wylib-calc'
-          menu.client = {value: 1234}
-console.log("  posted:", menu)
-        }
-      }		//if this.special
+        menu.component = 'wylib-calc'
+      } else if (spec == 'scm') {
+        menu.component = 'wylib-scm'
+      }
     },		//special
   },		//methods
 
+  beforeCreate: function() {
+    this.$options.components['wylib-win'] = require('./win.vue').default
+  },
+  
   created: function() {
 //console.log("Dew init:", this.field, this.mapValue)
     this.userValue = this.mapValue
@@ -282,10 +281,11 @@ console.log("  posted:", menu)
         , spButton = h('input', {attrs, on, class: 'special button'})
       kids.push(spButton)
     }
-//console.log("M:", st, st.menu)
+console.log("M:", st, 'm:', st.menu)
     if (st.menu?.posted) {		//Is the special menu posted?
       let client = h(st.menu.component, {
             props: {
+              data: cf.data,
               value: st.menu.value,
               env: this.env,
             }
@@ -299,7 +299,6 @@ console.log("  posted:", menu)
               env: this.env
             }
           }, [client])
-console.log('w:', menWin)
 console.log("P:", st.menu.component)
       kids.push(menWin)
     }

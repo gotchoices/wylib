@@ -131,5 +131,5 @@ module.exports = {
       }
     })
     return obj
-  }  
+  }
 }

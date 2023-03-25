@@ -35,7 +35,7 @@ export default {
     dirtys:	{},
     userData:	{},
     dewBus:	new Bus.messageBus(this),
-    stateTpt:	{optional: false, fields: []},
+    stateTpt:	{optional: false, fields: {}},
   }},
 
   computed: {
@@ -150,7 +150,7 @@ export default {
         if (item) {
           let field = item.field
           if (item.styles?.optional) rowOptional = true
-          if (!this.state.fields[field]) this.state.fields[field] = {}
+          if (!this.state.fields[field]) this.$set(this.state.fields,field,{})
           let dew = h('wylib-dew', {			//Make our data editing widget
             attrs: {value: this.data[field]},
             props: {
