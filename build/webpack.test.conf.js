@@ -22,9 +22,9 @@ module.exports = {
   module: Common.module,
   devServer: {
        port: 3300,
-       host: '0.0.0.0',	disableHostCheck: true,	//To browse from different host on lan
-       hot: true, hotOnly: true,
-       watchContentBase: true,
-       contentBase: 'test',			//Serve files out of test dir
+       host: '0.0.0.0',
+       allowedHosts: 'all',	//To browse from other hosts on the network
+       hot: 'only',
+       static: 'test',			//Serve files out of test dir
    }
 }
