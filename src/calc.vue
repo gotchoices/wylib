@@ -7,7 +7,7 @@
 <template>
   <div class="wylib wylib-calc">
     <input :value="expr"/>
-    <table>
+    <table class="keypad">
       <tr>
         <td><button @click="input('(')">(</button></td>
         <td><button @click="input(')')">)</button></td>
@@ -46,6 +46,7 @@
 const math = require('mathjs')
 
 export default {
+  name: 'wylib-calc',
   props: {
     value: '',
   },
@@ -64,7 +65,7 @@ export default {
       this.nextClear = false
     },
     equal() {
-      this.expr = math.eval(this.expr)
+      this.expr = math.evaluate(this.expr)
       this.nextClear = true
     }
   }
@@ -74,8 +75,6 @@ export default {
 <style>
 .wylib-calc {
   border: 1px solid green;
-  width: 100%;
-  height: 100%;
 }
 
 .wylib-calc input {
@@ -87,13 +86,15 @@ export default {
 }
 
 .wylib-calc table {
-  height: 78%;
-  width: 100%;
   table-layout: fixed;
 }
 
-.wylib-calc button {
-  width: 100%;
-  height: 100%;
+.wylib-calc table.keypad {
+  width: auto;
+}
+
+.wylib-calc table button {
+  width: 3em;
+  height: 1.5em;
 }
 </style>

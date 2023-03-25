@@ -164,6 +164,7 @@ export default {
 <style lang='less'>
   .wylib-menu {
     min-height: 3em;
+    max-height: 40vh;
     display: flex;
   }
   .wylib-menu .menu, .wylib-menu .submenus {

@@ -3,18 +3,13 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Make it work under a toplevel window
-//-Did report.vue obsolete the iframe/component stuff?
-//-
+//X-Did report.vue obsolete the iframe/component stuff?
 //- Keepopen status of buttons should be a config status--not the handler return value
 //- Test under a modal frame
 //-
 <template>
   <div class="wylib wylib-dialog">
     <div v-if="message && reason" class="title" v-html="reason + ': ' + message" :title="help"/>
-<!--
-    <component ref="component" v-if="state.component" :is="'wylib-'+stateVar('component','type')" :state="stateVar('component','state')" @submit="submit"/>
-    <iframe ref="iframe" v-if="state.iframe" :src="stateVar('iframe','src')" :name="stateVar('iframe','name')" :height="stateVar('iframe','width','100%')"/>
--->
     <wylib-mdew v-if="state.dews" :config="state.dews" :env="env" :data="state.data" @input="change" @submit="submit"/>
     <div v-if="buttons" class="buttons">
       <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but?.lang?.title ?? '?'" :title="but?.lang?.help ?? 'Confirm'"/>

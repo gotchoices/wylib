@@ -2,14 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X-   Individual lines with Reference, Memo, account, debit, credit
-//X- Anchor other fields near top when description expands to multi-line
-//X- Display a close button to remove a split
-//X- On addSplit, default debit, credit to balancing amount
-//X- On focus-in to debit or credit, default to, and highlight balancing amount
-//X- On focus-out from debit or credit, math.eval(what is in the cell)
-//X- Leave focus in Number field after adding new split
-//X- Expand width on Enter and top + button
 //- Use wyseman language data
 //- Put this in a top-level to enter data in ledger
 //- Disable enter button until:
@@ -35,7 +27,7 @@
         </tr>
         <tr class="data">
           <td/>
-          <td><wylib-indate :style="bordStyle" class="date" size=11 v-model="trData.date" placeholder="Select date" title="The date the transaction is posted to"/></td>
+          <td><input type="text" ref="date" :style="bordStyle" class="date" size=11 v-model="trData.date" placeholder="Select date" title="The date the transaction is posted to"/></td>
           <td><div contenteditable :style="[fontStyle, bordStyle]" class="memo" @input="change($event,null,'memo')" v-html="trData.memo" title="A description of the transaction block"/></td>
           <td v-if="!splitMode"><input :style="bordStyle" size=12 v-model="trData.splits[0].account" title="The account that will be debited, or made more positive"/></td>
           <td v-else/>
@@ -84,11 +76,10 @@
 const Com = require('./common.js')
 const Icons = require('./icons.js')
 //const Math = require('mathjs')
-import InDate from './indate.vue'
+const DatePicker = require('./date.js')
 
 export default {
   name: 'wylib-trans',
-  components: {'wylib-indate': InDate},
   props: {
     config:	Array,
     state:	{type: Object, default: () => ({})},	//Fixme: use this
@@ -98,6 +89,7 @@ export default {
 //    pr:		require('./prefs'),
     splitMode:	false,
 //    state:	{},
+    datePicker: null,
     trData:	{
       date: '2018-Feb-01',
       memo: 'Now is the time for all good men to come to the aid of their country',
@@ -200,12 +192,16 @@ console.log("Delete Split:", idx)
 
   mounted: function() {
     this.inputFont = window.getComputedStyle(this.$refs.sampleInput, null).getPropertyValue('font')
+    this.datePicker = new DatePicker(this.$refs.date)
     this.update()
+  },
+  beforeDestroy: function() {
+    if (this.datePicker) this.datePicker.destroy()
   },
 }
 </script>
 
-<style lang='less'>
+<style lang='scss'>
   .wylib-trans {
 // border: 1px solid blue; border-radius: 6px;
   }
@@ -245,4 +241,5 @@ console.log("Delete Split:", idx)
     font: 400 normal 11px system-ui;
     min-width: 16em;
   }
+  @import '../node_modules/flatpickr/dist/themes/light.css'
 </style>

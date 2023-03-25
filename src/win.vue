@@ -389,7 +389,7 @@ console.log("Clone to popup:", popId)
 <style lang='less'>
   .wylib-win {
     touch-action: none;		//Overcome dragging bug in android chrome
-    position: absolute;
+    position: fixed;
     border-style: solid;
   }
   .wylib-win.toplevel {

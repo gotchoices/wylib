@@ -6,35 +6,21 @@
 //X- Validity doesn't show on first load
 //X- Why do fields show changed after a clear?
 //X- Allow arbitrary misc attributes to be added to an input
-//- Honor -justify field from wyseman wmd files
-//- 
-//- Later:
-//- Display special function indicator on right side of entry
-//- How to invoke special function (right click, or icon press)
+//X- Honor -justify field from wyseman wmd files
+//X- Display special function indicator on right side of entry
 //- Handlers for each kind of special function
 //X-   Calendar
-//-   Calculator
-//-   Spinner
+//X-   Calculator
+//X-   Spinner
 //-   Scrolled menu (static data, or callback to parent somewhere)
 //-   Editing window
 //- Can select from scrolled menu of available countries (and other queries)
 //- 
 
-//<!-- template>		Changed to render function below
-//  <div class="wylib wylib-dew" :title="lang?.help">
-//    <div v-if="state.input == 'chk'" class="check" :style="genStyle">
-//      <input ref="input" type="checkbox" class="checkbox" :checked="userValue" @change="input($event, $event.target.checked)" :autofocus="state.focus" :disabled="disabled"/>
-//    </div>
-//    <textarea ref="input" v-else-if="state.input == 'mle'" :rows="height" :cols="width" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle"/>
-//    <select ref="input" v-else-if="state.input == 'pdm'" :value="userValue" @input="input" :autofocus="state.focus" :disabled="disabled" :style="genStyle">
-//      <option v-for="val in pdmValues" :label="val?.title" :value="val?.value" :title="val?.help"/>
-//    </select>
-//    <input ref="input" v-else-if="state.input == 'ent'" type="text" class="text" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
-//    <input ref="input" v-else :type="state.input" :value="userValue" @input="input" @keyup.enter="submit" :autofocus="state.focus" :placeholder="hint" :disabled="disabled" :style="genStyle"/>
-//  </div>
-//</template -->
-
 <script>
+import Win from './win.vue'
+import Calc from './calc.vue'
+
 const Com = require('./common.js')
 const DatePicker = require('./date.js')
 const shortHints = {
@@ -48,6 +34,7 @@ const shortTpts = {
 
 export default {
   name: 'wylib-dew',
+  components: {'wylib-calc': Calc},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     lang:	null,
@@ -62,7 +49,7 @@ export default {
   data() { return {
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, initial:null},
+    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, menu: {}, initial:null},
   }},
 
   computed: {
@@ -135,6 +122,7 @@ export default {
       borderRightWidth: this.pr.dewFlagWidth + 'px',
 //x:console.log("width:", this.field, this.width),
       minWidth: this.width/2 + 'em',		//Better way to compare to actual text size?
+      textAlign: Com.unabbrev(this.state?.justify?.toLowerCase(), ['left','center','right'])
     }},
 
     dims() {
@@ -186,20 +174,41 @@ export default {
     },
     clear() {
       return this.set(this.state.initial)
-    }
-  },
+    },
+
+    special: function() {
+      let spec = this.state.special
+console.log("Dew special:", this.field, 'st:', this.state, spec)
+      if (spec == 'cal') {			//Calendar not handled in regular wylib window
+        this.datePicker?.toggle()
+        return
+      }
+
+      if (!this.state.menu)			//menu doesn't get populated from mdew
+        this.$set(this.state, 'menu', {posted: false})
+      let menu = this.state.menu
+      
+      menu.posted = !menu.posted
+      if (spec == 'calc') {
+        if (!menu.posted) {
+          menu.component = 'wylib-calc'
+          menu.client = {value: 1234}
+console.log("  posted:", menu)
+        }
+      }		//if this.special
+    },		//special
+  },		//methods
 
   created: function() {
 //console.log("Dew init:", this.field, this.mapValue)
     this.userValue = this.mapValue
   },
-  beforeMount: function() {
-//console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
-    Com.stateCheck(this)
-    
-//    if (!('initial' in this.state)) this.state.initial = null
-//console.log(" Refs:", this.field, this.state.initial, JSON.stringify(this.$refs))
 
+  beforeMount: function() {
+console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
+    Com.stateCheck(this)
+console.log("dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
+    
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
       if (msg == 'clear')			//Set to default value
@@ -249,6 +258,7 @@ export default {
         }, val.title))
       }
       entry = h('select', conf, optList)
+
     } else if (st.input == 'button') {		//Action button
 //console.log("button lang:", this.lang)
       let txt = (this.lang?.title ?? this.lang ?? 'Reset')
@@ -256,10 +266,11 @@ export default {
       Object.assign(on, {click: ev=>this.input(ev, true)})
       Object.assign(conf, {domProps: {innerHTML}})
       entry = h('button', conf)
+
     } else {					//Text or other input type
       let type = Com.unabbrev(st.input, ['text', 'number'])
       Object.assign(attrs, {type: st.input == 'ent' ? 'text' : type, placeholder: this.hint})
-      Object.assign(conf, {class: 'text' + (!st.special ? '' : ' special')})
+      Object.assign(conf, {class: ['text', !st.special ? '' : 'special']})
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
@@ -267,14 +278,36 @@ export default {
       entry = st.input ? h('input', conf) : null
     }
     kids = [entry]
-console.log("R:", this.field, typeof st.special, st.special)
-//    if (!!st.special) {
-//      let attrs = {type: 'button'}
-//        , spButton = h('input', {attrs, class: 'button special'})
-//      kids.push(spButton)
-//    }
+//console.log("R:", this.field, typeof st.special, st.special)
+    if (!!st.special) {
+      let attrs = {type: 'button'}
+        , on = {click: this.special}
+        , spButton = h('input', {attrs, on, class: 'special button'})
+      kids.push(spButton)
+    }
+console.log("M:", st, st.menu)
+    if (st.menu?.posted) {		//Is the special menu posted?
+      let client = h(st.menu.component, {
+            props: {
+              value: st.menu.value,
+              env: this.env,
+            }
+          })
+        , menWin = h('wylib-win', {
+            props: {
+              state: st.menu,
+              topLevel: false,
+              fullHeader: false,
+              pinnable: true,
+              env: this.env
+            }
+          }, [client])
+console.log('w:', menWin)
+console.log("P:", st.menu.component)
+      kids.push(menWin)
+    }
     return h('div', {
-      class: "wylib wylib-dew",
+      class: ['wylib', 'wylib-dew'],
       attrs: {title: this.lang?.help ?? this.lang?.title ?? this.lang},
     }, kids)
   },
@@ -284,7 +317,7 @@ console.log("R:", this.field, typeof st.special, st.special)
 <style lang="scss">
   .wylib-dew {
     position: relative;
-    display: inline-block;
+    display: inline;
 //    padding: 1px 7px 1px 1px;
 //border: 1px solid black;
   }
@@ -298,14 +331,21 @@ console.log("R:", this.field, typeof st.special, st.special)
   .wylib-dew input.text, select {
     width: 100%;			//Make a preferences option
   }
-//  .wylib-dew button.special {
-//    background: purple;
-//    position: absolute;
-//    top: 50%;
-//    right: 0;
-//    transform: translateY(-50%);
-//    display: none;
-//  }
+  .wylib-dew input.special.button {
+    position: absolute;
+    border: none;
+    top: 50%;
+    right: 0.5em;
+    height: 1em;
+    transform: translateY(-40%);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23104010' d='M0 0 L50 50 L100 0 Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    display: none;
+  }
+  .wylib-dew:hover input.special.button {
+    display: block;
+  }
   .wylib-dew button {
     height: 1.5em;
     width: 100%;

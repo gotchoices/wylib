@@ -10,9 +10,10 @@ const Flatpickr = require('flatpickr/dist/flatpickr.js')
 module.exports = function(selector = '.date', defaultValue = 'today', container) {
   this.picker = Flatpickr(selector, {
     allowInput: true,
-    onClose: this.closeHandler
+    clickOpens: false,
+    onClose: this.closeHandler,
+    appendTo: container || window.body,
 //    defaultDate: defaultValue,
-//    appendTo: container || window.body,
   })
 
   this.closeHandler = function() {

@@ -2,19 +2,11 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Can layout multiple dews in a grid
-//X- Start with a single column of value
-//X- Can get rid of ref= now?
-//X- Row labels alternate colors
-//X- CSS to make optional fields hide/show
-//X- How to make class reactive?
 //X- Make clean/dirty work correctly
 //- Implement built-in template codes (date, time, etc)
-//- Arrange remaining fields for mychips.users_v
 //- Change dew state to config? (probably not--just trim state at this level)
 //- Should an mle save its state when the user enlarges it?  How do we get the default back?
 //- 
-//- Later:
 //- Can do 2D array with: 
 //-   Columnspans
 //-   Piggybacks
@@ -25,11 +17,10 @@
 const Bus = require('./bus.js')
 const Com = require('./common.js')
 import Dew from './dew.vue'
-import InDate from './indate.vue'
 
 export default {
   name: 'wylib-mdew',
-  components: {'wylib-dew': Dew, 'wylib-indate': InDate},
+  components: {'wylib-dew': Dew},
   props: {
     state:	{type: Object, default: () => ({})},
     data:	{type: Object, default: () => ({})},
@@ -150,12 +141,12 @@ export default {
         , rowOptional = false
         , len = row ? row.length : 0				//How many fields on this row
       for (let x = 0; x < len; x++) {				//Iterate through them
-//console.log("  item:", item)
         let item = row[x]
-          , col = item && item.grid ? item.grid.x : null
-          , xspan = (item && item.grid ? item.grid.xspan : null) || 1
-          , yspan = (item && item.grid ? item.grid.yspan : null) || 1
-//console.log("    row:", y, "item:", x, col, colCount, item)
+          , col = item?.grid?.x
+          , xspan = item?.grid?.xspan ?? 1
+          , yspan = item?.grid?.yspan ?? 1
+//console.log("  item:", item)
+//console.log("    row:", y, "item:", x, col, colCount, 'xs:', xspan)
         if (item) {
           if (item.styles && item.styles.optional != null && item.styles.optional) rowOptional = true
           let dew = h('wylib-dew', {			//Make our data editing widget
@@ -164,7 +155,7 @@ export default {
             on: {input: this.input, submit: this.submit},
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang.title + ':' : null))
-          tabItems.push(h('td', {attrs: {colspan:(xspan*2-1), rowspan:yspan}}, [dew]))
+          tabItems.push(h('td', {attrs: {colspan:(xspan * 2 - 1), rowspan:yspan}}, [dew]))
         } else if (colCount < col) {			//Assuming prior columns haven't spanned available space
           tabItems.push(h('td'))			//pad it with dead cells
           tabItems.push(h('td'))
