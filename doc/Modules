@@ -1,0 +1,124 @@
+Description of Various Wylib Component Modules
+
+button - Button
+Uniform button creator for use in various other components.
+
+app - Application
+Very most top-level component.  Contains the entire application.  An application contains
+a connection manager, a main menu and any number of context tabs.  Each tab gives the user
+a particular launch point into the database.  These are usually a preview (dbp) of a
+database view.
+
+connect - Connection Manager
+Used exclusively inside an app to display connection status with the backend.
+
+launch - Preview Launcher
+Allows the user to open one or more dbp windows in the current app viewport.
+
+pop - Popup Top
+Modules expect to exist under a toplevel module such as "app" described above.  Reports
+have the ability to create iframes and separate browser windows which themselves can
+contain other wylib modules.  The pop module is a very stripped down toplevel handler
+that can take the place of app for simple windows that are really part of the main app
+but need a holding spot to contain wylib modules.
+
+dbp - Database Preview
+This displays a list of database records that can be sorted, selected and edited.
+
+mlb - Multi List Box
+This displays a list of data items.  It forms the core of the dbp modules but is not 
+itself database aware.
+
+dbs - Database Search
+Allows the user to create complex database queries.  Typically launched from a dbp
+module to describe the records the user wants to preview.
+
+logitem - Logic Item
+loglist - Logic List
+These are used inside the dbs component to represent portions of the query.  They are
+not themselves database aware.
+
+dbe - Database Editor
+Displays a single database record, offering the user the option to modify, delete, or
+add new records.  This is a launch point for certain reports and actions which, when
+activated, are expected to act upon or in conjuction with the record currently loaded
+in the dbe.
+
+mdew - Multi Data Editor Widget
+This holds an array of dews and forms the core of the dbe module but is not itself
+database aware.
+
+dew - Data Editingn Widget
+This consists of a title and a data editor of a particular type.  It is meant to allow
+the user to view and/or modify the data contained in a single variable or database
+cell (column and row).  It is invoked once by mdew for each item in its array but it
+is also used by other modules where the user is expected to input data.
+
+win - Window
+Creates a frame that can hold other widgets.  The window can be moved around the 
+viewport and resized.  It has certain abilities to store its geometry and the
+configuration of widgets it contains and their progeny.
+
+menudock - Menu Dock
+Meant to be used inside the win component.  Presents a single hamburger menu as well
+as a number of shortcut buttons.
+
+User Interactions:
+There are several components used for accepting choices or displaying custom data for
+the user.  These are typically used in conjunction with some kind of container 
+component (win or modal).
+
+menu - Menu
+Displays a tabular set of pre-defined choices such as you would see in a typical
+application menu.  When the user clicks on one of the rows, this signals a choice
+of that item.  Rows can employ a variety of data types such as inputs, buttons,
+colors, in addition to simple static menu items.  This is typically contained
+inside a win component with a minimal border and which allows the menu to be
+pinned (kept open even after the user makes a selection).
+
+scm - Scrolled Menu
+Similar to a regular menu except it is meant for longer sets of choices--typically
+as might be drawn from the database.  In addition to simply looking through
+available choices, the user can search to narrow down available choices.  When
+the user executes a line, this indicates his choice and the containing window
+would normally close (unless it is pinned).
+
+calc - Calculator
+Allows the user to perform math computations to arrive at an answer to a query.
+Typically used as a special popup for a dew.
+
+dialog - Independent Dialog
+The dialog displays a message to the user, typically to ask for some data or set
+of data to be input.  The data is collected in an mdew, an array of individual
+data editing widgets.  This is sometimes contained inside a win component which
+automatically closes once the user has input the requested data.  It can also be
+contained inside a modal which means the user will be blocked from performing
+other UI interactions inside the same toplevel window until the dialog has been
+completed.
+
+modal - Modal Container
+This is the frame that blanks out its toplevel window and all its progeny.  It
+is typically used to contain a dialog widget which can force the user to
+address its query before proceeding to use other program features.
+
+report - Report
+This can be contained inside a win or a pop (which is inside a separate popup
+browser window).  It can contain any arbitrary component or report the backend
+might be configured to provide.
+
+Custom Data Widgets:
+
+strdoc - Structured Document
+Used to create any hierarchical document that can be represented in JSON format.
+
+svgraph - Scalable Vector Graph
+Contains a programmable vector image, typically used to visualize a graph dataset.
+
+svnode - Graph Node
+Renders a node in a graph database inside an svgraph component.
+
+svedge - Graph Edge
+Renders an edge (connection) in a graph database inside an svgraph component.
+
+trans - Transaction Editor
+Allows the user to view/modify an accounting entry.

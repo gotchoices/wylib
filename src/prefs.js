@@ -60,7 +60,7 @@ const Config = {
   mlbMinWidth:		{def:20,		mod:'mlb', inp:{type:'number', min:1, max:100, step:1},	lang:'Minimum Width'},
   mlbMaxWidth:		{def:200,		mod:'mlb', inp:{type:'number', min:1, max:500, step:1},	lang:'Maximum Width'},
   mlbDefWidth:		{def:80,		mod:'mlb', inp:{type:'number', min:1, max:500, step:1},	lang:'Default Width'},
-  mlbCharWidth:		{def:8,			mod:'mlb', inp:{type:'number', min:1, max:16, step:1},	lang:'Character Width'},
+  mlbCharWidth:		{def:10,		mod:'mlb', inp:{type:'number', min:1, max:16, step:1},	lang:'Character Width'},
 
 }
 

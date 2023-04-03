@@ -35,7 +35,7 @@ export default {
     dirtys:	{},
     userData:	{},
     dewBus:	new Bus.messageBus(this),
-    stateTpt:	{optional: false, fields: {}},
+    stateTpt:	{optional: false, dews: {}},
   }},
 
   computed: {
@@ -107,7 +107,7 @@ export default {
 //  },
 
   beforeMount: function() {
-    Com.stateCheck(this)
+    Com.stateCheck(this, true)
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'userData') {
         if (!data) return this.userData			//Get all records
@@ -150,13 +150,13 @@ export default {
         if (item) {
           let field = item.field
           if (item.styles?.optional) rowOptional = true
-          if (!this.state.fields[field]) this.$set(this.state.fields,field,{})
+          if (!this.state.dews[field]) this.$set(this.state.dews,field,{})
           let dew = h('wylib-dew', {			//Make our data editing widget
             attrs: {value: this.data[field]},
             props: {
               field,
               config: item.styles, 
-              state: this.state.fields[field],
+              state: this.state.dews[field],
               lang: item.lang, 
               values: item.values, 
               nonull: item.nonull, 

@@ -46,8 +46,7 @@ export default {
   data() { return {
     userValue:	null,					//Value, as modified by user
     datePicker: null,
-//    stateTpt:	{input: 'ent', size: null, state: null, template: null, special: null, menu: {}, initial:null},
-    stateTpt:	{menu: {posted: false}},
+    stateTpt:	{menu: {posted: false, client: {}}},
   }},
 
   computed: {
@@ -174,6 +173,11 @@ export default {
       return this.set(this.config.initial)
     },
 
+    specResult: function(res) {
+console.log('specResult:', res)
+      this.set(res)
+    },
+
     special: function() {
       let spec = this.config.special
         , menu = this.state.menu
@@ -202,7 +206,8 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
 
   beforeMount: function() {
 //console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
-    Com.stateCheck(this)
+    if (this.config.special)			//Only have sub-window for special menus
+      Com.stateCheck(this, true)
     
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
@@ -280,27 +285,30 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
         , on = {click: this.special}
         , spButton = h('input', {attrs, on, class: 'special button'})
       kids.push(spButton)
-    }
-console.log("M:", st, 'm:', st.menu)
-    if (st.menu?.posted) {		//Is the special menu posted?
-      let client = h(st.menu.component, {
-            props: {
-              data: cf.data,
-              value: st.menu.value,
-              env: this.env,
-            }
-          })
-        , menWin = h('wylib-win', {
-            props: {
-              state: st.menu,
-              topLevel: false,
-              fullHeader: false,
-              pinnable: true,
-              env: this.env
-            }
-          }, [client])
+//console.log("M:", st, 'm:', st.menu)
+      if (st.menu?.posted) {		//Is the special menu posted?
+        let client = h(st.menu.component, {
+              props: {
+                state: st.menu.client,
+                data: cf.data,
+                handle: val => this.specResult(val),
+                env: this.env,
+              }, on: {done: (res) => {			//console.log('dew got done:', res)
+                st.menu.posted = st.menu.pinned
+              }}
+            })
+          , menWin = h('wylib-win', {
+              props: {
+                state: st.menu,
+                topLevel: false,
+                fullHeader: false,
+                pinnable: true,
+                env: this.env
+              }
+            }, [client])
 console.log("P:", st.menu.component)
-      kids.push(menWin)
+        kids.push(menWin)
+      }
     }
     return h('div', {
       class: ['wylib', 'wylib-dew'],

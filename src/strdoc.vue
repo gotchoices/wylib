@@ -344,7 +344,7 @@ console.log("Import file:", ans, resp)
           reader.onload = () => {
             let data = JSON.parse(reader.result)
 //console.log("Import data:", data)
-            Com.stateCheck(this, data, true)
+            Com.stateCheck(this, true, data)
             Object.assign(this.state, data)
             this.$nextTick(()=>this.subBus.notify('check'))
           }
@@ -508,7 +508,7 @@ console.log("dragStart:", this.index, this.secNumber)
   },
 
   beforeMount() {
-    Com.stateCheck(this, this.state, true)
+    Com.stateCheck(this, true)
 //console.log("Strdoc state:", this.state)
 
     if (this.iAmChief) {
@@ -524,7 +524,7 @@ console.log("dragStart:", this.index, this.secNumber)
       if (msg == 'edit') this.state.edit = true
       else if (msg == 'preview') this.state.edit = false
       else if (msg == 'markup' && this.state.edit) this.markTextArea(data)
-      else if (msg == 'check') Com.stateCheck(this, this.state, true)
+      else if (msg == 'check') Com.stateCheck(this, true)
     })
   },
   mounted() {

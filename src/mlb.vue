@@ -230,7 +230,7 @@ console.log("Context Menu: " + e.target)
   watch: {
     'state.see': function (val) {this.see()},
     'state.footerOn': function (val) {
-console.log("Footer:", this.state.footerOn, val)
+//console.log("Footer:", this.state.footerOn, val)
       this.gridInstance.setOptions({showFooterRow: val})
 //      this.gridInstance.setOptions({showFooterRow: val, createFooterRow: true})
       this.gridInstance.resizeCanvas()

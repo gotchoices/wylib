@@ -11,7 +11,7 @@ module.exports = {
   langTpt() {return {title: null, help: null}},
   envTpt() {return {wm: {t: {}, h: {}}, pr: require('./prefs.js')}},
 
-  stateCheck(context, st = context.state, prune = false, props = context.stateTpt) {		//Initialize any needed properties in a component's state
+  stateCheck(context, prune = false, st = context.state, props = context.stateTpt) {		//Initialize any needed properties in a component's state
 //console.log("stateCheck:", context, props, st)
     if (st && props) {
       Object.keys(props).forEach(key => {		//Make sure all required properties are present

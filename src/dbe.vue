@@ -24,7 +24,7 @@
         <wylib-dbp :state="sub.client" :env="env" :bus="subBus" :master="keyMaster"/>
       </wylib-win>
     </div>
-    <wylib-mdew ref="mdew" :state="state.dews" :env="env" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
+    <wylib-mdew ref="mdew" :state="state.mdew" :env="env" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
   </div>
 </template>
 
@@ -55,7 +55,7 @@ export default {
     lastView:	null,
     mdewBus:	new Bus.messageBus(this),
     subBus:	new Bus.messageBus(this, this.reportQuery),
-    stateTpt:	{dock:{}, dbView:'', key: {}, loaded:false, subs:{}, dews:{fields: []}},
+    stateTpt:	{dock:{}, dbView:'', key: {}, loaded:false, subs:{}, mdew:{}},
     reports:	{},
   }},
 
@@ -91,7 +91,7 @@ export default {
       {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.keyValues},
       {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
-      {idx: 'opt', lang: this.wm.dbeOption,  call: this.opTog,   icon: 'eye',    type: 'checkbox', toggled: this.state.dews.optional, input: this.showOptValue},
+      {idx: 'opt', lang: this.wm.dbeOption,  call: this.opTog,   icon: 'eye',    type: 'checkbox', toggled: this.state.mdew.optional, input: this.showOptValue},
     ]},
     headerHeight() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
@@ -143,8 +143,8 @@ export default {
 
   methods: {
     showOptValue(v) {				//Set/get value for showing optional fields
-      if (v != null) this.state.dews.optional = v
-      return this.state.dews.optional
+      if (v != null) this.state.mdew.optional = v
+      return this.state.mdew.optional
     },
     loadRec() {					//Prompt for a primary key and load that record
       let resp = {}

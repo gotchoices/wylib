@@ -95,9 +95,14 @@ export default {
     stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null, fresh: true},
   }},
   inject: ['app'],
-  provide() { return {
-    top: () => {return this.top}
-  }},
+  provide() { 
+    if (this.topLevel)
+      return {
+        top: () => {return this.top}
+      }
+    else
+      return {}
+  },
   computed: {
     id() {return 'win_' + this._uid + '_'},
     wm() {return this.env.wm},
@@ -202,7 +207,7 @@ console.log("Clone to popup:", popId)
         this.saveStateAs()
     },
     storeState() {		//Redundant with stored app state?
-//console.log("Storing window state:", this.stateTag)
+console.log("Storing window state:", this.stateTag, JSON.stringify(this.state))
       if (this.topLevel && this.stateTag) Local.set(this.stateTag, this.state)
     },
     defaultSize() {

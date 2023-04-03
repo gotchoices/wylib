@@ -20,6 +20,7 @@ Wylib TODO
 - Later Wylib:
 - Preferences UI editor component
 - Implement dbp row menu?
+- If windows were served up from app (rather than win) layers might work better
 - 
 - Port additional widgets:
 -   Time selector
