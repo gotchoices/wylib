@@ -82,6 +82,7 @@ export default {
         })
       }
       this.state.columns.forEach((col,idx)=>{		//Get rid of any columns not described in config
+//console.log("drop: ", col.field)
         if (!(col.field in this.config)) this.state.columns.splice(idx,1)
       })
       cols.sort((a,b) => {return (a.order - b.order)})

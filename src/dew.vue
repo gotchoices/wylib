@@ -206,8 +206,11 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
 
   beforeMount: function() {
 //console.log("Dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
-    if (this.config.special)			//Only have sub-window for special menus
-      Com.stateCheck(this, true)
+    if (this.config.special) {			//Only have sub-window for special menus
+      Com.stateCheck(this, false)					//dew
+      Com.stateCheck(this, false, this.state.menu, this.stateTpt.menu)	//menu window
+    }
+//console.log("dew state:", this.field, this.value, this.userValue, this.values, JSON.stringify(this.state))
     
     if (this.bus) this.bus.register(this.field, (msg, data) => {
 //console.log('dew', this.field, 'got bus message:', msg, data)
@@ -285,7 +288,7 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
         , on = {click: this.special}
         , spButton = h('input', {attrs, on, class: 'special button'})
       kids.push(spButton)
-//console.log("M:", st, 'm:', st.menu)
+//console.log("M:", st, 'm:', JSON.stringify(st.menu))
       if (st.menu?.posted) {		//Is the special menu posted?
         let client = h(st.menu.component, {
               props: {
@@ -306,7 +309,7 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
                 env: this.env
               }
             }, [client])
-console.log("P:", st.menu.component)
+//console.log("P:", st.menu.component)
         kids.push(menWin)
       }
     }

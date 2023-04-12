@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //- Make reordering work (or disable it)
-//- Implement search
+//- Can search for choices (maybe as you type the selection)
 //- 
 <template>
   <div class="wylib wylib-scm">
@@ -63,8 +63,11 @@ export default {
     pr() {return this.env.pr},
 
     mlbConfig() {				//Make the column description format mlb expects
-      let colConfigs = {}
-console.log("Scm mlbConfig:", this.viewMeta)
+//console.log("Scm mlbConfig:", this.viewMeta, JSON.stringify(this.state.grid?.columns))
+      let colConfigs = this.state.grid?.columns?.reduce(	//Default config in case no viewMeta yet
+        (ac, el) => Object.assign(ac, {[el.field]: {field: el.field}}),
+        {}
+      )
 
       if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
         let defWidth
@@ -77,9 +80,9 @@ console.log("Scm mlbConfig:", this.viewMeta)
           let config = {
             field,
             title:	meta.title || field,
-            help:		meta.help,
+            help:	meta.help,
             order:	parseInt(meta.styles.display || 9999),
-            just:		meta.type.match(/(int|float)[0-9]/) ? 'right' : 'left',
+            just:	meta.type.match(/(int|float)[0-9]/) ? 'right' : 'left',
             width:	defWidth ? (defWidth <= this.pr.mlbMaxWidth ? defWidth : this.pr.mlbMaxWidth) : this.pr.mlbDefWidth,
             visible:	true,
           }
@@ -87,6 +90,7 @@ console.log("Scm mlbConfig:", this.viewMeta)
           colConfigs[field] = config
         }
       })
+//console.log("  grid cols:", JSON.stringify(colConfigs), JSON.stringify(this.state.grid?.columns))
       return colConfigs
     },
   },
@@ -138,7 +142,7 @@ console.log("Geometry changed:", this.top(), ev)
   },
 
   mounted: function() {
-console.log('Scm mounted:', this.id, 'st:', this.state, 'da:', this.data)
+//console.log('Scm mounted:', this.id, 'st:', this.state, 'da:', this.data)
     let d = this.data
     if (typeof d == 'string' && d in Stock) {
       this.spec = Stock[d]
@@ -173,6 +177,7 @@ console.log('Scm mounted:', this.id, 'st:', this.state, 'da:', this.data)
         if (!this.token)		//Guess at what to return
           this.token = data.pkey[0]
       })
+//      this.$parent.$emit('customize', {title:'Hi', help: 'Ho'}, 'scm:'+this.spec.view)
     }
   },
 

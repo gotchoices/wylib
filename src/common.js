@@ -2,7 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //- TODO:
-//X- Add a trim option to stateCheck to remove obsolete properties?
 //- 
 const Buffer = require('buffer/').Buffer
 
@@ -12,7 +11,7 @@ module.exports = {
   envTpt() {return {wm: {t: {}, h: {}}, pr: require('./prefs.js')}},
 
   stateCheck(context, prune = false, st = context.state, props = context.stateTpt) {		//Initialize any needed properties in a component's state
-//console.log("stateCheck:", context, props, st)
+//console.log("stateCheck:", context, st, props)
     if (st && props) {
       Object.keys(props).forEach(key => {		//Make sure all required properties are present
         if (!(key in st) || (st[key] == undefined && props[key] != undefined)) {
