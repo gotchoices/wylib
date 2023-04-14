@@ -151,7 +151,7 @@ export default {
   },
 
   methods: {
-    input(ev, value = ev.target.value) {
+    input(ev, value = ev?.target?.value) {
 //console.log("Dew input:", ev, this.nonull, value)
       if (this.config.input == 'file' && ev.target.files) {	//Special handler for file selectors
         value = ev.target.files
@@ -161,7 +161,9 @@ export default {
       }
       this.$emit('input', value, this.field, this.dirty, this.valid)
     },
-    submit(ev) {this.$emit('submit')},
+    submit() {						//console.log("Dew submit:")
+      this.$emit('submit', this.userValue, this.field, this.dirty, this.valid)
+    },
     focus() {			//Focus cursor on this entry field
 //console.log("Focusing:", this.$refs, this.field)
       this.$refs.input.focus()
@@ -173,9 +175,10 @@ export default {
       return this.set(this.config.initial)
     },
 
-    specResult: function(res) {
-console.log('specResult:', res)
+    specResult: function(res) {				//console.log('specResult:', res)
       this.set(res)
+      this.$emit('input', res, this.field, this.dirty, this.valid)
+      this.submit()
     },
 
     special: function() {

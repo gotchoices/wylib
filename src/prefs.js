@@ -5,19 +5,21 @@
 //X- Fill in default text descriptions
 //X- Build object of preferences when launched
 //X- Make routine to build menu items for editing prefs
-//- Generate pull-down to select supported languages from menu
-//-   Language changes in one step--not a character at a time
-//-   Call wyseman.newLanguage with new language setting, app updates reactively
-//-   How does prefs call to refill wyseman cache when language changes?
+//X- Generate pull-down to select supported languages from menu
+//X-   Language changes in one step--not a character at a time
+//X-   Call wyseman.newLanguage with new language setting, app updates reactively
+//X-   How does prefs call to refill wyseman cache when language changes?
 //- Can the pref field descriptions pull from the database?
 //- Defer building Prefs until init explicitly called (which includes saved prefs)
 //- Create initialize routine
 //-   Fills in any missing properties from default structure
 //- Should start with an empty config
 //-   Modules should supply their own prefs for the array (including app)
+//- Prefs are saved with app state
 
+const Wyseman = require('./wyseman.js')
 const Config = {
-  language:		{m:'app', d: 'eng',	input:'text', special:'scm', data: 'language', lang: 'Language'},
+  language:		{m:'app', d: 'eng',	input:'text', special:'scm', data: 'language', template: /[a-z]{3}/, lang: 'Language'},
   
   dataBackground:	{m:'app', d: '#fefefe',	input:'color',	lang: 'Data Entry Background'},
   frameBackground:	{m:'app', d: '#f4f4f4',	input:'color',	lang: 'Container Background'},
@@ -71,7 +73,7 @@ Object.defineProperty(Preferences, 'menu', {
   value: function(module) {
     let rest = 'Restore Defaults'
       , confArr = [{idx: 'restore', lang:rest, config:{input:'button'}, input:(v)=>{
-if (v) console.log("Restore:", v)
+//if (v) console.log("Restore:", v)
           if (v != undefined) for (let idx in Config) {
             let {d, m} = Config[idx]
             if (m == module) this[idx] = d
@@ -90,9 +92,9 @@ if (v) console.log("Restore:", v)
         config.size = config.input == 'text' ? 20 : 10		//Better way to do this?
 //console.log("Pref config:", idx, lang, JSON.stringify(config))
       let elem = {idx, lang, config, input:(va, ix, d, v)=>{	//When item changed by user
-//console.log("Pref input:", idx, va, ix, this[idx])
-        if (ix == 'language') {
-//console.log("Prefs detects language change:", va)
+//console.log("Pref input:", idx, va, ix, d, v)
+        if (ix == 'language' && va && v) {		//console.log("Prefs language change:", va)
+          Wyseman.newLanguage(va)
         }
         if (va != null && va != undefined && ix)	//Change the preference
           this[ix] = va
@@ -104,22 +106,6 @@ if (v) console.log("Restore:", v)
   }
 })
   
-//  _callbacks:			{},
-//  _currentLanguage:		'eng',
-//
-//  get language() {return this._currentLanguage},
-//  set language(lang) {
-//console.log("Set language:", lang)
-//    this._currentLanguage = lang
-//    Object.keys(this._callbacks).forEach( (id) => {	//Notify all listeners
-//      this._callbacks[id](this._currentLanguage)
-//    })
-//  },
-//  register(id, cb) {		//Remember a component to call back if language changes
-//console.log("Prefs register ID:", id)
-//    if (cb) this._callbacks[id] = cb; else delete this._callbacks[id]
-//  }
-
 //Temporary init; replace with initialization call from app
 for (let key in Config) {
   Preferences[key] = Config[key].d

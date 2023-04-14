@@ -100,12 +100,12 @@ export default {
 
   methods: {
     execute(selection) {
-console.log("Scm execute: ", selection, this.token)
+//console.log("Scm execute: ", selection, this.token)
       if (selection?.length <= 0) return
       let idx = selection[0]
         , row = this.gridData[idx]
         , value = row[this.token]
-console.log("   row: ", value, row)
+//console.log("   row: ", value, row)
       if (typeof this.handle === 'function')
         this.handle(value, row)
       this.$emit('done', value, row)
