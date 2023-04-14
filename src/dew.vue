@@ -84,13 +84,13 @@ export default {
       return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value,null,2) : this.value
     },
 
-    dirty() {						//The user has changed the value
+    dirty() {			//The user has changed the value
       let dirty = (this.userValue != this.mapValue)
 //console.log("dirty:", this.field, this.mapValue, this.userValue, dirty)
       return dirty
     },
 
-    valid() {						//The value matches the specified template pattern or seems otherwise valid, given the field type
+    valid() {			//The value matches the specified template pattern or seems otherwise valid, given the field type
       let isValid = false
 //console.log("Valid top:", this.field, this.config.input)
       if (this.config.input == 'chk' || this.config.input == 'inf') {
@@ -181,7 +181,7 @@ console.log('specResult:', res)
     special: function() {
       let spec = this.config.special
         , menu = this.state.menu
-console.log("Dew special:", this.field, 'st:', this.state, spec)
+//console.log("Dew special:", this.field, 'st:', this.state, spec)
       if (spec == 'cal') {			//Calendar not handled in regular wylib window
         this.datePicker?.toggle()
         return
@@ -200,7 +200,7 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
   },
   
   created: function() {
-//console.log("Dew init:", this.field, this.mapValue)
+//console.log("Dew init:", this.field, this.config)
     this.userValue = this.mapValue
   },
 
@@ -241,10 +241,7 @@ console.log("Dew special:", this.field, 'st:', this.state, spec)
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-      , other = typeof cf.other == 'string' ? JSON.stringify(cf.other) : cf.other
-//console.log("Dew render:", this.field, cf, 'O:', cf.other)
-    if (typeof cf.other == 'object')
-      attrs = Object.assign(attrs, cf.other)
+//console.log("Dew render:", this.field, cf)
     if (cf.input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)

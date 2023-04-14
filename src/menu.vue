@@ -2,10 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Register single event listener for toplevel window to unpost all menus (rather than having every menu register an event listener)
-//X- Can have multiple text fields, icons, cascades
-//X- Default menu icon for sub-menus
-//- Implement maximum height preference for menus (1/2 of screen size?)
+//X- Implement maximum height preference for menus (1/2 of screen size?)
 //- Don't create menus until the first time they are posted (win)
 //- Configuration separate from contents?
 //- Contents gives actual menu items
@@ -151,6 +148,7 @@ export default {
   },
 
   mounted: function() {
+//console.log("M:", this.layout, this.config)
 //console.log("Menu components: " + JSON.stringify(this.$options.components))
 //    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
     this.$parent.$emit('customize', this.lang)

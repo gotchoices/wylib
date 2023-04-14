@@ -2,6 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
+//- Make static data work (like state below)
 //- Make reordering work (or disable it)
 //- Can search for choices (maybe as you type the selection)
 //- 
@@ -27,8 +28,10 @@ const Stock = {
     token: 'iso_3'
   },
   language: {
-    view: 'base.language',
+    view: 'base.language_v',
     fields: ['code', 'eng_name', 'fra_name'],
+    where: {left: 'tables', oper: '>', entry: 0},
+    order: [1],
     token: 'code'
   },
   state: {
