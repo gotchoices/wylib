@@ -27,6 +27,11 @@ const Stock = {
     order: [1],
     token: 'iso_3'
   },
+  currency: {
+    view: 'base.currency',
+    fields: ['cur_code','cur_name'],
+    order: [1],
+  },
   language: {
     view: 'base.language_v',
     fields: ['code', 'eng_name', 'fra_name'],
