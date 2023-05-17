@@ -15,6 +15,7 @@
 <script>
 import Win from './win.vue'
 import Calc from './calc.vue'
+import File from './file.vue'
 import Scm from './scm.vue'
 
 const Com = require('./common.js')
@@ -30,7 +31,7 @@ const shortTpts = {
 
 export default {
   name: 'wylib-dew',
-  components: {'wylib-calc': Calc, 'wylib-scm': Scm},
+  components: {'wylib-calc': Calc, 'wylib-scm': Scm, 'wylib-file': File},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     config:	{type: Object, default: () => ({input: 'ent'})},
@@ -143,10 +144,10 @@ export default {
     },
 
     width() {					//In characters
-//console.log("Width:", this.field, this.config.size, this.pr.dewEntWidth, this.dims)
+//console.log("Width:", this.field, this.config.input, this.config.size, this.pr.dewEntWidth, this.dims)
       return this.dims?.x ?? (
         this.config.input == 'mle' ? (this.pr.dewMleWidth ?? 40) : 
-          (this.config.input != 'chk' ? (this.pr.dewEntWidth ?? 4) : 2)
+        this.config.input == 'chk' ? 2 : (this.pr.dewEntWidth ?? 12)
     )},
   },
 
@@ -194,6 +195,8 @@ export default {
         menu.component = 'wylib-calc'
       } else if (spec == 'scm') {
         menu.component = 'wylib-scm'
+      } else if (spec == 'file') {
+        menu.component = 'wylib-file'
       }
     },		//special
   },		//methods
@@ -238,22 +241,23 @@ export default {
     let entry, kids
       , st = this.state
       , cf = this.config
+      , input = cf.input ?? 'ent'
       , domProps = {value: this.userValue}
       , attrs = {autofocus: cf.focus, disabled: this.disabled}
       , on = {input: this.input}
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-//console.log("Dew render:", this.field, cf)
-    if (cf.input == 'mle') {			//Multi-line entry / textarea
+//console.log("Dew render:", this.field, input, cf)
+    if (input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)
-    } else if (cf.input == 'chk') {		//Checkbox
+    } else if (input == 'chk') {		//Checkbox
       Object.assign(attrs, {type: 'checkbox'})
       entry = h('div', {class: 'check', style}, [h('input',
         {ref, attrs, domProps:{checked: this.userValue}, on: {change: ev=>this.input(ev, ev.target.checked)}}
       )])
-    } else if (cf.input == 'pdm') {		//Pull-down menu
+    } else if (input == 'pdm') {		//Pull-down menu
       let optList = []
       for (let val of this.pdmValues) {
         optList.push(h('option', {
@@ -263,7 +267,7 @@ export default {
       }
       entry = h('select', conf, optList)
 
-    } else if (cf.input == 'button') {		//Action button
+    } else if (input == 'button') {		//Action button
 //console.log("button lang:", this.lang)
       let txt = (this.lang?.title ?? this.lang ?? 'Reset')
         , innerHTML = txt.split(' ')[0]
@@ -272,14 +276,14 @@ export default {
       entry = h('button', conf)
 
     } else {					//Text or other input type
-      let type = Com.unabbrev(cf.input, ['text', 'number'])
-      Object.assign(attrs, {type: cf.input == 'ent' ? 'text' : type, placeholder: this.hint})
+      let type = Com.unabbrev(input, ['text', 'number'])
+      Object.assign(attrs, {type: input == 'ent' ? 'text' : type, placeholder: this.hint})
       Object.assign(conf, {class: ['text', !cf.special ? '' : 'special']})
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
 //console.log("Render:", this.field, 'A:', attrs, conf, on)
-      entry = cf.input ? h('input', conf) : null
+      entry = input ? h('input', conf) : null
     }
     kids = [entry]
 //console.log("R:", this.field, typeof cf.special, cf.special)

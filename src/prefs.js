@@ -57,7 +57,7 @@ const Config = {
   dewFlagWidth:		{m:'app', d:4,		input:'number', min:1, max:10, step:1,	lang:'Data Flag Width'},
   dewMleHeight:		{m:'app', d:2,		input:'number', min:1, max:40, step:1,	lang:'Text Area Height'},
   dewMleWidth:		{m:'app', d:40,		input:'number', min:10, max:100, step:1,lang:'Text Area Width'},
-  dewEntWidth:		{m:'app', d:4,		input:'number', min:1, max:80, step:1,	lang:'Text Entry Min Width'},
+  dewEntWidth:		{m:'app', d:12,		input:'number', min:1, max:80, step:1,	lang:'Text Entry Min Width'},
 
   mlbMinWidth:		{m:'mlb', d:20,		input:'number', min:1, max:100, step:1,	lang:'Minimum Width'},
   mlbMaxWidth:		{m:'mlb', d:200,	input:'number', min:1, max:500, step:1,	lang:'Maximum Width'},

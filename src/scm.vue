@@ -30,7 +30,7 @@ const Stock = {
   currency: {
     view: 'base.currency',
     fields: ['cur_code','cur_name'],
-    order: [1],
+    order: [2],
   },
   language: {
     view: 'base.language_v',
