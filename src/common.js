@@ -77,8 +77,8 @@ module.exports = {
 
   fileReader(target, timeout, cb) {		//Read a JSON file
     for (let i = 0, f; f = target.files[i]; i++) {
-      let reader = new FileReader();
-      reader.onload = ()=>{
+      let reader = new FileReader()
+      reader.onload = () => {
         let fileData = JSON.parse(reader.result)
 //console.log("fileData:", fileData)
         cb(fileData)

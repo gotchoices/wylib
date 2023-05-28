@@ -42,14 +42,21 @@ export default {
 
   methods: {
     importFile(ev) {
-console.log("File import: ", ev)
-      Com.fileReader(ev.target, 1500, (fileData) => {
-console.log("File data:", typeof fileData, fileData)
-        this.$emit('done', fileData)
-      })
+console.log("File import: ", ev, this.handle)
+      for (let i = 0, f; f = ev?.target?.files[i]; i++) {
+        let reader = new FileReader()
+        reader.onload = () => {
+          let fileData = reader.result		//;console.log("File data:", fileData)
+          if (this.handle) this.handle(fileData)
+          this.$emit('done', fileData)
+        }
+        reader.readAsText(f)
+      }
+    setTimeout(()=>{target.value = null}, 1500)
     },
 
     exportFile() {
+      let data = 'Hi there'
 console.log("File export: ", data)
       let blob = new Blob([data], {type: "text/plain;charset=utf-8"})
         , fileName = 'download.dat'
