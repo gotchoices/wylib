@@ -2,10 +2,11 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- Pass in a prop containing the file data
-//- Capture the emit(done) to update the file data
-//- Can import file
-//- Can export file
+//X- Capture the emit(done) to update the file data
+//X- Can import file
+//X- Can export file
+//- Get mime type from calling widget, can pass up to mdew/dbe to set format?
+//-   (similar to a zip lookup also populating city, state)
 //- 
 <template>
   <div class="wylib wylib-file">
@@ -46,18 +47,16 @@ console.log("File import: ", ev, this.handle)
       for (let i = 0, f; f = ev?.target?.files[i]; i++) {
         let reader = new FileReader()
         reader.onload = () => {
-          let fileData = reader.result		//;console.log("File data:", fileData)
+          let fileData = new Uint8Array(reader.result)		;console.log("Mime:", f.type)
           if (this.handle) this.handle(fileData)
-          this.$emit('done', fileData)
+          this.$emit('done', fileData, f.type)
         }
-        reader.readAsText(f)
+        reader.readAsArrayBuffer(f)
       }
-    setTimeout(()=>{target.value = null}, 1500)
+//    setTimeout(()=>{target.value = null}, 1500)
     },
 
-    exportFile() {
-      let data = 'Hi there'
-console.log("File export: ", data)
+    exportFile() {				//console.log("File export")
       let blob = new Blob([data], {type: "text/plain;charset=utf-8"})
         , fileName = 'download.dat'
       FileSaver.saveAs(blob, fileName)		//File saved as a browser download

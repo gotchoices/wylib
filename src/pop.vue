@@ -45,6 +45,7 @@ export default {
   computed: {
     id() {return 'pop_' + this._uid + '_'},
     compName() {		//What standard component we will use
+//console.log("compName:", this.state.render)
       if (!this.state.render || this.state.render == 'html') return null
       if (this.state.render.includes('-')) return this.state.render
       return 'wylib-' + this.state.render
