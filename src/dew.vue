@@ -20,6 +20,7 @@ import Scm from './scm.vue'
 
 const Com = require('./common.js')
 const DatePicker = require('./date.js')
+const Buffer = require('buffer/').Buffer
 const shortHints = {
   date: 'YYYY-MM-DD',
 }
@@ -82,7 +83,12 @@ export default {
 
     mapValue() {
 //console.log("mapValue", this.field, this.value, typeof this.value)
-      return (this.value != null && typeof this.value == 'object') ? JSON.stringify(this.value,null,2) : this.value
+      let val = this.value 
+        , mapped = (val === null || val === undefined) ? null :
+          (typeof val != 'object') ? val :
+          (val.type == 'Buffer' && val.data) ? Buffer.from(val,'binary').toString('hex').slice(0, 128) :
+          JSON.stringify(this.value,null,2)
+      return mapped
     },
 
     dirty() {			//The user has changed the value
@@ -248,7 +254,7 @@ export default {
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-//console.log("Dew render:", this.field, input, cf)
+//console.log("Dew render:", this.field, input, cf, typeof this.userValue)
     if (input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)
