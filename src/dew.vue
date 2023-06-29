@@ -182,9 +182,9 @@ export default {
       return this.set(this.config.initial)
     },
 
-    specResult: function(res) {				//console.log('specResult:', res)
+    specResult: function(res, extra) {		//console.log('specResult:', res, extra)
       this.set(res)
-      this.$emit('input', res, this.field, this.dirty, this.valid)
+      this.$emit('input', res, this.field, this.dirty, this.valid, extra)
       this.submit()
     },
 
@@ -230,6 +230,11 @@ export default {
         return this.clear()
       else if (msg == 'set')			//User value = current top-down value
         return this.set(this.mapValue)
+      else if (msg == 'input') {		//Simulate user input of specified field
+        let {field, value} = data		//console.log(' force:', data, this.config)
+        if (field == this.field || field == this.config.alias)
+          return this.set(value)
+      }
     })
   },
 
@@ -304,9 +309,9 @@ export default {
               props: {
                 state: st.menu.client,
                 data: cf.data,
-                handle: val => this.specResult(val),
+                handle: (...v) => this.specResult(...v),
                 env: this.env,
-              }, on: {done: (res) => {			//console.log('dew got done:', res)
+              }, on: {done: (...v) => {			//console.log('dew; spf done:', ...v)
                 st.menu.posted = st.menu.pinned
               }}
             })

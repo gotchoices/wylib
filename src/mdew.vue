@@ -3,12 +3,12 @@
 // -----------------------------------------------------------------------------
 //TODO:
 //X- Make clean/dirty work correctly
+//X- Change dew state to config? (probably not--just trim state at this level)
 //- Implement built-in template codes (date, time, etc)
-//- Change dew state to config? (probably not--just trim state at this level)
 //- Should an mle save its state when the user enlarges it?  How do we get the default back?
 //- 
 //- Can do 2D array with: 
-//-   Columnspans
+//X-   Columnspans
 //-   Piggybacks
 //-   Derived values
 //- 
@@ -94,12 +94,16 @@ export default {
     wmLang(tag, type='title') {return this.wm[tag] ? this.wm[tag][type] : tag},
     togOption() {this.state.optional = !this.state.optional},
     submit(ev) {this.$emit('submit', ev)},
-    input(value, field, dirty, valid) {			//An input has been changed
+    input(value, field, dirty, valid, extra) {		//An input has been changed
       this.$set(this.dirtys, field, dirty)
       this.$set(this.valids, field, valid)
       this.userData[field] = value
-//console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid)
+//console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid, extra)
       this.$emit('input', value, field, this.dirty, this.valid)
+
+      if (extra) Object.keys(extra).forEach(key => {		//Widget is attempting to set other related fields
+        this.dewBus.notify('input', {field: key, value: extra[key]})	//Notify all fields, let them decide
+      })
     },
   },
 

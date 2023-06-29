@@ -5,8 +5,9 @@
 //X- Capture the emit(done) to update the file data
 //X- Can import file
 //X- Can export file
-//- Get mime type from calling widget, can pass up to mdew/dbe to set format?
-//-   (similar to a zip lookup also populating city, state)
+//X- How to get passed the file mime format for export function
+//X- Get mime type from calling widget, can pass up to mdew/dbe to set format?
+//X-   (similar to a zip lookup also populating city, state)
 //- 
 <template>
   <div class="wylib wylib-file">
@@ -27,6 +28,7 @@ export default {
   name: 'wylib-file',
   props: {
 //    state:	{type: Object, default: () => ({})},
+    data:	null,
     env:	{type: Object, default: Com.envTpt},
     handle:	null
   },
@@ -43,13 +45,14 @@ export default {
 
   methods: {
     importFile(ev) {
-console.log("File import: ", ev, this.handle)
+//console.log("File import: ", ev, this.handle)
       for (let i = 0, f; f = ev?.target?.files[i]; i++) {
         let reader = new FileReader()
         reader.onload = () => {
-          let fileData = new Uint8Array(reader.result)		;console.log("Mime:", f.type)
-          if (this.handle) this.handle(fileData)
-          this.$emit('done', fileData, f.type)
+          let fileData = new Uint8Array(reader.result)
+            , extra = {mime: f.type}				//;console.log("Mime:", f.type)
+          if (this.handle) this.handle(fileData, extra)
+          this.$emit('done', fileData, extra)
         }
         reader.readAsArrayBuffer(f)
       }
@@ -57,7 +60,7 @@ console.log("File import: ", ev, this.handle)
     },
 
     exportFile() {				//console.log("File export")
-      let blob = new Blob([data], {type: "text/plain;charset=utf-8"})
+      let blob = new Blob([this.data], {type: "text/plain;charset=utf-8"})
         , fileName = 'download.dat'
       FileSaver.saveAs(blob, fileName)		//File saved as a browser download
     },
