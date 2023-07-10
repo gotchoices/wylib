@@ -207,8 +207,8 @@ export default {
     },
 
     update(ev, fields) {
-console.log("Update data:", ev, JSON.stringify(fields))
       if (!fields) fields = this.mdewBus.notify('userData',true)[0]
+console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
       this.fieldCheck(fields)
       this.dataRequest('update', {fields, where: this.keyWhere()}, true, ()=>{this.dirty = false})
     },

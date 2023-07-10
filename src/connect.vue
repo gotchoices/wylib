@@ -29,7 +29,7 @@
 </template>
 
 <script>
-const CountDown = 2
+const CountDown = 3
 const Crypto = window.crypto
 const Subtle = Crypto.subtle
 
