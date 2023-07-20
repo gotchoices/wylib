@@ -8,6 +8,6 @@ var log				// = console.log	//Print debug messages from library
 
 var instance
 module.exports = (function() {
-  if (!instance) instance = new Message(Local, log)
+  if (!instance) instance = new Message(Local, {debug: log})
   return instance
 }())

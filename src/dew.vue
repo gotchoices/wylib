@@ -122,6 +122,7 @@ export default {
       borderRightColor: (this.disabled || !this.dirty) ? this.pr.dewBorderColor : this.pr.dewDirtyColor,
       borderBottomColor: (this.disabled ? this.pr.dataBackground : this.pr.dewBorderColor),
       background: ('background' in this.config) ? this.config.background : this.pr.dataBackground,
+//x:console.log("bg:", this.field, this.pr.dataBackground),
       borderLeftWidth: this.pr.dewFlagWidth + 'px',
       borderRightWidth: this.pr.dewFlagWidth + 'px',
 //x:console.log("width:", this.field, this.width),

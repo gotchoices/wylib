@@ -49,6 +49,7 @@
 <script>
 const Com = require('./common.js')
 const Local = require('./local.js')
+const Prefs = require('./prefs.js')
 const TopHandler = require('./top.js')
 const Wyseman = require('./wyseman.js')
 const State = require('./state.js')
@@ -71,6 +72,31 @@ const WmDefs = {		//English defaults, as we may not yet be connected
   appDefault:	{title:'Default State',	help:'Initialize the application to a default state'},
   appEditState:	{title:'Edit State',	help:'Preview a list of saved states for this application'},
 }
+Prefs.mod('app', {
+  dataBackground:	{m:'app', d: '#fefefe',	input:'color',	lang: 'Data Entry Background'},
+  frameBackground:	{m:'app', d: '#f4f4f4',	input:'color',	lang: 'Container Background'},
+  titleBackground:	{m:'app', d: '#dfdfdf',	input:'color',	lang: 'Title Background'},
+  highlightBackground:	{m:'app', d: '#ddffff',	input:'color',	lang: 'Highlight Background'},
+  dragOverBackground:	{m:'app', d: '#ffd8a0',	input:'color',	lang: 'Dragover Background'},
+  butHoverColor:	{m:'app', d: '#88ff88',	input:'color',	lang: 'Button Hover'},
+  butActiveColor:	{m:'app', d: '#55cc55',	input:'color',	lang: 'Button Active Color'},
+  butToggledColor:	{m:'app', d: '#66aa66',	input:'color',	lang: 'Button Toggled Color'},
+  butBackground:	{m:'app', d: '#f4f6f0',	input:'color',	lang: 'Button Background'},
+  butIconFill:		{m:'app', d: '#2482a4',	input:'color',	lang: 'Button Icon Fill'},
+  butIconStroke:	{m:'app', d: '#222222',	input:'color',	lang: 'Button Icon Stroke'},
+  butCloseColor:	{m:'app', d: '#ffdddd',	input:'color',	lang: 'Close Button Color'},
+  butCloseHoverColor:	{m:'app', d: '#ffbbbb',	input:'color',	lang: 'Close Button Hover Color'},
+  butDisabledColor:	{m:'app', d: '#aaaaaa',	input:'color',	lang: 'Button Disabled Color'},
+  butDisabledBackground:{m:'app', d: '#eeeeee',	input:'color',	lang: 'Button Disabled Background'},
+  butSize:		{m:'app', d: 1.5,	input:'number', min:0.5, max:100, step:0.1,	lang: 'Button Size'},
+  dewInvalidColor:	{m:'app', d:'#f02020',	input:'color',	lang: 'Data Invalid Color'},
+  dewDirtyColor:	{m:'app', d:'#f0a020',	input:'color',	lang: 'Data Dirty Color'},
+  dewBorderColor:	{m:'app', d:'#808080',	input:'color',	lang: 'Entry Border Color'},
+  dewFlagWidth:		{m:'app', d:4,		input:'number', min:1, max:10, step:1,	lang:'Data Flag Width'},
+  dewMleHeight:		{m:'app', d:2,		input:'number', min:1, max:40, step:1,	lang:'Text Area Height'},
+  dewMleWidth:		{m:'app', d:40,		input:'number', min:10, max:100, step:1,lang:'Text Area Width'},
+  dewEntWidth:		{m:'app', d:12,		input:'number', min:1, max:80, step:1,	lang:'Text Entry Min Width'},
+})
 
 export default {
   name: 'wylib-app',
@@ -95,7 +121,7 @@ export default {
     restoreMenu:	[],
     previews:		[{posted: false, x:null, y:null, client:{dbView: 'wylib.data_v'}}],
     lastLoadIdx:	null,
-    env:		{wm: Wyseman.langDefs({}, WmDefs), pr: require('./prefs')},
+    env:		{wm: Wyseman.langDefs({}, WmDefs), pr: Prefs.values},
   }},
   provide() { return {
     top: () => {return this.top},
@@ -122,7 +148,7 @@ export default {
       {idx: 'sav', lang: wm.appSave,      icon: 'upload',    call: this.saveState},
       {idx: 'sas', lang: wm.appSaveAs,    icon: 'upload2',   call: this.saveStateAs},
       {idx: 'res', lang: wm.appRestore,   icon: 'download',  menu: this.restoreMenu, layout: ['lang','owner','access']},
-      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: this.pr.menu('app'), layout: ['lang', 'dew']},
+      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: Prefs.menu('app'), layout: ['lang', 'dew']},
       {idx: 'def', lang: wm.appDefault,   icon: 'home',      call: this.defaultState},
       {idx: 'edi', lang: wm.appEditState, icon: 'pencil',    call: ()=>{this.previews[0].posted = true}},
     ]},
@@ -197,7 +223,9 @@ export default {
 
       let savedState = Local.get(this.tagTitle)
 //console.log("Restoring state:", JSON.stringify(savedState, null, 2))
-      if (savedState) this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
+      if (savedState)
+        this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
+      Prefs.init()
 
       State.listen(this.id+'sl', this.tag, (menuData) => {
 //console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);

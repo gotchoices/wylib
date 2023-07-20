@@ -74,7 +74,6 @@ export default {
     env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:		require('./prefs'),
     stateTpt:	{subs: {}}
   }},
   computed: {

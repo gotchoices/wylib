@@ -2,8 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//- 
-//- Later:
 //- Width calcs in auto-size (render into a hidden element, and measure it)
 //- Can turn on/off footer row
 //- Main widget menu
@@ -11,7 +9,6 @@
 //- Native summary routines
 //- Custom formatters per column?
 //- 
-
 <template>
   <div class="wylib wylib-mlb">
     <div v-once ref="gridTable" class="slickgrid-container" :style="{width: gridWidth}"></div>
@@ -21,8 +18,15 @@
 <script>
 const { Grid, Data, Formatters, Plugins } = require('slickgrid-es6')
 const Com = require('./common.js')
+const Prefs = require('./prefs.js')
 const ElementResize = require('element-resize-detector')
 var elementResize = ElementResize({strategy: 'scroll'})
+Prefs.mod('mlb', {
+  mlbMinWidth:		{m:'mlb', d:20,		input:'number', min:1, max:100, step:1,	lang:'Minimum Width'},
+  mlbMaxWidth:		{m:'mlb', d:200,	input:'number', min:1, max:500, step:1,	lang:'Maximum Width'},
+  mlbDefWidth:		{m:'mlb', d:80,		input:'number', min:1, max:500, step:1,	lang:'Default Width'},
+  mlbCharWidth:		{m:'mlb', d:10,		input:'number', min:1, max:16, step:1,	lang:'Character Width'},
+})
 
 var options = {
   enableCellNavigation: true,
@@ -48,7 +52,6 @@ export default {
     env:	{type: Object, default: Com.envTpt},
   },
   data: function () {return {
-//    pr:		require('./prefs'),
     orderBoxes:		{},		//Div elements that show sort order in header field
     gridInstance:	null,		//Keep pointer to our grid
     stateTpt:		{footerOn: false, sorting: {}, columns: [], see: 'top', sortColumns: null},

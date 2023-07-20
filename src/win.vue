@@ -59,6 +59,7 @@ const MenuLayer = 1000
 const Bus = require('./bus.js')
 const Com = require('./common.js')
 const Local = require('./local.js')
+const Prefs = require('./prefs.js')
 const State = require('./state.js')
 const TopHandler = require('./top.js')
 const Interact = require('interactjs')
@@ -68,6 +69,19 @@ import Dialog from './dialog.vue'
 import Report from './report.vue'
 import Modal from './modal.vue'
 //console.log("Interact:", Interact)
+Prefs.mod('win', {
+  winBorderColor:	{m:'win', d:'#c0c0c0',	input:'color',	lang: 'Border Color'},
+  winHighlightColor:	{m:'win', d:'#202060',	input:'color',	lang: 'Highlight Color'},
+  winHeadColorHigh:	{m:'win', d:'#f0f0f8',	input:'color',	lang: 'Header Gradient Light'},
+  winHeadColorLow:	{m:'win', d:'#b8b8c0',	input:'color',	lang: 'Header Gradient Dark'},
+  winBorderWidth:	{m:'win', d:2,		input:'number', min:0, max:20, step:1,	lang:'Border Width'},
+  winBorderRad:		{m:'win', d:5,		input:'number', min:0, max:20, step:1,	lang:'Border Radius'},
+  winOpacity:		{m:'win', d:0.94,	input:'number', min:0, max:1, step:0.05,lang:'Opacity'},
+  winFullHeader:	{m:'win', d:22,		input:'number', min:8, max:50, step:1,	lang:'Large Header Height'},
+  winSmallHeader:	{m:'win', d:12,		input:'number', min:4, max:50, step:1,	lang:'Small Header Height'},
+  winSubWindowX:	{m:'win', d:40,		input:'number', min:0, max:500, step:10,lang:'Sub Offset X'},
+  winSubWindowY:	{m:'win', d:40,		input:'number', min:0, max:500, step:10,lang:'Sub Offset Y'},
+})
 
 export default {
   name: 'wylib-win',
@@ -148,7 +162,7 @@ export default {
       {idx: 'def', lang: wm.winDefault,   icon: 'home',      call: this.defaultState},
       {idx: 'geo', lang: wm.winGeom,      icon: 'shrink',    call: this.defaultSize},
       prElem,
-      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: this.pr.menu('win'), layout: ['lang', 'dew']},
+      {idx: 'prf', lang: wm.appPrefs,     icon: 'cog',       menu: Prefs.menu('win'), layout: ['lang', 'dew']},
       {idx: 'top', lang: wm.winToTop,     icon: 'arrowup',   call: ()=>{this.top.layer(1)}},
       {idx: 'bot', lang: wm.winToBottom,  icon: 'arrowdown', call: ()=>{this.top.layer(-1)}},
       {idx: 'min', lang: wm.winMinimize,  icon: 'eyeblock',  call: this.minimize},

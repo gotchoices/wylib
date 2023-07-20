@@ -19,6 +19,7 @@
 
 <script>
 const Bus = require('./bus.js')
+const Prefs = require('./prefs.js')
 const TopHandler = require('./top.js')
 import Dialog from './dialog.vue'
 import Modal from './modal.vue'
@@ -34,7 +35,7 @@ export default {
     state:	{render: 'dialog', content: {}},
     modal:	{posted: false, client: {}},
     top:	null,
-    env:	{wm: {h:{}, t:{}}, pr: require('./prefs')},
+    env:	{wm: {h:{}, t:{}}, pr: Prefs.values},
     compBus:	new Bus.messageBus(this),
 //    config:	{}			//Any applicable report configuration
   }},

@@ -23,7 +23,6 @@ export default {
     env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-//    pr:		require('./prefs'),
     top:	null,
     stateTpt:	{posted: false, client:{}},
   }},
