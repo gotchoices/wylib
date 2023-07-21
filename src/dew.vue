@@ -255,12 +255,12 @@ export default {
       , cf = this.config
       , input = cf.input ?? 'ent'
       , domProps = {value: this.userValue}
-      , attrs = {autofocus: cf.focus, disabled: this.disabled}
+      , attrs = Object.assign({}, {autofocus: cf.focus, disabled: this.disabled}, cf.attr)
       , on = {input: this.input}
       , style = this.genStyle
       , ref = 'input'
       , conf = {ref, style, attrs, domProps, on}
-//console.log("Dew render:", this.field, input, cf, typeof this.userValue)
+//console.log("Dew render:", this.field, input, 'c:', cf, typeof this.userValue)
     if (input == 'mle') {			//Multi-line entry / textarea
       Object.assign(attrs, {rows: this.height, cols: this.width})
       entry = h('textarea', conf)
@@ -294,7 +294,7 @@ export default {
       Object.assign(on, {keyup: ev=>{
         if (ev.code == 'Enter') this.submit()
       }})
-//console.log("Render:", this.field, 'A:', attrs, conf, on)
+//console.log("R:", this.field, 'A:', attrs, conf, on)
       entry = input ? h('input', conf) : null
     }
     kids = [entry]
