@@ -6,17 +6,17 @@
 //TODO:
 //X- Can edit contracts in database
 //X- Can launch with no editing at all (preview only)
-//- Is sourceURL too MyCHIPs-centric?  Or will it work for other document inclusions
+//X- Is sourceURL too MyCHIPs-centric?  Or will it work for other document inclusions
+//X- Merge tag into name
+//X- Can update resource strings to DB
 //- Should call dbe/dbp to do export for us (to know proper record type tag)
-//- Ignore record tag on import?
 //- Make good default name on file export
 //- Generate/check digest on file export
 //- Strip null/empty fields on file export
-//- Double-click on section div now waits for mouse motion to transition
+//- Double-click on section div sometimes waits for mouse motion to transition
 //- Can mark a cross reference link from contenteditable view (insertHTML)
 //- 
 //- Later:
-//- Tag is fixed for chief as Author-Main_Title-Version-Language?
 //- Paragraphs created automatically editLeave don't exit direct editing right away on dblclick
 //- Implement headers/footers for printing
 //- Implement undo stack for state
@@ -36,12 +36,15 @@
       <div v-show="state.edit" class="edit" :title="wm.h.sdcEdit" draggable="true" @dragstart.prevent.stop @dragend.prevent.stop @dragover.prevent.stop @dragleave.prevent.stop>
         <div class="editline">
           <div class="secnum">
-            <x-r :name="state.tag" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
-            {{wm.t.sdcTitle || 'Title'}}:
+            <x-r :name="state.name" :value="secNumber" @connect="targetChange" @change="targetChange"></x-r>.
+            &nbsp;
           </div>
-          <input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="wm.t.sdcTitle" @input="change" :title="wm.h.sdcTitle">
-          <div>{{ wm.t.sdcTag || 'Tag' }}:</div>
-          <input class="input tag" v-model="state.tag" :placeholder="wm.t.sdcTag" @input="change" :title="wm.h.sdcTag">
+          <span v-if="state.source == null">
+            {{wm.t.sdcTitle || 'Title'}}:
+            <input class="input title" v-model="state.title" spellcheck="spellCheck" :placeholder="wm.t.sdcTitle" @input="change" :title="wm.h.sdcTitle">
+          </span>
+          <div>{{ wm.t.sdcName || 'Name' }}:</div>
+          <input class="input name" v-model="state.name" :placeholder="wm.t.sdcName" @input="change" :title="wm.h.sdcName">
           <wylib-button icon='document' @click="togEdit" :env="env" :title="butHelp('sdcPreview')"/>
           <wylib-button icon='plus' @click="addChild" :env="env" :title="butHelp('sdcAdd')"/>
           <wylib-button v-if="level > 0" icon='target' @click="togSource" :env="env" :title="butHelp('sdcTogSource')"/>
@@ -56,13 +59,13 @@
       <div v-if="!state.edit" class="preview">
         <div v-if="level <= 0 && state.title" class="title" v-html="state.title" :title="wm.h.sdcPreview"/>
         <div v-if="level > 0 && state.source" class="text" :style="parStyle">
-          {{secNumber}}. <b v-html="state.title || wm.t.sdcReference"></b>: {{ wm.h.sdcReference }}:
-          <a :href="sourceURL" target="_blank">{{ sourceURL }}.</a>
+          {{secNumber}}. <b v-html="state.name || wm.t.sdcResource"></b>: {{ wm.h.sdcResource }}:
+          <a :href="formatURI" target="_blank">{{ state.source }}.</a>
         </div>
         <div v-else="titledText" class="text input" ref="text" v-html="titledText" :style="parStyle" :contenteditable="editable" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="sections" v-for="(sec, idx) in state.sections">
-        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="sec" :env="env" :bus="useBus" @delete="(x)=>{deleteSub(x||idx)}" @add="(a,s)=>{addSubs(idx,a,s)}"/>
+        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="subState(sec)" :env="env" :bus="useBus" @delete="(x)=>{deleteSub(x||idx)}" @add="(a,s)=>{addSubs(idx,a,s)}"/>
       </div>
     </div>
   </div>
@@ -97,7 +100,7 @@ var dragee = null
 customElements.define('x-r', CrossRef)
 //DiffPatch.create({
 //  objectHash: function(obj, index) {
-//    return obj.title + obj.tag + obj.text || '$$index:' + index;
+//    return obj.title + obj.name + obj.text || '$$index:' + index;
 //  }
 //})
 
@@ -127,7 +130,7 @@ export default {
     crossVals:		{},
     spellCheck:		true,
     subBus:		this.bus,
-    stateTpt:		{title: null, text:null, tag:null, sections:[], source:null, edit:false},
+    stateTpt:		{title: null, text:null, name:null, sections:[], source:null, edit:false, resource:null},
   }},
   inject: ['top'],
   computed: {
@@ -151,15 +154,12 @@ export default {
       		(this.numTitle + (this.state.title ? ':' : '') + (' ' + this.state.text || ''))
     },
     secHelp() {
-      return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title||'' + '(' + this.state.tag||'' + '); ' + (this.wm.h.sdcSection||'')
+      return (this.wm.t.sdcSection||"Section") + ': ' + this.state.title||'' + '(' + this.state.name||'' + '); ' + (this.wm.h.sdcSection||'')
     },
-    sourceURL() {
-      let [ domain, path ] = this.state.source ? this.state.source.split('/') : []
-        , [ host, query ] = path ? path.split('?') : []
-        , qArray = query ? query.split('&') : []
-//console.log("sourceURL:", domain, "h:", host, "q:", query)
-      if (domain) qArray.push('domain=' + domain)
-      return [host, qArray.join('&')].join('?')
+    formatURI() {
+      let path = this.state.resource || ''
+        , cont = Com.buf2b64url(this.state.source)	//source may itself be a uri, so encode it
+      return path + '/' + cont
     },
     iconStyle() {return {
       fill:	this.pr.butIconfill,
@@ -210,6 +210,10 @@ export default {
     iconSvg(icon) {return Icons(icon)},
     butHelp(tag) {
       return (this.wm.t[tag] + ' (' + this.wm.h[tag] + ')')
+    },
+    subState(sub) {				//Pass resource location down to subs
+      sub.resource = this.state.resource
+      return sub
     },
     processXrefs(ev) {
       let name = ev.target.name, value = ev.target.value
@@ -305,7 +309,19 @@ console.log("Mark up as:", mode, tag, sel.rangeCount, sel, sel.anchorNode)
 //      this.$nextTick(()=>{ev.target.innerHTML = this.titledText})
     },
     update() {
-      this.$emit('submit', 'editor', {request:'update', data:this.state})
+      let secStrip = (sec) => {
+        let {title, name, source, text, sections} = sec
+          , newSec
+          , subSecs = sections?.map(secStrip)
+        if (source)
+          newSec = {name, source}
+        else
+          newSec = {title, name, text, sections: subSecs?.length > 0 ? subSecs : null}
+        return newSec
+      }
+        , data = secStrip(this.state)
+//console.log("SD update", data)
+      this.$emit('submit', 'editor', {request:'update', data})
     },
 
     clear() {				//Empty workspace
@@ -528,6 +544,7 @@ console.log("dragStart:", this.index, this.secNumber)
     })
   },
   mounted() {
+//console.log("SS:", this.state.resource)
     if (this.iAmChief) {
       this.top().context.$emit('swallow', this.$refs.header)
     }
@@ -544,11 +561,9 @@ console.log("dragStart:", this.index, this.secNumber)
     padding: 0;
   }
   .wylib-strdoc .header {
-    position: absolute;			//Should probably be 'fixed,' but that makes
-    top: 0.5em;				//things go blurry in Chrome?  Will workaround
-    left: 0.5em;			//with absolute and top,left
+//    position: fixed;			//Fixed makes menu fall behind content
     opacity: 0.26;
-//    transition: opacity 500ms ease-in;	//Also has problem with blur
+    transition: opacity 350ms ease-in;	//Had problem with blur on some chrome versions
   }
   .wylib-strdoc .header:hover {
     opacity: 0.94;
@@ -582,7 +597,7 @@ console.log("dragStart:", this.index, this.secNumber)
   .wylib-strdoc .input.title {
     flex-grow: 2;
   }
-  .wylib-strdoc .input.tag {
+  .wylib-strdoc .input.name {
     left: -1em;
     flex-grow: 1;
   }

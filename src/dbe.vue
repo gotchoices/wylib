@@ -281,7 +281,7 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
             uData[key] = data[key]
           }
         })
-//console.log("  update:", uData, rptKey, this.pkey)
+//console.log("  RQ update:", uData, rptKey, this.pkey)
         let key = rptKey || this.pKey		//Try to link to current record if one is loaded
         if (key) {
           this.fieldCheck(uData)

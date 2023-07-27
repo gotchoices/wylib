@@ -272,7 +272,7 @@ module.exports = function topHandler(context, amSlave) {
             win.postMessage({request:'populate', data:{render:action.render, content, config}}, location.origin)	//send content to report window
         })
 
-      } else if (target == 'editor') {				//Content is a record editor and asking for an editing sub-command to be performed
+      } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
 //console.log("Command for Dbe:", request, "data:", data, "keys:", info.keys)
         if (bus && bus.mom) bus.mom(request, data, info.keys[0], ()=>{
           win.postMessage({request:'child', data:'clean'}, location.origin)	//Confirm update with report window
