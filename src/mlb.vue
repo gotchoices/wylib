@@ -67,7 +67,7 @@ export default {
       for (let field in this.config) {
         let conf = this.config[field]
           , col = this.state.columns.find(e => (e.field == field))
-          , visible = (!conf || conf.visible === undefined) ? true : conf.visible	//visibility defaults to true
+          , visible = col.visible
         if (!col) {					//Add any missing column using defaults
           col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible}
           this.state.columns.push(col)

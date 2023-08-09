@@ -108,13 +108,14 @@ export default {
     ]},
     visibleMenu() { 
       let items = [], conf = this.mlbConfig
-//console.log("Visible:", this.state.dbView)
+//console.log("Visible:", this.state.dbView, this.state.grid)
       Object.keys(this.mlbConfig).sort((a,b)=>{return conf[a].title < conf[b].title ? -1 : 1}).forEach(key=>{
-        let col = this.state.grid.columns.find(e => (e.field == key))
-        items.push({idx: key, lang:{title: conf[key].title, help: key+'\n'+conf[key].help}, type: 'checkbox', input: (v)=>{
-//console.log("inp:", key, v, col.visible)
-          if (v != null && col) {col.visible = v}
-          return col ? col.visible : null
+        let col = this.state.grid?.columns?.find(e => (e.field == key))
+        if (col) items.push({idx: key, lang:{title: conf[key].title, help: key+'\n'+conf[key].help}, type: 'checkbox', input: (v)=>{
+          if (v != null && col) {		//console.log("inp:", key, v, col.visible)
+            col.visible = v
+          }
+          return col?.visible
         }})
       })
       return items
