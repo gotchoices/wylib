@@ -91,9 +91,9 @@ console.log("Launch got file import:", data, "spec:", spec)
       if (err) {console.log(err.msg); return}
       this.viewMeta = data
       this.launchData = (this.viewMeta && this.viewMeta.styles) ? this.viewMeta.styles.launch : null
-//console.log("Launch got meta data:", this.view, data, this.launchData)
+//console.log("Launch got meta data:", this.view, 'm:', data.msg, this.launchData)
 
-      let launchLang = this.viewMeta.msg['launch.title'] || {title:this.viewMeta.title, help:this.viewMeta.help}
+      let launchLang = this.viewMeta.msg?.launch?.title || {title:this.viewMeta?.title, help:this.viewMeta?.help}
       if (this.viewMeta.title)
         this.$parent.$emit('customize', this.tag, launchLang)
       if (this.launchNum > 0 && Object.keys(this.state.windows).length <= 0)
