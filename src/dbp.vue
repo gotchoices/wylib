@@ -20,13 +20,13 @@
       <div ref="headStatus" class="wylib-dbp headstatus" :title="wm.h.dbpLoaded">#:<input disabled :value="state.loaded" :size="loadedSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win :state="state.colMenu" :env="env" @close="state.colMenu.posted=false">
-        <wylib-menu :state="state.colMenu.client" :env="env" :config="colMenuConfig" :lang="wm.dbpColumn" @done="state.colMenu.posted=false"/>
+      <wylib-win :state="state.colMenu" :env="env" @close="winCloser()">
+        <wylib-menu :state="state.colMenu.client" :env="env" :config="colMenuConfig" :lang="wm.dbpColumn" @done="winCloser()"/>
       </wylib-win>
-      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="state.edit.posted=false" :env="env">
+      <wylib-win v-if="this.editPosts" :state="state.edit" topLevel=true @close="winCloser('edit')" :env="env">
         <wylib-dbe :state="state.edit.client" :env="env" @modified="modified" :bus="dbeBus" :master="master"/>
       </wylib-win>
-      <wylib-win v-if="this.filtPosts" :state="state.filter" :env="env" topLevel=true @close="state.filter.posted=false">
+      <wylib-win v-if="this.filtPosts" :state="state.filter" :env="env" topLevel=true @close="winCloser('filter')">
         <wylib-dbs :fields="logicFields" :state="state.filter.client" :env="env" :bus="dbsBus" @search="search" @default="dbsDefault"/>
       </wylib-win>
     </div>
@@ -87,7 +87,7 @@ export default {
     },
     loadedSize() {
       let len = 3
-      if (this.loaded) len = this.loaded.length > 8 ? 8 : this.loaded.length
+      if (this.loaded) len = this.loaded.length > 8 ? 8 : this.loaded.length + 1
       return len
     },
     dockConfig() { return [
@@ -158,12 +158,9 @@ export default {
   },
 
   methods: {
-//    test() {
-//console.log("Test!", this.top)
-//      this.top().confirm('A test message', (tag) => {
-//console.log("Modal answers:", tag)
-//      })
-//    },
+    winCloser(w = 'colMenu') {			//console.log("Closer:", w)
+      this.state[w].posted = false
+    },
     autoTog(ev) {				//Toggle auto loading mode
       this.state.autoLoad = !this.state.autoLoad
     },
@@ -448,7 +445,7 @@ console.log("  in (" + keys.join(',') + ')')
   }
   .wylib-dbp > .header {
     background: linear-gradient(to top, #c0c0c0, #e0e0e0);	//Fixme: prefs
-    width: 100%;
+//    width: 100%;
 //    height: 1.4em;	//Fixme: prefs
     display: flex;
 //    border: 1px solid green;

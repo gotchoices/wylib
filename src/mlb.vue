@@ -339,10 +339,11 @@ console.log("Context Menu: " + e.target)
   .wylib-mlb {
 //    border: 1px solid green;
     height: 100%;
+    max-width: 80vw;
   }
   .wylib-mlb .slickgrid-container {
 //    border: 1px solid red;
-    width: auto;
+//    width: auto;
   }
   .wylib-mlb .align-right {
     text-align: right;

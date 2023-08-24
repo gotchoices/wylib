@@ -51,7 +51,7 @@ module.exports = {
     return clone
   },
 
-  addWindow(winObj, template, ctx, placement, clone) {	//Create a new subwindow in an array of config objects
+  addWindow(winObj, template, ctx, clone, placement) {	//Create a new subwindow in an array of config objects
 //console.log("Add Window", template, placement)
     template.x = null; template.y = null
     var newState = clone ? this.clone(template) : template
@@ -70,7 +70,7 @@ module.exports = {
     let { x, y, template } = winObj[idx]
 //console.log("Close Window", idx, reopen)
     if (reopen && template)
-      this.addWindow(winObj, template, ctx, {x, y})	//Force to open in a new slot
+      this.addWindow(winObj, template, ctx, false, {x, y})	//Force to open in a new slot
     ctx.$delete(winObj, idx)
 //console.log(" after:", winObj)
   },

@@ -338,7 +338,7 @@ console.log("Clone to popup:", popId)
 
   beforeMount: function() {		//Create any state properties that don't yet exist
     Com.stateCheck(this)
-//if (this.topLevel) console.log("Win state:", this.state);
+//if (this.topLevel) console.log("Win state:", this.state)
 
     if (this.topLevel) this.$on('customize', (lang, tag, print, dirty)=>{	//Allow child to set the window's title and tagging ID
 //console.log("Customize", this.id, lang, tag, print, dirty)
