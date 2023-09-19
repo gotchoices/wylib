@@ -1,5 +1,12 @@
 Change Log:
 
+1.0.34	2023-Sep
+	- Improve preferences module
+	- Can select preferred language
+	- Special dew menus, basic support
+	- Can import/export files from widget
+	- Improved handling of binary data
+
 1.0.33	2023-Mar
 	- Improved report windows
 	- Track with Wyseman crypto algorithm
