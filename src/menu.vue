@@ -167,6 +167,10 @@ export default {
   .wylib-menu .menu, .wylib-menu .submenus {
     display: inline;
   }
+  .wylib-menu input {
+    width: 3em;
+    text-align: right;
+  }
 //  .wylib-menu .submenus {min-height: 10px; min-width: 10px; border: 1px solid blue;} //Debug 
   .wylib-menu > .menu {
     width: calc(100% - 6px);	//Fixme: can do with padding or borders?

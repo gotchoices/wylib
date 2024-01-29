@@ -2,6 +2,7 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
+//X- Implement maximum rows to fetch parameter in menu settings
 //- Initial sort order comes from wyseman, apply to indicators
 //- If up/down button takes selection off screen, adjust to show highlighted record
 //- Retain previous scroll position after reload
@@ -10,7 +11,6 @@
 //- Make menu module use toggled field correctly (instead of call function)
 //- Display summaries in footer
 //- Can disable reload on sort controls
-//- Implement maximum rows to fetch parameter in menu settings
 //- 
 <template>
   <div class="wylib wylib-dbp">
@@ -72,7 +72,7 @@ export default {
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     stateTpt() {return {
-      dock: {}, loaded: 0, autoLoad:false, lastLoad: {}, colMenu: {x: 100, y:0},
+      dock: {}, loaded: 0, limit: 1000, autoLoad:false, lastLoad: {}, colMenu: {x: 100, y:0},
       edit: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: this.pr.winInitHeight, client: {dbView: this.state.dbView}},
       filter: {posted: false, x: this.pr.winSubWindowX, y: this.pr.winSubWindowY, height: 120, client: {}},
       grid: {footerOn: false, sorting: {}, columns: []}
@@ -99,6 +99,7 @@ export default {
       {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
       {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
       {idx: 'sum', lang: this.wm.dbpShowSum,  call: this.sumTog,       icon: 'circle',	  type: 'checkbox', toggled: this.state.showSum, input: this.showSumValue},
+      {idx: 'lim', lang: this.wm.dbpLimit,    call: undefined,         icon: 'meter',	  type: 'text', input: this.setLimit},
       {idx: 'exp', lang: this.wm.dbpExport,   call: this.export,       icon: 'boxout'},
       {idx: 'prv', lang: this.wm.dbpPrev,     call: this.prev,         icon: 'arrowup',   shortcut: true},
       {idx: 'nxt', lang: this.wm.dbpNext,     call: this.next,         icon: 'arrowdown', shortcut: true},
@@ -175,6 +176,11 @@ export default {
       if (v != null) this.state.grid.footerOn = this.state.showSum = v
       return this.state.showSum
     },
+    setLimit(v) {
+      if (v != null) this.state.limit = this.state.limit = v
+console.log('setLimit:', v)
+      return this.state.limit;
+    },
     editTog(ev) {				//Toggle the editing window
       this.state.edit.posted = !this.state.edit.posted
       if (this.state.edit.posted) {
@@ -231,8 +237,9 @@ console.log("  in (" + keys.join(',') + ')')
         if (this.viewMeta.styles && this.viewMeta.styles.where)
           spec = {where: this.viewMeta.styles.where}
       }
-//console.log("Dbp load:", this.state.dbView, spec, this.viewMeta)
-      Wyseman.request('dbp_'+this._uid, 'select', Object.assign({view: this.state.dbView, fields: '*'}, spec), (data, err) => {
+      let loadSpec = Object.assign({view: this.state.dbView, fields: '*', limit: this.state.limit}, spec)
+//console.log("Dbp load:", this.state.dbView, loadSpec, this.viewMeta)
+      Wyseman.request('dbp_'+this._uid, 'select', loadSpec, (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
         if (this.state.edit.posted && this.state.autoLoad) this.executeRows()
