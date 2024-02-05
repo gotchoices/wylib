@@ -176,9 +176,8 @@ export default {
       if (v != null) this.state.grid.footerOn = this.state.showSum = v
       return this.state.showSum
     },
-    setLimit(v) {
+    setLimit(v) {				//console.log('setLimit:', v)
       if (v != null) this.state.limit = this.state.limit = v
-console.log('setLimit:', v)
       return this.state.limit;
     },
     editTog(ev) {				//Toggle the editing window
