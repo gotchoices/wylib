@@ -13,8 +13,10 @@
 //- Re-normalize all registered window layers after raise
 //- 
 const Com = require('./common')
+const Local = require('./local')
 const WinCom = require('./wincom')
 const Wyseman = require('./wyseman')
+const State = require('./state.js')
 const ReportFile = '/report.html'
 const zLevelMod = 10
 var topWins = {}		//Keep the state of all toplevel windows
@@ -36,6 +38,46 @@ module.exports = function topHandler(context, amSlave) {
   this.listenWin = WinCom.listen			//Make calls available to component
   this.momWin = WinCom.mom
 
+  this.swallow = function(childMenu, childStatus) {	//Eat the menu bar, and optionally status bar of a child component
+//console.log("Swallow Menu:", childMenu, childStatus)
+    if (childMenu && '$el' in childMenu) childMenu = childMenu.$el		//Can pass in element or vue object
+    if (childStatus && '$el' in childStatus) childStatus = childStatus.$el
+    let cmenu = context.$refs.childMenu
+      , cstat = context.$refs.childStatus
+    cmenu.innerHTML = ''		//Get rid of any prior contents
+    cstat.innerHTML = ''
+    cmenu.appendChild(childMenu)
+    if (childStatus) cstat.appendChild(childStatus)
+  },
+
+  this.custom = function(lang, tag, print, dirty) {	//Allow child to set the window's title and tagging ID
+//console.log("Customize", context.id, lang, tag, print, dirty)
+    if (!context.topLevel) return
+    context.lang = lang
+    if (tag) context.stateTag = tag
+    context.printable = print
+    if (dirty) context.dirty = dirty
+
+    State.listen(context.id+'sl', context.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
+//console.log("DB State:", context.id, context.restoreMenu.length, "Data:", menuData);
+      let menuItems = menuData.map(el=>{
+        return Object.assign(el, {call:()=>{
+          Object.assign(context.state, Com.clone(el.data))
+          Com.stateCheck(context)
+          context.lastLoadIdx = el.idx
+          context.lastLoadName = el.lang.title
+        }})
+      })
+      context.restoreMenu.splice(0, context.restoreMenu.length, ...menuItems)
+//console.log("WMC:", 1, context.winMenuConfig)
+    }, this.error)
+  },
+
+  this.geometry = function() {		//Store main window geometry
+    if (context.topLevel && context.stateTag)
+      Local.set(context.stateTag, context.state)
+  },
+
   this.registerDialog = function(dialogTag, cb) {	//Register handlers for our standard dialog actions
 //console.log("Top register:", dialogTag)		//so callbacks are persistent across reloads
     if (cb)
@@ -54,7 +96,10 @@ module.exports = function topHandler(context, amSlave) {
 
   this.listenClick = function(tag, cb) {		//Register for a callback upon any click in the toplevel
 //console.log("Top click register:", tag, !!cb)
-    if (cb) this.clickCB[tag] = cb; else delete this.clickCB[tag]
+    if (cb)
+      this.clickCB[tag] = cb
+    else
+      delete this.clickCB[tag]
   }
 
   this.notifyClick = function(ev) {			//Notify any listers of clicks
@@ -163,7 +208,7 @@ module.exports = function topHandler(context, amSlave) {
   this.postModal = function(message, conf) {
     if (this.context.modal) {
       let client = Object.assign({message: this.makeMessage(message, conf)}, conf)
-//console.log("Modal:", this.context.modal, client)
+console.log("Modal:", this.context.modal, client)
       Object.assign(this.context.modal, {posted: true, client})
     }
   }
@@ -229,7 +274,7 @@ module.exports = function topHandler(context, amSlave) {
       , config = {repTag, view, action, info, actTag}	//Will save this for restore purposes
 
     info.keys = getKeys()				//Remember the last key values too
-//console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
+console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
 //console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp, "bus:", bus)
 
     if (buttonTag == 'diaCancel') {			//If we came from a dialog, and user says cancel
@@ -266,10 +311,14 @@ module.exports = function topHandler(context, amSlave) {
           , keys = getKeys()
 //console.log("DB request:", view, request, options, "k:", JSON.stringify(keys))
         Wyseman.request(repTag, 'action', {view, name, data:{request, options, keys}}, (content, error) => {
-//console.log("DB answers:", content, "error:", error)
+//console.log("DB answers:", content, "error:", error, "config:", config)
           if (error) {this.error(error); return}
-          if (win && content)
-            win.postMessage({request:'populate', data:{render:action.render, content, config}}, location.origin)	//send content to report window
+          if (win && content) {
+            let render = action.render
+              , data = {render, content, config}
+//console.log("R:", typeof data, data)
+            win.postMessage({request:'populate', data}, location.origin)	//send content to report window
+          }
         })
 
       } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed

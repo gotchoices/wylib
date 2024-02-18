@@ -35,6 +35,7 @@ export default {
   data() { return {
     stateTpt:	{logic: {and: true, items: [{left: null, not: false, oper: '='}]}, dock: {}},
   }},
+  inject: ['top'],
 
   computed: {			//Fixme: get langauge from wyseman/db
     id() {return 'dbs_' + this._uid + '_'},
@@ -96,8 +97,8 @@ export default {
   },
 
   mounted: function() {
-    this.$parent.$emit('swallow', this.$refs['header'])
-    this.$parent.$emit('customize', this.wm.dbs)
+    this.top().swallow(this.$refs.header)
+    this.top().custom(this.wm.dbs)
 
     if (this.bus) this.bus.register(this.id, (msg, data) => {	//Commands from my parent dbp
 //console.log("Dbs bus message: ", msg, data);

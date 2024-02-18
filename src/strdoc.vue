@@ -45,10 +45,10 @@
           </span>
           <div>{{ wm.t.sdcName || 'Name' }}:</div>
           <input class="input name" v-model="state.name" :placeholder="wm.t.sdcName" @input="change" :title="wm.h.sdcName">
-          <wylib-button icon='document' @click="togEdit" :env="env" :title="butHelp('sdcPreview')"/>
-          <wylib-button icon='plus' @click="addChild" :env="env" :title="butHelp('sdcAdd')"/>
-          <wylib-button v-if="level > 0" icon='target' @click="togSource" :env="env" :title="butHelp('sdcTogSource')"/>
-          <wylib-button v-if="level > 0" icon='zap' @click="$emit('delete',index)" :env="env" :title="butHelp('sdcDelete')" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor"/>
+          <wylib-button icon='document' @activate="togEdit" :env="env" :title="butHelp('sdcPreview')"/>
+          <wylib-button icon='plus' @activate="addChild" :env="env" :title="butHelp('sdcAdd')"/>
+          <wylib-button v-if="level > 0" icon='target' @activate="togSource" :env="env" :title="butHelp('sdcTogSource')"/>
+          <wylib-button v-if="level > 0" icon='zap' @activate="$emit('delete',index)" :env="env" :title="butHelp('sdcDelete')" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor"/>
         </div>
         <textarea v-if="state.source == null" class="input" ref="textarea" :rows="6" v-model="state.text" spellcheck="spellCheck" :title="wm.h.sdcText" :placeholder="wm.t.sdcText" @input="change"/>
         <div v-else class="sourceline">
@@ -546,7 +546,7 @@ console.log("dragStart:", this.index, this.secNumber)
   mounted() {
 //console.log("SS:", this.state.resource)
     if (this.iAmChief) {
-      this.top().context.$emit('swallow', this.$refs.header)
+      this.top().swallow(this.$refs.header)
     }
   },
 }

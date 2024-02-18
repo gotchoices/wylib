@@ -95,7 +95,7 @@ console.log("Launch got file import:", data, "spec:", spec)
 
       let launchLang = this.viewMeta.msg?.launch?.title || {title:this.viewMeta?.title, help:this.viewMeta?.help}
       if (this.viewMeta.title)
-        this.$parent.$emit('customize', this.tag, launchLang)
+        this.top().custom(this.tag, launchLang)
       if (this.launchNum > 0 && Object.keys(this.state.windows).length <= 0)
         for (let i = 0; i < this.launchNum; i++) this.addWin()
     })

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev-hot": "webpack-dev-server --hot --config build/webpack.test.conf.js",
-    "dev-build": "webpack --mode development --watch --progress --config build/webpack.dist.conf.js",
+    "dev-build": "webpack --mode development --watch --progress --config build/webpack.dist.conf.js --stats-error-details",
     "build": "webpack --mode production --config build/webpack.dist.conf.js",
     "tclpkg": "wmmkpkg wylib 0.35 tcltk",
     "preversion": "npm-run-all build && git add -A",
@@ -36,13 +36,16 @@
     "jsondiffpatch": "^0.4.1",
     "mathjs": "^9.4.5",
     "regenerator-runtime": "^0.13.9",
-    "slickgrid-es6": "^3.0.1",
-    "webcola": "^3.4.0"
+    "slickgrid-es6": "^3.0.1"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.19"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
     "@babel/plugin-transform-classes": "^7.16.0",
     "@babel/preset-env": "^7.0.0",
+    "@vue/compiler-sfc": "3.4.19",
     "babel-loader": "^8.2.3",
     "css-loader": "^6.5.1",
     "eslint": "^8.2.0",
@@ -55,10 +58,9 @@
     "style-loader": "^3.3.1",
     "svg-url-loader": "^7.1.1",
     "url-loader": "^3.0.0",
-    "vue": "2.7",
-    "vue-loader": "^15.11.1",
-    "vue-template-compiler": "^2.6.12",
+    "vue-loader": "^17.4.2",
     "webpack": "^5.76.0",
+    "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^4.5.0",
     "webpack-node-externals": "^3.0.0"

@@ -19,8 +19,8 @@
   <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang?.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
-        <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @click="winMenu.posted = !winMenu.posted" :title="wm.h.winMenu"/>
-        <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @click="state.pinned = !state.pinned" :title="wm.h.winPinned"/>
+        <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @activate="winMenu.posted = !winMenu.posted" :title="wm.h.winMenu"/>
+        <wylib-button v-if="!topLevel && pinnable" :env="env" icon="pushpin" :size="buttonSize" :toggled="state.pinned" @activate="state.pinned = !state.pinned" :title="wm.h.winPinned"/>
         <div ref="childMenu" class="childmenu"></div>
       </div>
       <div class="handle" v-on:dblclick="minimize" v-on:click="()=>{if (top) top.layer(1)}">
@@ -30,7 +30,7 @@
       </div>
       <div class="headerbar operations">
         <div ref="childStatus" class="childstatus"></div>
-        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :env="env" :size="buttonSize" @click="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.h.winClose"/>
+        <wylib-button class="closebutton" v-if="topLevel || state.pinned" icon="close" :env="env" :size="buttonSize" @activate="close" :color="pr.butCloseColor" :hoverColor="pr.butCloseHoverColor" :title="wm.h.winClose"/>
       </div>
     </div>
     <div class="subwindows">
@@ -44,7 +44,7 @@
         <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client" :env="env"/>
       </wylib-win>
       <wylib-modal v-if="topLevel && modal.posted" :state="modal" :env="env" v-slot="ws">
-        <wylib-dialog :state="ws.state" :env="env"/>
+        <wylib-dialog :state="ws.state" :env="env" @submit="modal.posted=false"/>
       </wylib-modal>
     </div>
     <div v-show="!state.minim" ref="content" class="content wylib-win-nodrag" :style="{ height: 'calc(100% - ' + (headerHeight + 4) + 'px)'}">
@@ -105,7 +105,9 @@ export default {
     dirty:		null,
     printable:		false,
     repBus:		new Bus.eventBus(this),
-    winMenu:		{client:{}}, client: {}, modal: {posted: false}, //Fixme: what is this?
+    winMenu:		{client:{}, posted: false},
+//    client:		{},			//Fixme: needed?
+//    modal: 		{posted: false},	//Fixme: what is this?
     stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null, fresh: true},
   }},
   inject: ['app'],
@@ -220,14 +222,14 @@ console.log("Clone to popup:", popId)
       else
         this.saveStateAs()
     },
-    storeState() {		//Redundant with stored app state?
+//    storeState() {		//Redundant with stored app state?
 //console.log("Storing window state:", this.stateTag, JSON.stringify(this.state))
-      if (this.topLevel && this.stateTag)
-        Local.set(this.stateTag, this.state)
-    },
+//      if (this.topLevel && this.stateTag)
+//        Local.set(this.stateTag, this.state)
+//    },
     defaultSize() {
       this.state.width = this.state.height = null
-      this.storeState()
+      this.top.geometry()
     },
     defaultState() {
       this.top.confirm(this.wm.h.winDefault, (tag) => {
@@ -249,16 +251,6 @@ console.log("Clone to popup:", popId)
       this.state.height = event.rect.height
       this.state.x += event.deltaRect.left
       this.state.y += event.deltaRect.top
-    },
-    swallowMenu(childMenu, childStatus) {	//Eat the menu bar, and optionally status bar of a child component
-//console.log("Swallow Menu:", childMenu, childStatus)
-      if (childMenu && '$el' in childMenu) childMenu = childMenu.$el		//Can pass in element or vue object
-      if (childStatus && '$el' in childStatus) childStatus = childStatus.$el
-      let cmenu = this.$refs['childMenu'], cstat = this.$refs['childStatus']
-      cmenu.innerHTML = ''		//Get rid of any prior contents
-      cstat.innerHTML = ''
-      cmenu.appendChild(childMenu)
-      if (childStatus) cstat.appendChild(childStatus)
     },
 
 //    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},	//Obsolete?
@@ -283,7 +275,8 @@ console.log("Clone to popup:", popId)
         winState.client.config = config		//;console.log("Report config:", config, popUp)
       } else {
         winState = {posted: false, x:25, y:25, client:{src, config, name:repTag}, ready}
-        this.$set(this.state.reports, repTag, winState)	//Create new report record
+//        this.$set(this.state.reports, repTag, winState)	//Create new report record
+        this.state.reports[repTag] = winState		//Create new report record
       }
       if (popUp) {			//Generate browser popup
         winState.posted = false
@@ -306,9 +299,10 @@ console.log("Clone to popup:", popId)
 
     closeRep(repTag, reopen, notPosted) {
       let oldState = this.state.reports[repTag]
-//console.log("closeRep:", repTag, oldState, reopen, notPosted)
+console.log("closeRep:", repTag, oldState, reopen, notPosted)
       if (notPosted && oldState.posted) return		//Ignore if a regular report is currently posted
-      this.$delete(this.state.reports, repTag)
+      delete this.state.reports[repTag]
+//      this.$delete(this.state.reports, repTag)
       if (reopen)
         this.reportWin(repTag, oldState.src, Com.clone(oldState.client.config))
       if (oldState && oldState.popWin) oldState.popWin.close()
@@ -333,34 +327,34 @@ console.log("Clone to popup:", popId)
   created: function() {
     if (this.topLevel) this.top = new TopHandler(this)
 //console.log("Win created; top:", this.id, this.topLevel, this.top)
-    this.$on('swallow', this.swallowMenu)
+//    this.$on('swallow', this.swallowMenu)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist
     Com.stateCheck(this)
-//if (this.topLevel) console.log("Win state:", this.state)
+//    if (this.topLevel) console.log("Win state:", this.state)
 
-    if (this.topLevel) this.$on('customize', (lang, tag, print, dirty)=>{	//Allow child to set the window's title and tagging ID
+//    if (this.topLevel) this.$on('customize', (lang, tag, print, dirty)=>{	//Allow child to set the window's title and tagging ID
 //console.log("Customize", this.id, lang, tag, print, dirty)
-      this.lang = lang
-      if (tag) this.stateTag = tag
-      this.printable = print
-      if (dirty) this.dirty = dirty
-
-      State.listen(this.id+'sl', this.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
+//      this.lang = lang
+//      if (tag) this.stateTag = tag
+//      this.printable = print
+//      if (dirty) this.dirty = dirty
+//
+//      State.listen(this.id+'sl', this.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
 //console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-        let menuItems = menuData.map(el=>{
-          return Object.assign(el, {call:()=>{
-            Object.assign(this.state, Com.clone(el.data))
-            Com.stateCheck(this)
-            this.lastLoadIdx = el.idx
-            this.lastLoadName = el.lang.title
-          }})
-        })
-        this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
+//        let menuItems = menuData.map(el=>{
+//          return Object.assign(el, {call:()=>{
+//            Object.assign(this.state, Com.clone(el.data))
+//            Com.stateCheck(this)
+//            this.lastLoadIdx = el.idx
+//            this.lastLoadName = el.lang.title
+//          }})
+//        })
+//        this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
 //console.log("WMC:", 1, this.winMenuConfig)
-      }, this.top.error)
-    })
+//      }, this.top.error)
+//    })
 
     this.$on('report', (config)=>{
       let { action, repTag, info } = config
@@ -379,7 +373,7 @@ console.log("Clone to popup:", popId)
       ignoreFrom: wId + ' .subwindows',
 //      allowFrom: wId + '> .content',
       onmove: this.sizeHandler,
-      onend: this.storeState
+      onend: () => this.top.geometry()
     }).draggable({
 //      ignoreFrom: '.wylib-win-nodrag',	//Do we need this?
       allowFrom: '.wylib-win .handle',
@@ -388,7 +382,7 @@ console.log("Clone to popup:", popId)
     })
 //console.log("Mounted; this: ", wId, this.title, "topLevel:", this.topLevel, "top:", this.top)
 
-    this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
+//    this.$on('geometry', (ev)=>{this.storeState()})	//When window layout changes, save it in localstorage
 
     if (this.topLevel && this.state.fresh) {		//This is a brand new window--not one restored from saved state
       this.state.fresh = false				//Mark so we don't overwrite stored state next time

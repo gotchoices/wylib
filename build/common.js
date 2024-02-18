@@ -1,10 +1,10 @@
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const { VueLoaderPlugin } = require('vue-loader')
 const path = require('path')
 
 module.exports = {
   resolve: {
     alias: {
-      vue: 'vue/dist/vue.js'
+      vue: '@vue/runtime-dom'
     },
 //    mainFields: ['main', 'module'],	prefer CJS over ESM
   },
@@ -35,7 +35,7 @@ module.exports = {
       },
       {
         test: /\.scss$/,
-        use: [ 'vue-style-loader', 'css-loader', 'sass-loader' ],
+        use: [ 'style-loader', 'css-loader', 'sass-loader' ],
       },
       {
         test: /.*\.(gif|png|jpe?g)$/i,

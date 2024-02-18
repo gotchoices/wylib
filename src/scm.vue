@@ -137,7 +137,7 @@ console.log("Menu handler:", index, x, y)
 
     geometry(ev) {
 console.log("Geometry changed:", this.top(), ev)
-      this.top().emit('geometry', ev)
+      this.top().geometry()
     },
   },
 
@@ -185,11 +185,10 @@ console.log("Geometry changed:", this.top(), ev)
         if (!this.token)		//Guess at what to return
           this.token = data.pkey[0]
       })
-//      this.$parent.$emit('customize', {title:'Hi', help: 'Ho'}, 'scm:'+this.spec.view)
     }
   },
 
-//  beforeDestroy: function() {
+//  beforeUnmount: function() {
 //console.log('Scm about to die:', this.state)
 //  }
 }

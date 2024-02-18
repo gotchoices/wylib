@@ -8,15 +8,15 @@
 <template>
   <div class="wylib wylib-menudock">
     <div class="buttons">
-      <wylib-button class="menubutton" icon="menu" :env="env" :toggled="state.menu.posted" @click="state.menu.posted = !state.menu.posted" :title="lang?.title"/>
-      <wylib-button class="shortcut" v-for="conf in config" v-if="conf.shortcut" :env="env"
-      	:key="conf.idx" :icon="conf.icon" :toggled="conf.toggled" @click="conf.call" 
+      <wylib-button class="menubutton" icon="menu" :env="env" :toggled="state.menu?.posted" @activate="state.menu.posted = !state.menu.posted" :title="lang?.title"/>
+      <wylib-button class="shortcut" v-for="conf in haveShortcut" :env="env"
+      	:key="conf.idx" :icon="conf.icon" :toggled="conf.toggled" @activate="conf.call" 
       	:disabled="('disabled' in conf) ? conf.disabled : false"
       	:title="conf?.lang?.title + ':\n' + conf?.lang?.help"/>
     </div>
     <div class="subwindows">
       <wylib-win :state="state.menu" :env="env" pinnable=true @close="state.menu.posted=false">
-        <wylib-menu :state="state.menu.client" :env="env" :config="config" :lang="lang" @done="state.menu.posted=state.menu.pinned"/>
+        <wylib-menu :state="state.menu?.client" :env="env" :config="config" :lang="lang" @done="state.menu.posted=state.menu.pinned"/>
       </wylib-win>
     </div>
   </div>
@@ -40,11 +40,15 @@ export default {
   data() { return {
     stateTpt:	{menu: {client: {}, posted: false}},
   }},
+  inject: ['top'],
+  computed: {
+    haveShortcut() {return this.config.filter(c => c.shortcut)},
+  },
 
   beforeMount: function() {
 //console.log("Menudock state: ", JSON.stringify(this.state, null, 2))
     Com.stateCheck(this)
-    this.$parent.$emit('customize', this.lang)
+    this.top().custom(this.lang)
   },
 }
 </script>

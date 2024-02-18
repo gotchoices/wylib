@@ -145,7 +145,9 @@ export default {
     if (this.state.x == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
 //console.log("     beforeMount:", this.state)
     this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
-      if (typeof lk == 'object' && !lk.hub) this.$set(lk, 'hub', ()=>{})	
+      if (typeof lk == 'object' && !lk.hub)
+        lk.hub = ()=>{}
+//        this.$set(lk, 'hub', ()=>{})	
     })
   },
 

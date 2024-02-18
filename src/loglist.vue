@@ -20,8 +20,8 @@
       <button class="button close" @click="$emit('close')" :title="wMsg('lstRemove')">X</button>
     </div>
     <div class="subdivision" v-for="(item, index) in state.items">
-      <wylib-loglist v-if="'and' in item" :key="index" :index="index" :state="item" :env="env" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
-      <wylib-logitem v-else :key="index" :index="index" :state="item" :env="env" @input="val=>{item = val}" @submit="submit" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
+      <wylib-loglist v-if="item && 'and' in item" :key="`l-${index}`" :index="index" :state="item" :env="env" @input="val => {item = val}" @close="closeChild(index)" :config="config" @geometry="childGeometry"/>
+      <wylib-logitem v-else :key="`i-${index}`" :index="index" :state="item" :env="env" @input="val=>{item = val}" @submit="submit" :config="config" @lower="lower(index)" @close="closeChild(index)" @insert="insert" @geometry="childGeometry"/> <!--{{index}} Debug -->
     </div>
   </div>
 </template>
@@ -65,16 +65,18 @@ export default {
       this.$emit('geometry', this, true)
     },
     closeChild(idx) {
-//console.log("Close: " + idx)
-      this.$delete(this.state.items, idx)
-      if (this.state.items.length <= 0) this.$emit('close')
+//console.log("Close: ", idx, this.state.items)
+      this.state.items.splice(idx, 1)
+      if (this.state.items.length <= 0)
+        this.$emit('close')
       this.$emit('geometry', this, true)
       this.drawConnectors()			//Remove connector to this item
     },
     lower(idx) {				//Turn an item component into a list component
 console.log("Lower: " + idx)
       let itemState = Object.assign({},this.state.items[idx])
-      this.$set(this.state.items, idx, {and: 'true', items: [itemState]})
+//      this.$set(this.state.items, idx, {and: 'true', items: [itemState]})
+      this.state.items[idx] = {and: 'true', items: [itemState]}
     },
     insert(idx, state) {
 console.log("Insert:" + idx + " State:" + state)

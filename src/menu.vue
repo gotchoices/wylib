@@ -49,7 +49,7 @@
       </table>
     </div>
     <div class="submenus subwindows">
-      <wylib-win v-for="item in config" v-if="item.menu" ref="submenu" :state="state.subs[item.idx]" :env="env" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false">
+      <wylib-win v-for="item in haveMenu" ref="submenu" :state="state.subs[item.idx]" :env="env" :key="item.idx" pinnable=true @close="state.subs[item.idx].posted=false">
         <wylib-menu :state="state.subs[item.idx].client" :env="env" :lang="item.lang" :config="item.menu" :layout="item.layout?item.layout:layout" @done="state.subs[item.idx].posted = state.subs[item.idx].pinned; $emit('done')"/>
       </wylib-win>
     </div>
@@ -70,15 +70,16 @@ export default {
     layout:	{type: Array, default: () => (['icon', 'lang', 'input'])},
     config:	Array,
     lang:	{type: Object, default: Com.langTpt},
-    top:	null,
     env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
     stateTpt:	{subs: {}}
   }},
+  inject: ['top'],
   computed: {
     id() {return 'menu_' + this._uid + '_'},
     pr() {return this.env.pr},
+    haveMenu() {return this.config.filter(c => c.menu)}
   },
   methods: {
     iconSvg(icon) {
@@ -140,7 +141,8 @@ export default {
 
     this.config.forEach((item, x) => {		//Set any object properties that are not known until now
       if (item.menu && !this.state.subs[item.idx]) {
-        this.$set(this.state.subs, item.idx, {posted: false, pinned: false, x:null, y:null, client: {}})
+//        this.$set(this.state.subs, item.idx, {posted: false, pinned: false, x:null, y:null, client: {}})
+        this.state.subs[item.idx] = {posted: false, pinned: false, x:null, y:null, client: {}}
 //console.log("Set default for: ", item.idx, "State:", this.state.subs[item.idx])
       }
     })
@@ -149,11 +151,10 @@ export default {
   mounted: function() {
 //console.log("M:", this.layout, this.config)
 //console.log("Menu components: " + JSON.stringify(this.$options.components))
-//    this.$on('customize', (lang, tag)=>{this.$parent.$emit(lang, tag)})
-    this.$parent.$emit('customize', this.lang)
+    this.top().custom(this.lang)
   },
-  beforeDestroy: function() {
-    if (this.top) this.top.listenClick(this.id)		//De-register
+  beforeUnmount: function() {
+    this.top().listenClick(this.id)		//De-register
   }
 }
 </script>

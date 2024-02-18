@@ -32,6 +32,7 @@
 const Bus = require('./bus.js')
 const Com = require('./common.js')
 const Wyseman = require('./wyseman.js')
+import { reactive, isReactive, toRaw } from 'vue'
 import MenuDock from './menudock.vue'
 import Mdew from './mdew.vue'
 import Dbp from './dbp.vue'
@@ -69,7 +70,11 @@ export default {
 //console.log("actMenu:", this.metaStyles)
       if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {
         let name = act.name			//;console.log("  act:", name, act)
-        acts.push({idx: name, icon: 'wand', lang: this.viewMeta.msg[name] || {title:name}, call: (ev)=>{this.perform(ev, act)}})
+        acts.push({
+          idx: name, 
+          icon: 'wand',
+          lang: this.viewMeta.msg[name] || {title:name},
+          call: (ev)=>{this.perform(ev, act)}})
       })
       return acts
     },
@@ -91,7 +96,7 @@ export default {
       {idx: 'del', lang: this.wm.dbeDelete,  call: this.delete,  icon: 'bin',    disabled: !!this.keyValues},
       {idx: 'clr', lang: this.wm.dbeClear,   call: this.clear,   icon: 'sun',    shortcut: true},
       {idx: 'ldr', lang: this.wm.dbeLoadRec, call: this.loadRec, icon: 'target'},
-      {idx: 'opt', lang: this.wm.dbeOption,  call: this.opTog,   icon: 'eye',    type: 'checkbox', toggled: this.state.mdew.optional, input: this.showOptValue},
+      {idx: 'opt', lang: this.wm.dbeOption,  call: null      ,   icon: 'eye',    type: 'checkbox', toggled: this.state.mdew.optional, input: this.showOptValue},
     ]},
     headerHeight() {
       return this.pr.winFullHeader - 1	//Fit in parent header, plus top border
@@ -104,6 +109,7 @@ export default {
     },
     mdewConfig() {			//Make the column description format mdew is looking for
       let fieldArray = []
+//console.log("mdewConfig:", this.viewMeta, isReactive(this.viewMeta))
       if (this.viewMeta) this.viewMeta.columns.forEach(meta => {
 //console.log("Col:", meta.col, " Meta:", meta, meta.styles, meta.values)
         fieldArray.push({
@@ -114,7 +120,7 @@ export default {
           nonull:	meta.nonull
         })
       })
-      return fieldArray
+      return reactive(fieldArray)
     },
     pKey() {		//object describing current PK fields and their values
       let ret = {}
@@ -295,12 +301,14 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
     perform(event, action) {
 //console.log("Perform action:", action, event.shiftKey)
       let data = {}
+        , act = toRaw(action)			//non-reactive copy
         , view = this.state.dbView
         , diaTag = ['action', view, action.name].join(':')
+//console.log("  act:", typeof act, act)
       if (action.options) {			//Do we need to prompt for report options?
         this.top().dialog(action.lang, action.options, data, null, diaTag + ':opts', this.top().diaButs3)
       } else {
-        this.top().actionLaunch(view, action, {popUp:event.shiftKey}, this.subBus)	//Go direct to action/report
+        this.top().actionLaunch(view, act, {popUp:event.shiftKey}, this.subBus)	//Go direct to action/report
       }
     },
 
@@ -313,7 +321,8 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
         this.lastView = this.state.dbView
         
         let lang = {title: this.wm.t.dbeMenu+': '+data.title, help: this.state.dbView+':\n'+data.help}
-        this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
+//        this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
+        this.top().custom(lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
         
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
 //console.log("Dbe register Dialog callback:", act)
@@ -357,7 +366,7 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
 
   mounted: function() {
 //console.log("Dbe refs: ", this.$refs, JSON.stringify(this.state.key))
-    this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
+    this.top().swallow(this.$refs.headMenu, this.$refs.headStatus)
 
     if (this.bus) this.bus.register(this.id, (msg, data) => {	//Commands from my parent dbp
 //console.log("Dbe bus message: ", msg, data);
@@ -365,7 +374,7 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
     })
   },
 
-  beforeDestroy: function() {
+  beforeUnmount: function() {
 //console.log("Dbe closing popups:", this.reports)
     Object.values(this.reports).forEach(popup=>{popup.close()})		//Fixme: Doesn't really get called much--create onunload handler?
   },

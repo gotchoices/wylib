@@ -15,7 +15,8 @@ module.exports = {
     if (st && props) {
       Object.keys(props).forEach(key => {		//Make sure all required properties are present
         if (!(key in st) || (st[key] == undefined && props[key] != undefined)) {
-          context.$set(st, key, this.clone(props[key]))
+          st[key] = this.clone(props[key])
+//          context.$set(st, key, this.clone(props[key]))
 //console.log("    init key:", key, st.key, props[key])
         }
       })
@@ -61,18 +62,20 @@ module.exports = {
       newState.y = placement.y || (Math.random() - 0.5) * 100 + 250
     }
     for(var newIndex = 0; newIndex in winObj; newIndex++);	// console.log('test', newIndex);
-    ctx.$set(winObj, newIndex, newState)
+//    ctx.$set(winObj, newIndex, newState)
+    winObj[newIndex] = newState
 //console.log(" at:", newIndex)
     return newIndex
   },
 
   closeWindow(winObj, idx, ctx, reopen) {
     let { x, y, template } = winObj[idx]
-//console.log("Close Window", idx, reopen)
+console.log("Close Window", idx, reopen)
     if (reopen && template)
       this.addWindow(winObj, template, ctx, false, {x, y})	//Force to open in a new slot
-    ctx.$delete(winObj, idx)
-//console.log(" after:", winObj)
+//    ctx.$delete(winObj, idx)
+    delete winObj[idx]
+console.log(" after:", winObj)
   },
 
   fileReader(target, timeout, cb) {		//Read a JSON file

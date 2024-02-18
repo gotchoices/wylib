@@ -25,7 +25,7 @@
           {{ tab?.lang?.title || tab.title }}
         </div>
         <div class="tab-filler">
-          <wylib-button icon="menu" :env="env" :toggled="appMenu.posted" @click="postAppMenu($event)" :title="appMenu.title"/>
+          <wylib-button icon="menu" :env="env" :toggled="appMenu.posted" @activate="postAppMenu($event)" :title="appMenu.title"/>
           <wylib-win :state="appMenu" :env="env" pinnable=true @close="appMenu.posted=false">
             <wylib-menu v-if="appMenu.posted" :state="appMenu.client" :env="env" :config="appMenuConfig()" @done="appMenu.posted=appMenu.pinned"/>
           </wylib-win>
@@ -33,14 +33,15 @@
       </div>
       <div class="subwindows">
         <wylib-modal v-if="modal.posted" :state="modal" :env="env" v-slot="ws">
-          <wylib-dialog :state="ws.state" :env="env"/>
+          <wylib-dialog :state="ws.state" :env="env" @submit="modal.posted=false"/>
         </wylib-modal>
-        <wylib-win v-for="win,idx in previews" v-if="win.posted" topLevel=true :key="idx" :state="win" :env="env" @close="win.posted=false">
+        
+        <wylib-win v-for="win,idx in postedPrevs" topLevel=true :key="idx" :state="win" :env="env" @close="win.posted=false">
           <wylib-dbp :state="win.client" :env="env"/>
         </wylib-win>
       </div>
       <div class="app-content">
-        <slot :env="env"></slot>
+        <slot name="default" :env="env"></slot>
       </div>
     </div>
   </div>
@@ -131,6 +132,7 @@ export default {
     id() {return 'app_' + this._uid + '_'},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
+    postedPrevs() {return this.previews.filter(w => w.posted)},
     siteConnected() {
       return this.currentSite || this.wm.t.appNoConnect || 'Not Connected'
     },
@@ -250,18 +252,18 @@ export default {
 
   beforeMount: function() {
     if (this.ready) this.initApp()
-    this.$on('customize', (tag, lang)=>{	//Allow child to set the tab title
+    this.top.custom = (tag, lang) => {		//Allow child to set the tab title
 //console.log("Customize tab", tag, lang, this.tabs)
       let tabIdx = this.tabs.findIndex(el=>(el.tag == tag))
       if (tabIdx >= 0) this.tabs[tabIdx].lang = lang
-    })
+    }
   },
 
   mounted: function () {
     window.addEventListener('beforeunload', this.beforeUnload)
   },
 
-  beforeDestroy: function() {
+  beforeUnmount: function() {
     window.removeEventListener('beforeunload', this.beforeUnload)
   },
 }

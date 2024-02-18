@@ -13,6 +13,7 @@
 //- 
 
 <script>
+import { h, isReactive } from 'vue'
 import Win from './win.vue'
 import Calc from './calc.vue'
 import File from './file.vue'
@@ -208,9 +209,9 @@ export default {
     },		//special
   },		//methods
 
-  beforeCreate: function() {
-    this.$options.components['wylib-win'] = require('./win.vue').default
-  },
+//  beforeCreate: function() {
+//    this.$options.components['wylib-win'] = require('./win.vue').default
+//  },
   
   created: function() {
 //console.log("Dew init:", this.field, this.config)
@@ -240,16 +241,16 @@ export default {
   },
 
   mounted: function() {
-//console.log(" Dew mounted:", this.field, this.state, this.mapValue, typeof this.mapValue)
+//console.log(" Dew mounted:", this.field, this.state, isReactive(this.state), this.config, isReactive(this.config))
     if (this.config.special == 'cal')
       this.datePicker = new DatePicker(this.$refs.input)
     if (this.config.focus && this.top) this.top().onPosted(() => {this.focus()})
   },
-  beforeDestroy: function() {
+  beforeUnmount: function() {
     if (this.datePicker) this.datePicker.destroy()
   },
   
-  render: function(h, context) {
+  render: function() {
     let entry, kids
       , st = this.state
       , cf = this.config
@@ -259,79 +260,81 @@ export default {
       , on = {input: this.input}
       , style = this.genStyle
       , ref = 'input'
-      , conf = {ref, style, attrs, domProps, on}
+      , conf = (p) => Object.assign({on, style, ref}, attrs, domProps, p)
 //console.log("Dew render:", this.field, input, 'c:', cf, typeof this.userValue)
     if (input == 'mle') {			//Multi-line entry / textarea
-      Object.assign(attrs, {rows: this.height, cols: this.width})
-      entry = h('textarea', conf)
+      entry = h('textarea', conf({rows: this.height, cols: this.width}))
     } else if (input == 'chk') {		//Checkbox
-      Object.assign(attrs, {type: 'checkbox'})
-      entry = h('div', {class: 'check', style}, [h('input',
-        {ref, attrs, domProps:{checked: this.userValue}, on: {change: ev=>this.input(ev, ev.target.checked)}}
-      )])
+      domProps = {checked: this.userValue}
+      on = {change: ev=>this.input(ev, ev.target.checked)}
+      entry = h('div', {class: 'check', style}, [
+          h('input', conf({type: 'checkbox'}))
+        ]
+      )
     } else if (input == 'pdm') {		//Pull-down menu
       let optList = []
       for (let val of this.pdmValues) {
         optList.push(h('option', {
-          attrs: {label: val.title, title: val?.help},
-          domProps: {value: val.value}
+          label: val.title,
+          title: val?.help,
+          value: val.value
         }, val.title))
       }
-      entry = h('select', conf, optList)
+      entry = h('select', conf(), optList)
 
     } else if (input == 'button') {		//Action button
 //console.log("button lang:", this.lang)
       let txt = (this.lang?.title ?? this.lang ?? 'Reset')
         , innerHTML = txt.split(' ')[0]
       Object.assign(on, {click: ev=>this.input(ev, true)})
-      Object.assign(conf, {domProps: {innerHTML}})
-      entry = h('button', conf)
+      domProps = {innerHTML}
+      entry = h('button', conf())
 
     } else {					//Text or other input type
       let type = Com.unabbrev(input, ['text', 'number'])
       Object.assign(attrs, {type: input == 'ent' ? 'text' : type, placeholder: this.hint})
-      Object.assign(conf, {class: ['text', !cf.special ? '' : 'special']})
-      Object.assign(on, {keyup: ev=>{
+      Object.assign(on, {keyup: ev => {
         if (ev.code == 'Enter') this.submit()
       }})
 //console.log("R:", this.field, 'A:', attrs, conf, on)
-      entry = input ? h('input', conf) : null
+      entry = input 
+        ? h('input', conf({class: ['text', !cf.special ? '' : 'special']}))
+        : null
     }
     kids = [entry]
 //console.log("R:", this.field, typeof cf.special, cf.special)
     if (!!cf.special) {
-      let attrs = {type: 'button'}
-        , on = {click: this.special}
-        , spButton = h('input', {attrs, on, class: 'special button'})
+      let spButton = h('input', {
+          type: 'button',
+          class: 'special button'
+        })
       kids.push(spButton)
 //console.log("M:", st, 'm:', JSON.stringify(st.menu))
       if (st.menu?.posted) {		//Is the special menu posted?
         let client = h(st.menu.component, {
-              props: {
-                state: st.menu.client,
-                data: cf.data,
-                handle: (...v) => this.specResult(...v),
-                env: this.env,
-              }, on: {done: (...v) => {			//console.log('dew; spf done:', ...v)
+              state: st.menu.client,
+              data: cf.data,
+              handle: (...v) => this.specResult(...v),
+              env: this.env,
+              on: {done: (...v) => {			//console.log('dew; spf done:', ...v)
                 st.menu.posted = st.menu.pinned
               }}
             })
-          , menWin = h('wylib-win', {
-              props: {
-                state: st.menu,
-                topLevel: false,
-                fullHeader: false,
-                pinnable: true,
-                env: this.env
-              }
+          , menWin = h(Win, {
+              state: st.menu,
+              topLevel: false,
+              fullHeader: false,
+              pinnable: true,
+              env: this.env
             }, [client])
 //console.log("P:", st.menu.component)
         kids.push(menWin)
       }
     }
+//console.log("Z:", kids)
     return h('div', {
       class: ['wylib', 'wylib-dew'],
-      attrs: {title: this.lang?.help ?? this.lang?.title ?? this.lang},
+      title: this.lang?.help ?? this.lang?.title ?? this.lang
     }, kids)
   },
 }

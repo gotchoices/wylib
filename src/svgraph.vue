@@ -171,7 +171,8 @@ export default {
 //console.log("SVGraph beforeMount:", this.state, this.state.setting)
     this.menu.forEach(m => {
       if (m.tag && !(m.tag in this.state.setting))
-        this.$set(this.state.setting, m.tag, m.default)
+        this.state.setting[m.tag] = m.default
+//        this.$set(this.state.setting, m.tag, m.default)
     })
   },
 

@@ -194,7 +194,7 @@ console.log("Delete Split:", idx)
     this.datePicker = new DatePicker(this.$refs.date)
     this.update()
   },
-  beforeDestroy: function() {
+  beforeUnmount: function() {
     if (this.datePicker) this.datePicker.destroy()
   },
 }

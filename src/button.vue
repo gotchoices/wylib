@@ -6,7 +6,7 @@
 //Removed: v-on:mouseup="mouseUp" v-on:mousedown.stop="mouseDown"
 
 <template>
-  <div class="wylib wylib-button button" :style="buttonStyle" v-on:mouseenter="mouseEnter" v-on:mouseleave="mouseLeave" v-on:click.stop="click">
+  <div class="wylib wylib-button button" :style="buttonStyle" v-on:mouseenter="mouseEnter" v-on:mouseleave="mouseLeave" @click="click">
     <svg class="icon" :style="iconStyle" v-html='iconSvg'></svg>
   </div>
 </template>
@@ -35,11 +35,24 @@ export default {
     isActive:	false,
   }},
   methods: {
-    mouseEnter: function(ev) {if (this.disabled) return; this.isHover = true;	this.$emit('mouseenter',ev)},
-    mouseLeave: function(ev) {if (this.disabled) return; this.isHover = false;	this.$emit('mouseleave',ev)},
+    mouseEnter: function(ev) {
+      if (this.disabled) return
+      this.isHover = true
+      this.$emit('mouseenter',ev)
+    },
+    mouseLeave: function(ev) {
+      if (this.disabled) return
+      this.isHover = false
+      this.$emit('mouseleave',ev)
+    },
+    click:	function(ev) {		//console.log('click:', this.disabled)
+      if (this.disabled) return
+      ev.stopPropagation()
+      this.$emit('activate', ev)
+    },
 //    mouseDown:	function(ev) {if (this.disabled) return; this.isActive = true;	this.$emit('mousedown',ev)},
 //    mouseUp:	function(ev) {if (this.disabled) return; this.isActive = false;	this.$emit('mouseup',ev)},
-    click:	function(ev) {if (this.disabled) return; this.$emit('click', ev)},
+
   },
   computed: {
     pr() {return this.env.pr},

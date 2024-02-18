@@ -23,10 +23,11 @@
 
 <script>
 const Com = require('./common.js')
+import MenuDock from './menudock.vue'
 
 export default {
   name: 'wylib-report',
-//  components: {'wylib-menudock': MenuDock},	//To avoid recursion problems
+  components: {'wylib-menudock': MenuDock},	//To avoid recursion problems
   props: {
     state:	{type: Object, default: () => ({})},
     ready:	{type: Function},
@@ -60,9 +61,11 @@ console.log("Run report:", ev)
     },
   },
 
-  beforeCreate() {
-    this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
-  },
+//  beforeCreate() {
+//console.log("BBB:", this.$options, this.$options.components)
+//    this.$options.components['wylib-menudock'] = require('./menudock.vue').default	//Seems to work better here to avoid recursion problems
+//  },
+  
   beforeMount: function() {
     Com.stateCheck(this)
     if (this.bus) this.bus.register(this.id, this.state.name, (req, data)=>{
@@ -78,8 +81,8 @@ console.log("Run report:", ev)
       , actTag = conf?.actTag
 //console.log("Report mounted:", this.ready, 'aTag:', actTag, 'rTag:', conf?.repTag, this.render)
     if (actTag) {
-//    this.$parent.$emit('swallow', this.$refs.header)		//Only if we re-enable a report menu
-      this.$parent.$emit('customize', action.lang, actTag, true, ()=>{return this.dirty})
+//    this.top().swallow(this.$refs.header)			//Only if we re-enable a report menu
+      this.top().custom(action.lang, actTag, true, ()=>{return this.dirty})
       this.$nextTick(() => {					//customize will wipe out our saved config
         this.state.config = conf				//So restore it here
       })
@@ -97,7 +100,7 @@ console.log("Run report:", ev)
 //setTimeout(() => {console.log("Report later:", this.state?.config?.repTag)}, 500)
   },
 
-//  beforeDestroy: function() {
+//  beforeUnmount: function() {
 //    this.bus.master.$emit('destroy', this.state.config)		;console.log('Report destroy')
 //  },
 }

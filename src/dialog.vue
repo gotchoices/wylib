@@ -43,6 +43,7 @@ export default {
     valid:	true,
     stateTpt:	{message: Com.langTpt, buttons: ['diaOK'], dews: null, data: {}, tag:'dialog', iframe:null, component:null, check:null},
   }},
+  inject: ['top'],
 
   computed: {
     id() {return 'dialog_' + this._uid + '_'},
@@ -87,7 +88,7 @@ export default {
       if (this.state.cb)			//Callback for the dialog; Will not be persistent across reloads!
         this.state.cb(butTag, data)
 
-      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)	//wylib-win with dialog in slot needs this
+//      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)	//wylib-win with dialog in slot needs this
       this.$emit('submit', ev, butTag, this.state.tag, data)		//dialog in pop uses this
     },
     change(value, field, dirty, valid) {	//When data changed
@@ -107,10 +108,10 @@ export default {
   beforeMount: function() {
     Com.stateCheck(this)
 //console.log("Dialog state:", this.state)
-    this.$parent.$emit('customize', this.state.report ? this.wm.diaReport : this.wm.diaDialog, 'dia:'+ this.state.tag, this.state.iframe != null)
+    this.top().custom(this.state.report ? this.wm.diaReport : this.wm.diaDialog, 'dia:'+ this.state.tag, this.state.iframe != null)
   },
 
-  beforeDestroy: function() {
+  beforeUnmount: function() {
 //console.log("Dialog destroy:", this.state)
     this.state.destroyed = true			//At least report module needs to know
   },

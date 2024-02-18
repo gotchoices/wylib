@@ -67,7 +67,7 @@ const LastKey = 'lastSite'
 
 export default {
   name: 'wylib-connect',
-  components: {'wylib-button': Button, 'wylib-menudock': MenuDock},
+  components: {'wylib-menudock': MenuDock},
   props: {
     db:		null,
     env:	{type: Object, default: Com.envTpt},
@@ -361,7 +361,8 @@ console.log("  URL ticket:", ticket)
 
 //console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
-      this.$set(site, 'selected', null)			//GUI needs to react to this
+//      this.$set(site, 'selected', null)			//GUI needs to react to this
+      site.selected - null
 //console.log("Processing saved key:", site)
       if (site.key) Subtle.importKey('jwk', site.key, KeyConfig, true, ['sign']).then((priv)=>{
         site.priv = priv

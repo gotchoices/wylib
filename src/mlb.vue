@@ -313,7 +313,7 @@ console.log("Context Menu: " + e.target)
 //console.log("Mlb sorting:", this.state.sortColumns)
   },
 
-  beforeDestroy: function() {
+  beforeUnmount: function() {
     elementResize.removeListener(this.$el, this.winSizeHandler)
   }
 }

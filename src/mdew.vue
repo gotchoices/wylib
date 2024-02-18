@@ -14,13 +14,14 @@
 //- 
 
 <script>
+import { h, reactive, isReactive } from 'vue'
+import Dew from './dew.vue'
 const Bus = require('./bus.js')
 const Com = require('./common.js')
-import Dew from './dew.vue'
 
 export default {
   name: 'wylib-mdew',
-  components: {'wylib-dew': Dew},
+//  components: {'wylib-dew': Dew},
   props: {
     state:	{type: Object, default: () => ({})},
     data:	{type: Object, default: () => ({})},
@@ -86,7 +87,7 @@ export default {
         rows.push([con])
       })
 //console.log("  rows:", rows)
-      return rows
+      return reactive(rows)
     },
   },
   
@@ -95,8 +96,10 @@ export default {
     togOption() {this.state.optional = !this.state.optional},
     submit(ev) {this.$emit('submit', ev)},
     input(value, field, dirty, valid, extra) {		//An input has been changed
-      this.$set(this.dirtys, field, dirty)
-      this.$set(this.valids, field, valid)
+//      this.$set(this.dirtys, field, dirty)
+      this.dirtys[field] = dirty
+//      this.$set(this.valids, field, valid)
+      this.valids[field] = valid
       this.userData[field] = value
 //console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid, extra)
       this.$emit('input', value, field, this.dirty, this.valid)
@@ -126,17 +129,19 @@ export default {
         answers.forEach(el => {				//These don't generate input events, so grab values now
           let { value, field, dirty, valid } = el
           this.userData[field] = value
-          this.$set(this.dirtys, field, dirty)
-          this.$set(this.valids, field, valid)
+//          this.$set(this.dirtys, field, dirty)
+          this.dirtys[field] = dirty
+//          this.$set(this.valids, field, valid)
+          this.valids[field] = valid
         })
         return answers
       }
     })
-//console.log("Mdew before:", this.config, this.data)
+//console.log("Mdew before:", this.config, this.data, isReactive(this.config), isReactive(this.state))
   },
 
-  render: function(h, context) {
-//console.log("Rendering", context)
+  render: function() {
+//console.log("Rendering mdew", this.config, isReactive(this.config), isReactive(this.gridConfig))
     let rowOpts, tabRows = []
     for (let y = 0; y < this.gridConfig.length; y++) {		//Iterate through the rows
       let row = this.gridConfig[y]
@@ -149,28 +154,30 @@ export default {
           , col = item?.grid?.x
           , xspan = item?.grid?.xspan ?? 1
           , yspan = item?.grid?.yspan ?? 1
-//console.log("  item:", item)
-//console.log("    row:", y, "item:", x, col, colCount, 'xs:', xspan)
         if (item) {
           let field = item.field
+//console.log("  item:", field, item)
+//console.log("    row:", y, "item:", x, col, colCount, 'xs:', xspan)
           if (item.styles?.optional) rowOptional = true
-          if (!this.state.dews[field]) this.$set(this.state.dews,field,{})
-          let dew = h('wylib-dew', {			//Make our data editing widget
-            attrs: {value: this.data[field]},
-            props: {
-              field,
-              config: item.styles, 
-              state: this.state.dews[field],
-              lang: item.lang, 
-              values: item.values, 
-              nonull: item.nonull, 
-              bus: this.dewBus, 
-              env: this.env
-            },
-            on: {input: this.input, submit: this.submit},
+          if (!this.state.dews[field])
+            this.state.dews[field] = {}
+//            this.$set(this.state.dews,field,{})
+
+//console.log("  dew item:", item.styles, isReactive(item.styles), isReactive(this.state.dews[field]))
+          let dew = h(Dew, {			//Make our data editing widget
+            state:	this.state.dews[field],
+            config:	item.styles, 
+            lang:	item.lang, 
+            value:	this.data[field],
+            values:	item.values, 
+            field,
+            nonull:	item.nonull, 
+            bus:	this.dewBus, 
+            env:	this.env,
+            on:		{input: this.input, submit: this.submit},
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang?.title + ':' : null))
-          tabItems.push(h('td', {attrs: {colspan:(xspan * 2 - 1), rowspan:yspan}}, [dew]))
+          tabItems.push(h('td', {colspan:(xspan * 2 - 1), rowspan:yspan}, [dew]))
         } else if (colCount < col) {			//Assuming prior columns haven't spanned available space
           tabItems.push(h('td'))			//pad it with dead cells
           tabItems.push(h('td'))
@@ -179,9 +186,9 @@ export default {
       }
       if (rowOpts == null && rowOptional) {		//Time for the 'optional' button?
         let optButton = h('div', {
-          class: "wylib-mdew-option",
-          attrs:{title:this.wmLang('mdewMore','help')},
-          style:this.optStyle,
+          class:	"wylib-mdew-option",
+          title:	this.wmLang('mdewMore','help'),
+          style:	this.optStyle,
 //          domProps:{innerHTML: this.wmLang('mdewMore')},
           on: {click: this.togOption}
         })
@@ -193,6 +200,7 @@ export default {
       if (tabItems.length > 0) tabRows.push(h('tr', rowOpts, tabItems))
     }
 
+//console.log(" mdew rend:", tabRows)
     return h('div', {class: "wylib wylib-mdew"}, [
       h('table', {}, tabRows)
     ])

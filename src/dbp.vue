@@ -85,9 +85,10 @@ export default {
       }
       return flds.sort((a,b) => {return (a.title > b.title) ? 1 : -1})
     },
-    loadedSize() {
+    loadedSize() {	//Width of window showing how many records loaded
       let len = 3
-      if (this.loaded) len = this.loaded.length > 8 ? 8 : this.loaded.length + 1
+        , loaded = String(this.state?.loaded ?? 1)
+      if (loaded) len = loaded.length > 8 ? 8 : loaded.length + 1
       return len
     },
     dockConfig() { return [
@@ -310,7 +311,7 @@ console.log("  in (" + keys.join(',') + ')')
     },
     geometry(ev) {
 //console.log("Geometry changed:", top, ev)
-      this.top().emit('geometry', ev)
+      this.top().geometry()
     },
     hideCol() {
       let col = this.state.grid.columns.find(e => (e.field == this.lastMenu))
@@ -326,7 +327,8 @@ console.log("  in (" + keys.join(',') + ')')
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
         let title = (this.wm.t.dbp || '') + ': ' + data.title
-        this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
+//        this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
+        this.top().custom({title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },
     followMaster() {		//Handle a load request from a master dbe
@@ -425,7 +427,7 @@ console.log("  in (" + keys.join(',') + ')')
   },
 
   mounted: function() {
-    this.$parent.$emit('swallow', this.$refs['headMenu'], this.$refs['headStatus'])
+    this.top().swallow(this.$refs.headMenu, this.$refs.headStatus)
 //console.log('Dbp mounted state:', this.id, this.state)
     this.$nextTick(() => {
       if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
@@ -438,7 +440,7 @@ console.log("  in (" + keys.join(',') + ')')
     })
   },
 
-//  beforeDestroy: function() {
+//  beforeUnmount: function() {
 //console.log('Dbp about to die:', this.state)
 //  }
 }

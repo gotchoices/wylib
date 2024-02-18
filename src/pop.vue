@@ -9,7 +9,7 @@
 <!--    <div class="header"></div> -->
     <div class="subwindows">
       <wylib-modal v-if="modal.posted" :state="modal" :env="env" v-slot="ws">
-        <wylib-dialog :state="ws.state" :env="env"/>
+        <wylib-dialog :state="ws.state" :env="env" @submit="modal.posted=false"/>
       </wylib-modal>
     </div>
     <div class="pop-content" v-if="state.render == 'html'" v-html="parseContent"/>
@@ -101,7 +101,7 @@ export default {
     })
   },
 
-//  beforeDestroy() {
+//  beforeUnmount() {
 //console.log("Pop closing:", window.opener)	//Do I need to inform the parent?
 //    this.top.momWin({request:'close'})
 //  },
