@@ -10,7 +10,7 @@
 //- Custom formatters per column?
 //- 
 <template>
-  <div class="wylib wylib-mlb">
+  <div class="wylib wylib-mlb" ref="root">
     <div v-once ref="gridTable" class="slickgrid-container" :style="{width: gridWidth}"></div>
   </div>
 </template>
@@ -58,7 +58,7 @@ export default {
   }},
 
   computed: {
-    id() {return 'mlb_' + this._uid + '_'},
+    id() {return 'mlb_' + this.$.uid},
     pr() {return this.env.pr},
     slickColumns() {			//Convert wyseman column spec to what slickgrid expects
       let cols = []
@@ -137,7 +137,7 @@ console.log("Context Menu: " + e.target)
       for (let i = 0; i < ord.classList.length; i++) {			//hack way to find this column field name
         if (/^slick-header-column-field-/.test(ord.classList[i])) {idx = ord.classList[i].replace('slick-header-column-field-','')}
       }
-      let mlbBox = this.$el.getBoundingClientRect()
+      let mlbBox = this.$refs.root?.getBoundingClientRect()
 //console.log("Header Menu:", e, "Index:", idx, mlbBox, e.clientX, e.clientY)
       this.$emit('headerMenu', e, idx, e.clientX - parseInt(mlbBox.x), e.clientY - parseInt(mlbBox.y))
     },
@@ -195,11 +195,11 @@ console.log("Context Menu: " + e.target)
 
     see(line) {					//Make a certain line visible
       if (line) 
-        this.gridInstance.scrollRowIntoView(line, false)
+        this.gridInstance?.scrollRowIntoView(line, false)
       else if (this.state.see == 'top')
-        this.gridInstance.scrollRowIntoView(0, false)
+        this.gridInstance?.scrollRowIntoView(0, false)
       else
-        this.gridInstance.scrollRowIntoView(this.data.length, true)
+        this.gridInstance?.scrollRowIntoView(this.data.length, true)
     },
 
     advance(delta = 1) {			//Move current line forward or backward
@@ -218,7 +218,7 @@ console.log("Context Menu: " + e.target)
     autoSize(field) {			//Move current line forward or backward
       let idx = this.state.columns.findIndex(e => (e.field == field))
         , maxLen = 2
-        , aCell = this.$el.querySelector('.slick-cell')
+        , aCell = this.$refs.root?.querySelector('.slick-cell')
         , fontSize = aCell ? parseFloat(window.getComputedStyle(aCell, null).getPropertyValue('font-size')) : 16
 //console.log("Mlb autosize:", field, idx, fontSize)
       for (let dat of this.data) {
@@ -289,7 +289,7 @@ console.log("Context Menu: " + e.target)
   },
 
   mounted: function() {
-    elementResize.listenTo(this.$el, this.winSizeHandler)	//Event when our component div size gets changed
+    elementResize.listenTo(this.$refs.root, this.winSizeHandler)	//Event when our component div size gets changed
   
     this.$refs.gridTable.style.height = '200px'			//Init to some known height, for now
 //console.log("data: " + JSON.stringify(this.data))
@@ -314,7 +314,7 @@ console.log("Context Menu: " + e.target)
   },
 
   beforeUnmount: function() {
-    elementResize.removeListener(this.$el, this.winSizeHandler)
+    elementResize.removeListener(this.$refs.root, this.winSizeHandler)
   }
 }
 </script>

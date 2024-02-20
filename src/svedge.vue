@@ -116,10 +116,8 @@ export default {
     Com.stateCheck(this)
     if (!this.state.source.end)		//Make default endpoints if they don't exist
       this.state.source.end = {x:0, y:0}
-//      this.$set(this.state.source, 'end', {x:0, y:0})
     if (!this.state.target.end)
       this.state.target.end = {x:0, y:0}
-//      this.$set(this.state.target, 'end', {x:0, y:0})
   },
 
 //  mounted: function() {

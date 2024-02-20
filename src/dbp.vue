@@ -58,9 +58,9 @@ export default {
     viewMeta:	null,
     gridData:	[],
     lastMenu:	null,
-    mlbBus:	new Bus.messageBus(this),
-    dbeBus:	new Bus.messageBus(this),
-    dbsBus:	new Bus.messageBus(this),
+    mlbBus:	null,
+    dbeBus:	null,
+    dbsBus:	null,
     lastView:	null,
     editPosts:	0,			//Don't instantiate until we've posted once
     filtPosts:	0,
@@ -68,7 +68,7 @@ export default {
   inject: ['top'],
 
   computed: {
-    id() {return 'dbp_' + this._uid + '_'},
+    id() {return 'dbp_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     stateTpt() {return {
@@ -219,14 +219,14 @@ export default {
         , oldWhere = this.state.lastLoad.where
       if (selection.length <= 0 || selection.length >= this.state.loaded)
         return oldWhere			//Including all loaded records
-console.log("selectWhere: ", this.viewMeta, oldWhere, left)
+//console.log("selectWhere: ", this.viewMeta, oldWhere, left)
       selection.forEach(idx=>{
         let row = this.gridData[idx]
           , keyVal = left.map(el=>(row[el]))
         keys.push(keyVal)
       })
       let thisWhere = {left, oper: 'in', entry: keys}
-console.log("  in (" + keys.join(',') + ')')
+//console.log("  in (" + keys.join(',') + ')')
       if (oldWhere)
         return {and:true, items: [oldWhere, thisWhere]}
       return thisWhere
@@ -239,7 +239,7 @@ console.log("  in (" + keys.join(',') + ')')
       }
       let loadSpec = Object.assign({view: this.state.dbView, fields: '*', limit: this.state.limit}, spec)
 //console.log("Dbp load:", this.state.dbView, loadSpec, this.viewMeta)
-      Wyseman.request('dbp_'+this._uid, 'select', loadSpec, (data, err) => {
+      Wyseman.request(this.id+'_ld', 'select', loadSpec, (data, err) => {
 //console.log("  data:", data)
         if (err) this.top().error(err); else this.gridData = data
         if (this.state.edit.posted && this.state.autoLoad) this.executeRows()
@@ -320,14 +320,13 @@ console.log("  in (" + keys.join(',') + ')')
     },
 
     metaListen() {		//Register which view we are dealing with
-      let zid = this.id+'cv'
+      let zid = this.id+'_cv'
       if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register
-      if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data, err) => {
+      if (this.state.dbView) Wyseman.register(zid, this.state.dbView, (data, err) => {
         if (err) {this.top().error(err); return}
 //console.log("Dbp got metadata for:", this.state.dbView, data)
         this.viewMeta = data
         let title = (this.wm.t.dbp || '') + ': ' + data.title
-//        this.$parent.$emit('customize', {title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
         this.top().custom({title, help: this.state.dbView+':\n'+data.help}, 'dbp:'+this.state.dbView)
       })
     },
@@ -366,7 +365,7 @@ console.log("  in (" + keys.join(',') + ')')
             , tag = (this.viewMeta.styles ? this.viewMeta.styles.export : null) || this.viewMeta.obj	//Identifies the record type on export
 //console.log("Export:", resp.file, selects, where)
            
-          Wyseman.request('dbp_x_'+this._uid, 'select', spec, (data, err) => {
+          Wyseman.request(this.id+'_ex', 'select', spec, (data, err) => {
 //console.log("  err:", err, " data:", data)
             if (err) {this.top().error(err); return}
             let expData = data.map(el=>({[tag]:el.json}))
@@ -406,9 +405,9 @@ console.log("  in (" + keys.join(',') + ')')
   },
 
   created: function() {
-//    Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
-//      if (data.msg) this.wm = data.msg
-//    })
+    this.mlbBus = new Bus.messageBus()
+    this.dbeBus = new Bus.messageBus()
+    this.dbsBus = new Bus.messageBus()
     this.metaListen()
   },
 

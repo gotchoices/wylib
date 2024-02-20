@@ -35,12 +35,12 @@ export default {
     valids:	{},
     dirtys:	{},
     userData:	{},
-    dewBus:	new Bus.messageBus(this),
+    dewBus:	null,
     stateTpt:	{optional: false, dews: {}},
   }},
 
   computed: {
-    id() {return 'mdew_' + this._uid + '_'},
+    id() {return 'mdew_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     dirty() {
@@ -96,9 +96,7 @@ export default {
     togOption() {this.state.optional = !this.state.optional},
     submit(ev) {this.$emit('submit', ev)},
     input(value, field, dirty, valid, extra) {		//An input has been changed
-//      this.$set(this.dirtys, field, dirty)
       this.dirtys[field] = dirty
-//      this.$set(this.valids, field, valid)
       this.valids[field] = valid
       this.userData[field] = value
 //console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid, extra)
@@ -110,8 +108,11 @@ export default {
     },
   },
 
-//  created: function() {
-//  },
+  created: function() {
+    this.dewBus = new Bus.messageBus(msg => {
+console.log("dew->mdew Message:", msg)
+    })
+  },
 
   beforeMount: function() {
     Com.stateCheck(this, true)
@@ -129,9 +130,7 @@ export default {
         answers.forEach(el => {				//These don't generate input events, so grab values now
           let { value, field, dirty, valid } = el
           this.userData[field] = value
-//          this.$set(this.dirtys, field, dirty)
           this.dirtys[field] = dirty
-//          this.$set(this.valids, field, valid)
           this.valids[field] = valid
         })
         return answers
@@ -161,7 +160,6 @@ export default {
           if (item.styles?.optional) rowOptional = true
           if (!this.state.dews[field])
             this.state.dews[field] = {}
-//            this.$set(this.state.dews,field,{})
 
 //console.log("  dew item:", item.styles, isReactive(item.styles), isReactive(this.state.dews[field]))
           let dew = h(Dew, {			//Make our data editing widget

@@ -77,7 +77,7 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id() {return 'menu_' + this._uid + '_'},
+    id() {return 'menu_' + this.$.uid},
     pr() {return this.env.pr},
     haveMenu() {return this.config.filter(c => c.menu)}
   },
@@ -105,9 +105,9 @@ export default {
             , viewWidth = (window.innerWidth || document.documentElement.clientWidth)
             , rightGap = viewWidth - (menuBBox.x + menuBBox.width)
             , subComp = this.$refs.submenu.find(cur=>{return (cur.state == theSub)})
-            , subElem = subComp ? subComp.$el : null
-            , subBBox = subElem ? subElem.getBoundingClientRect() : null
-            , subWidth = subBBox ? subBBox.width : 200
+            , subElem = subComp?.$el
+            , subBBox = subElem?.getBoundingClientRect()
+            , subWidth = subBBox?.width ?? 200
 //console.log("rightGap:", rightGap, "subWidth:", subWidth, "Menu wid:", menuBBox.width, "sub:", subElem.getBoundingClientRect())
           theSub.y = itemBBox.y - menuBBox.y - itemBBox.height		//Place the menu relevant to the invoking menu item
           theSub.x = (rightGap < subWidth) ? -(menuBBox.width + subWidth) : 0
@@ -141,7 +141,6 @@ export default {
 
     this.config.forEach((item, x) => {		//Set any object properties that are not known until now
       if (item.menu && !this.state.subs[item.idx]) {
-//        this.$set(this.state.subs, item.idx, {posted: false, pinned: false, x:null, y:null, client: {}})
         this.state.subs[item.idx] = {posted: false, pinned: false, x:null, y:null, client: {}}
 //console.log("Set default for: ", item.idx, "State:", this.state.subs[item.idx])
       }

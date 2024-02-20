@@ -36,7 +36,7 @@ export default {
     modal:	{posted: false, client: {}},
     top:	null,
     env:	{wm: {h:{}, t:{}}, pr: Prefs.values},
-    compBus:	new Bus.messageBus(this),
+    compBus:	null,
 //    config:	{}			//Any applicable report configuration
   }},
   provide() { return {
@@ -44,7 +44,7 @@ export default {
     app: () => {return this.top}
   }},
   computed: {
-    id() {return 'pop_' + this._uid + '_'},
+//    id() {return 'pop_' + this.$.uid},
     compName() {		//What standard component we will use
 //console.log("compName:", this.state.render)
       if (!this.state.render || this.state.render == 'html') return null
@@ -71,6 +71,9 @@ export default {
 
   created() {
 //console.log("Pop env:", this.env)
+    this.compBus = new Bus.messageBus(msg => {
+//console.log("comp->pop Message:", msg)
+    })
     this.top = new TopHandler(this, true)
   },
 
@@ -78,7 +81,7 @@ export default {
     this.top.momWin({request:'control'})		//Let parent window know we are ready to load content
 
     this.top.listenWin('', (request, data) => {		//Listen for messages from '' (master window)
-//console.log("Popup got message:", request, "Data:", data)
+//console.log("Popup got message:", request, "Data:", data.render, data, Object.keys(data))
       if (request == 'populate' && data.render) {
 //console.log("Popup got populate:", data)
         let { render, content, config } = data

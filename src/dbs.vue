@@ -38,7 +38,7 @@ export default {
   inject: ['top'],
 
   computed: {			//Fixme: get langauge from wyseman/db
-    id() {return 'dbs_' + this._uid + '_'},
+    id() {return 'dbs_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     logicConfig() {

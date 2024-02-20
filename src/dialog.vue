@@ -46,7 +46,7 @@ export default {
   inject: ['top'],
 
   computed: {
-    id() {return 'dialog_' + this._uid + '_'},
+    id() {return 'dialog_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     message() {
@@ -88,7 +88,6 @@ export default {
       if (this.state.cb)			//Callback for the dialog; Will not be persistent across reloads!
         this.state.cb(butTag, data)
 
-//      this.$parent.$emit('submit', ev, butTag, this.state.tag, data)	//wylib-win with dialog in slot needs this
       this.$emit('submit', ev, butTag, this.state.tag, data)		//dialog in pop uses this
     },
     change(value, field, dirty, valid) {	//When data changed

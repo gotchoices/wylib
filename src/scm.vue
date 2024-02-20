@@ -56,7 +56,7 @@ export default {
   },
   data() { return {
     gridData:	[],
-    mlbBus:	new Bus.messageBus(this),
+    mlbBus:	null,
     spec:	{},
     viewMeta:	null,
     stateTpt:	{grid: {columns: []}},
@@ -66,7 +66,7 @@ export default {
   inject: ['top'],
 
   computed: {
-    id() {return 'scm_' + this._uid + '_'},
+    id() {return 'scm_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
 
@@ -145,6 +145,12 @@ console.log("Geometry changed:", this.top(), ev)
     this.$options.components['wylib-dew'] = require('./dew.vue').default
   },
 
+  created: function() {
+    this.mlbBus = new Bus.messageBus(msg => {
+console.log("mlb->scm message:", msg)
+    })
+  },
+
   beforeMount: function() {
     Com.stateCheck(this)
   },
@@ -173,12 +179,12 @@ console.log("Geometry changed:", this.top(), ev)
       this.token = this.spec.token
     if (this.spec.view && this.spec.fields) {
 //console.log("  Scm requesting DB:", this.spec)
-      Wyseman.request(this.id+'d', 'select', this.spec, (data, err) => {
+      Wyseman.request(this.id+'_d', 'select', this.spec, (data, err) => {
 //console.log("  Scm got data:", data)
         if (err) {this.top().error(err); return}
         this.gridData = data
       })
-      Wyseman.register(this.id+'m', this.spec.view, (data, err) => {
+      Wyseman.register(this.id+'_m', this.spec.view, (data, err) => {
         if (err) {this.top().error(err); return}
 //console.log("Scm got metadata for:", this.spec.view, data)
         this.viewMeta = data

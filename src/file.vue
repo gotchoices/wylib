@@ -38,7 +38,6 @@ export default {
 //  inject: ['top'],
 
   computed: {
-//    id() {return 'file_' + this._uid + '_'},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
   },
@@ -67,7 +66,7 @@ export default {
   },
 
 //  mounted: function() {
-//console.log('File mounted:', this.id, 'st:', this.state)
+//console.log('File mounted:', this.state)
 //  },
 
 }

@@ -21,7 +21,7 @@ const Com = require('./common.js')
 const Bus = require('./bus.js')
 const Interact = require('interactjs')
 const LinkColor = 'blue'
-var nodeBus = new Bus.eventBus(this)			//Discover vms by a given tag
+var nodeBus = new Bus.eventBus()			//Discover vms by a given tag
 
 export default {
   name: 'wylib-svgnode',
@@ -147,7 +147,6 @@ export default {
     this.state.links.forEach(lk => {				//Initialize empty stubs for hub routines
       if (typeof lk == 'object' && !lk.hub)
         lk.hub = ()=>{}
-//        this.$set(lk, 'hub', ()=>{})	
     })
   },
 

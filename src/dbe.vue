@@ -54,14 +54,14 @@ export default {
     dirty:	false,
     valid:	false,
     lastView:	null,
-    mdewBus:	new Bus.messageBus(this),
-    subBus:	new Bus.messageBus(this, this.reportQuery),
+    mdewBus:	null,
+    subBus:	null,
     stateTpt:	{dock:{}, dbView:'', key: {}, loaded:false, subs:{}, mdew:{}},
     reports:	{},
   }},
 
   computed: {
-    id() {return 'dbe_' + this._uid + '_'},
+    id() {return 'dbe_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     metaStyles() {return this.viewMeta?.styles ?? {}},
@@ -248,7 +248,7 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
 
     dataRequest(action, options, modifies = true, cb) {
 //console.log("Dbe dataRequest:", action, options)
-      Wyseman.request(this.id+'dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
+      Wyseman.request(this.id+'_dr', action, Object.assign({view: this.state.dbView}, options), (data, err) => {
 //console.log("Dbe data received:", err, data)
         if (err) {
           this.top().error(err)
@@ -313,15 +313,14 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
     },
 
     metaListen() {				//Register which DB view we are dealing with
-      let zid = this.id+'cv'
+      let zid = this.id+'_cv'
       if (this.lastView) Wyseman.register(zid, this.lastView)		//Un-register any prior view
-      if (this.state.dbView) Wyseman.register(this.id+'cv', this.state.dbView, (data) => {
+      if (this.state.dbView) Wyseman.register(zid, this.state.dbView, (data) => {
 //console.log("Dbe got metadata for:", this.state.dbView, data)
         this.viewMeta = data
         this.lastView = this.state.dbView
         
         let lang = {title: this.wm.t.dbeMenu+': '+data.title, help: this.state.dbView+':\n'+data.help}
-//        this.$parent.$emit('customize', lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
         this.top().custom(lang, 'dbe:'+this.state.dbView, false, ()=>{return this.dirty})
         
         if (this.metaStyles.actions) this.metaStyles.actions.forEach(act => {		//Make menu options for any actions associated with this view
@@ -347,9 +346,10 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
   created: function() {
 //console.log("Dbe created; top:", this.top())
     this.metaListen()
-//    this.subBus = new Bus.messageBus(this, (msg)=>{
-//console.log("Dbe got sub message:", msg)
-//    })
+    this.mdewBus = new Bus.messageBus((msg) => {
+console.log("mdew->dbe message:", msg)
+    })
+    this.subBus = new Bus.messageBus(this.reportQuery)
   },
 
   beforeMount: function() {

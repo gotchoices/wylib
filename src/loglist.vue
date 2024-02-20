@@ -12,7 +12,7 @@
 //-  Tab from RHS will add a new line if non exists below, then move focus to its LHS
 //- 
 <template>
-  <div class="wylib wylib-loglist">
+  <div class="wylib wylib-loglist" ref="root">
     <div class="header">
       <svg ref="connector" class="connector"><path ref="connectPath"/></svg>
       <button class="button andor" :class="{and: state.and}" @click="state.and = !state.and" :title="wMsg('lstAndOr')">{{joinFunction}}</button>
@@ -75,16 +75,15 @@ export default {
     lower(idx) {				//Turn an item component into a list component
 console.log("Lower: " + idx)
       let itemState = Object.assign({},this.state.items[idx])
-//      this.$set(this.state.items, idx, {and: 'true', items: [itemState]})
       this.state.items[idx] = {and: 'true', items: [itemState]}
     },
     insert(idx, state) {
-console.log("Insert:" + idx + " State:" + state)
+//console.log("Insert:" + idx + " State:" + state)
       this.state.items.splice(idx, 0, state)
     },
     childGeometry(child, cascade) {		//When a child has just rendered itself, capture its position
-      let childBox = child.$el.getBoundingClientRect()
-      let parBox = this.$el.getBoundingClientRect()
+      let childBox = child.$refs?.root?.getBoundingClientRect()
+      let parBox = this.$refs?.root?.getBoundingClientRect()
 //console.log("Child rendered:", childBox, "\n par box:", parBox)
       let halfHeight = Math.round(childBox.height / 2)
       let childY = Math.round(childBox.y) - Math.round(parBox.y) + halfHeight

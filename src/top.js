@@ -39,11 +39,12 @@ module.exports = function topHandler(context, amSlave) {
   this.momWin = WinCom.mom
 
   this.swallow = function(childMenu, childStatus) {	//Eat the menu bar, and optionally status bar of a child component
-//console.log("Swallow Menu:", childMenu, childStatus)
+    let cmenu = context.$refs.childMenu			//Find elements to insert into
+      , cstat = context.$refs.childStatus
+//console.log("Swallow Menu:", childMenu, childStatus, context)
+    if (!cmenu || !cstat) return
     if (childMenu && '$el' in childMenu) childMenu = childMenu.$el		//Can pass in element or vue object
     if (childStatus && '$el' in childStatus) childStatus = childStatus.$el
-    let cmenu = context.$refs.childMenu
-      , cstat = context.$refs.childStatus
     cmenu.innerHTML = ''		//Get rid of any prior contents
     cstat.innerHTML = ''
     cmenu.appendChild(childMenu)
@@ -88,7 +89,7 @@ module.exports = function topHandler(context, amSlave) {
     
   this.submitDialog = function(dialogTag, ...args) {
     let actTag = dialogTag.split(':').slice(0,3).join(':')	//First three define the action we will be calling
-//console.log("Top call:", dialogTag, actTag, ...args)
+//console.log("Top call:", dialogTag, actTag, ...args, !!this.dialogCB[actTag])
     if (this.dialogCB[actTag]) {
       return this.dialogCB[actTag](dialogTag, ...args)
     }
@@ -208,7 +209,7 @@ module.exports = function topHandler(context, amSlave) {
   this.postModal = function(message, conf) {
     if (this.context.modal) {
       let client = Object.assign({message: this.makeMessage(message, conf)}, conf)
-console.log("Modal:", this.context.modal, client)
+//console.log("Modal:", this.context.modal, client)
       Object.assign(this.context.modal, {posted: true, client})
     }
   }
@@ -274,8 +275,8 @@ console.log("Modal:", this.context.modal, client)
       , config = {repTag, view, action, info, actTag}	//Will save this for restore purposes
 
     info.keys = getKeys()				//Remember the last key values too
-console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
-//console.log("  repTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp, "bus:", bus)
+//console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", config, "key:", JSON.stringify(info.keys))
+//console.log("RepTag:", repTag, "buttonTag:", buttonTag, "options:", options, "dialogIndex:", dialogIndex, "popUp:", popUp, "bus:", bus)
 
     if (buttonTag == 'diaCancel') {			//If we came from a dialog, and user says cancel
       this.context.closeRep(repTag)			//Close our window if it is open
@@ -293,7 +294,7 @@ console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", 
     
     let perform = (target, message, win) => {		//Respond to messages from report window
       let {request, data} = message ? message : {}
-//console.log("Report perform:", repTag, 't:', target, 'm:', message)
+//console.log("Report perform:", repTag, 'target:', target, 'm:', message)
 
       if (target == 'unload') {				//Window could be closing
 //console.log("Got unload from window:", repTag, "dirty:", data)
@@ -316,23 +317,23 @@ console.log("Action Launcher:", view, "act:", action, "info:", info, "config:", 
           if (win && content) {
             let render = action.render
               , data = {render, content, config}
-//console.log("R:", typeof data, data)
-            win.postMessage({request:'populate', data}, location.origin)	//send content to report window
+//console.log("Populate ->", win.name, typeof data, data)
+            WinCom.post(win, {request:'populate', data})
           }
         })
 
       } else if (target == 'editor') {			//Content is a record editor and asking for an editing sub-command to be performed
 //console.log("Command for Dbe:", request, "data:", data, "keys:", info.keys)
         if (bus && bus.mom) bus.mom(request, data, info.keys[0], ()=>{
-          win.postMessage({request:'child', data:'clean'}, location.origin)	//Confirm update with report window
+          WinCom.post(win, {request:'child', data:'clean'})	//Confirm update with report window
         })
 
       } else if (target == 'env') {			//Content is asking for data for its environment
 //console.log("Request for env", win)
-        win.postMessage({request:'env', data:{
+        WinCom.post(win, {request:'env', data:{
           wm:this.context.wm, 
           pr:Object.assign({}, this.context.pr)
-        }}, location.origin)	//send prefs, language metadata to report window
+        }})			//send prefs, language metadata to report window
       }
     }
     

@@ -27,7 +27,7 @@ export default {
     stateTpt:	{posted: false, client:{}},
   }},
   computed: {
-    id() {return 'modal_' + this._uid + '_'},
+//    id() {return 'modal_' + this.$.uid},
     pr() {return this.env.pr},
     screenStyle() {return {
       display:		this.state.posted ? 'flex' : 'none',

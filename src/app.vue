@@ -129,7 +129,7 @@ export default {
     app: () => {return this.top}
   }},
   computed: {
-    id() {return 'app_' + this._uid + '_'},
+    id() {return 'app_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     postedPrevs() {return this.previews.filter(w => w.posted)},
@@ -217,7 +217,7 @@ export default {
       }
     },
     initApp() {					//Call when app ready to run
-      Wyseman.register(this.id+'wm', 'wylib.data', (data, err) => {
+      Wyseman.register(this.id+'_wm', 'wylib.data', (data, err) => {
         if (data.msg) Object.assign(this.env.wm, data.msg)	//Don't overwrite what might be in WmDefs
 //console.log("App wm:", this.wm)
         if (!this.pw.checked) Local.check()	//If this is the first run, we should now have enough wm data for the dialog to work
@@ -229,7 +229,7 @@ export default {
         this.$nextTick(()=>{Object.assign(this.state, savedState)})	//Comment line for debugging from default state
       Prefs.init()
 
-      State.listen(this.id+'sl', this.tag, (menuData) => {
+      State.listen(this.id+'_sl', this.tag, (menuData) => {
 //console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
         let menuItems = menuData.map(el=>{
           return Object.assign(el, {call:()=>{
@@ -243,7 +243,7 @@ export default {
   },
 
   created: function() {
-//console.log("app created:", this.env)
+//console.log("app created:", this.env, this.id)
     this.top = new TopHandler(this)
     Local.init(this, this.pw, this.tag, (isReady)=>{
       if (this.pw.ready = isReady) this.initApp()

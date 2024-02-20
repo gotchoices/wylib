@@ -6,10 +6,13 @@
 //- 
 
 module.exports = {
-  messageBus(vm, masterCB) {		//Bus for messages to be distributed to registered clients
-    this.master = vm
+  messageBus(masterCB) {		//Bus for messages to be distributed to registered clients
     this.masterCB = masterCB
     this.clients = {}
+    
+    this.mom = function(...args) {	//Send a message to the bus master
+      if (this.masterCB) return this.masterCB(...args)
+    }
     
     this.register = function(id, cb) {	//Clients register to receive callbacks
 //console.log("Bus register:", id, cb)
@@ -17,27 +20,28 @@ module.exports = {
         this.clients[id] = cb
       else if (id in this.clients && !cb)
         delete this.clients[id]
-    },
-    
-    this.mom = function(message, ...args) {	//Send a message to the bus master
-      if (this.masterCB) return this.masterCB(message, ...args)
-    },
+    }
     
     this.notify = function(message, ...args) {	//Every registered client will get every message
       let replies = []
 //console.log("Bus notify:", this.clients)
       Object.keys(this.clients).forEach(key => {
-//console.log("Bus:", this.master, "notifying:", key)
+//console.log("Bus notifying:", key)
         replies.push(this.clients[key](message, ...args))
       })
-//console.log("Bus ans:", this.master, replies)
+//console.log("Bus ans:", replies)
       return replies
     }
   },
 
-  eventBus(vm) {			//Like messageBus, but clients can listen for specific events
-    this.master = vm
+  eventBus(masterCB) {			//Like messageBus, but clients can listen for specific events
+    this.masterCB = masterCB
     this.events = {}
+
+    this.mom = function(...args) {		//Send a message to the bus master
+      if (this.masterCB) return this.masterCB(...args)
+    }
+    
     this.register = function(id, event, cb) {		//I:ID am listening for events:event
       if (!(event in this.events)) this.events[event] = {}
 //console.log("Register id:", id, "event:", event)
@@ -47,6 +51,7 @@ module.exports = {
         delete this.events[events][id]
       }
     }
+
     this.notify = function(event, ...args) {			//Invoke all listener callbacks for: event
       let replies = []
 //console.log("Notify event:", event, this.events[event])

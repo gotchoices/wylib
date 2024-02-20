@@ -4,7 +4,6 @@
 // Makes a document such as a manual or contract which is composed of nested
 // sections, paragraphs, and so forth.
 //TODO:
-//X- Can edit contracts in database
 //X- Can launch with no editing at all (preview only)
 //X- Is sourceURL too MyCHIPs-centric?  Or will it work for other document inclusions
 //X- Merge tag into name
@@ -25,7 +24,7 @@
 //- Can indent/undent by dragging to the right
 //- 
 <template>
-  <div class="wylib wylib-strdoc">
+  <div class="wylib wylib-strdoc" ref="root">
     <div v-if="iAmChief && editable" ref="header" class="header">
       <wylib-menudock class="menudock" :config="dockConfig" :state="state.dock" :env="env" :lang="wm.sdcMenu"/>
       <div class="headerfill"/>
@@ -65,7 +64,7 @@
         <div v-else="titledText" class="text input" ref="text" v-html="titledText" :style="parStyle" :contenteditable="editable" spellcheck="spellCheck" @focus="editEnter" @blur="editLeave" @connect="crossChange" :title="secHelp" @input="change"/>
       </div>
       <div class="sections" v-for="(sec, idx) in state.sections">
-        <wylib-strdoc :key="idx" :index="idx+1" :prefix="nextPrefix" :level="level+1" :state="subState(sec)" :env="env" :bus="useBus" @delete="(x)=>{deleteSub(x||idx)}" @add="(a,s)=>{addSubs(idx,a,s)}"/>
+        <wylib-strdoc :key="idx" :index="idx+1" :master="master" :prefix="nextPrefix" :level="level+1" :state="subState(sec)" :env="env" :bus="useBus" @delete="(x)=>{deleteSub(x||idx)}" @add="(a,s)=>{addSubs(idx,a,s)}"/>
       </div>
     </div>
   </div>
@@ -79,7 +78,8 @@ const CrossRef = require('./crossref.js')
 const Interact = require('interactjs')
 //const DiffPatch = require('jsondiffpatch')
 const FileSaver = require('file-saver')
-import WylibButton from './button.vue'
+import Button from './button.vue'
+//import MenuDock from './menudock.vue'
 
 const IndentOff = 50
 const PtrString = ' 7 7, pointer'
@@ -106,7 +106,7 @@ customElements.define('x-r', CrossRef)
 
 export default {
   name: 'wylib-strdoc',
-  components: {'wylib-button': WylibButton},	//To avoid recursion problems
+  components: {'wylib-button': Button},
   props: {
     state:	{type: Object,	default: () => ({})},
     indent:	{type: Number,	default: 1},
@@ -115,6 +115,7 @@ export default {
     prefix:	{type: String,	default: null},
     index:	{type: Number,	default: 0},
     editable:	{type: Boolean,	default: true},
+    master:	{default: this},
     env:	{type: Object,	default: Com.envTpt},
     bus:	{default: null},		//Commands from the toplevel strdoc
   },
@@ -134,7 +135,7 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id() {return 'sdc_' + this._uid + '_'},
+    id() {return 'sdc_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     iAmChief() {return (this.level <= 0)},
@@ -205,7 +206,7 @@ export default {
     change(ev) {
 //console.log('Strdoc change', this.index, this.iAmChief, ev)
       if (this.iAmChief) this.dirty = true		//Chief marks itself
-      else this.bus.master.$emit('dirty')		//Children emit on Chief
+      else this.bus.mom('dirty')			//Children have chief keep track
     },
     iconSvg(icon) {return Icons(icon)},
     butHelp(tag) {
@@ -216,10 +217,11 @@ export default {
       return sub
     },
     processXrefs(ev) {
-      let name = ev.target.name, value = ev.target.value
+      let name = ev.target.name
+        , value = ev.target.value
 //console.log('Proc xref!', this.secNumber, 'n:', name, 'v:', value)
       this.crossVals[name] = value		//Cache cross reference values
-      this.$el.querySelectorAll('x-r:not([name])').forEach(el=>{
+      this.$refs?.root?.querySelectorAll('x-r:not([name])').forEach(el=>{
 //console.log('   xref', el.value, el.innerHTML, value)
         if (el.innerHTML == name) el.value = value
       })
@@ -229,12 +231,11 @@ export default {
       if (this.iAmChief)
         this.processXrefs(ev)
       else
-        this.bus.master.$emit('xref', ev)	//Send up to the chief
+        this.bus.mom('xref', ev)		//Send up to the chief
     },
     crossChange(ev) {				//Cross reference has been reconstructed
-      let master = this.iAmChief ? this : this.bus.master
-        , link = ev.target.innerHTML
-        , value = master.crossVals[link]
+      let link = ev.target.innerHTML
+        , value = this.master.crossVals[link]
 //console.log(`Cross ${ev.type}:`, this.secNumber, ev.detail, 'n:', ev.target.name, 'v:', ev.target.value, 'l:', link, 'v:', value)
       ev.target.value = value
     },
@@ -462,7 +463,7 @@ console.log("dragStart:", this.index, this.secNumber)
       let stateCopy = Com.clone(this.state)
 //console.log("Clone:", JSON.stringify(stateCopy))
       if (iPoint == 'app') {
-        dragTarget.$emit('append', [stateCopy])		//Tell drag target to append to its list
+        dragTarget.append([stateCopy])		//Tell drag target to append to its list
       } else if (iPoint) {
         let offset = (iPoint == 'bef') ? 0 : 1
         dragTarget.$emit('add', [stateCopy], offset)	//Tell target's parent to insert
@@ -492,15 +493,15 @@ console.log("dragStart:", this.index, this.secNumber)
         ev.stopPropagation()
       }
     },
-//    test(ev) {
-//console.log("Test!", ev)
-//    },
+    append(subs) {				console.log("Append!", subs)
+      this.state.sections.push(...subs)
+    },
   },
 
   watch: {
     dirty(data) {
       if (this.iAmChief)
-        this.$parent.$emit('submit', 'report', {request:'dirty', data})	//Let my container know my clear/dirty status
+        this.$emit('submit', 'report', {request:'dirty', data})	//Let my container know my clear/dirty status
     },
   },
 
@@ -528,13 +529,20 @@ console.log("dragStart:", this.index, this.secNumber)
 //console.log("Strdoc state:", this.state)
 
     if (this.iAmChief) {
-      this.subBus = new Bus.messageBus(this)		//Parent
-      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
-      this.$on('dirty', ()=>{this.dirty = true})
+      this.subBus = new Bus.messageBus((msg, dat) => {		//Parent
+//console.log("strdoc->strdoc event:", msg, dat)
+        if (msg == 'xref') {
+          this.processXrefs(dat)
+        } else if (msg == 'dirty') {
+          this.dirty = true
+        }
+      })
+//      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
+//      this.$on('dirty', ()=>{this.dirty = true})
     }
-    this.$on('append', (subs)=>{
-      this.state.sections.push(...subs)
-    })
+//    this.$on('append', (subs)=>{
+//      this.state.sections.push(...subs)
+//    })
     if (this.subBus) this.subBus.register(this.id, (msg, data) => {	//Children (and parent) listen
 //console.log("Got bus message:", this.secNumber, msg, data, this.state)
       if (msg == 'edit') this.state.edit = true

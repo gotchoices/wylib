@@ -5,7 +5,7 @@
 //- Use local language preference to display Is/Not button
 //- 
 <template>
-  <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}">
+  <div class="wylib wylib-logitem" draggable='true' v-on:dragover="zoneEnter" v-on:dragleave="zoneLeave" v-on:dragend="drop" :style="{background}" ref="root">
     <wylib-button class="button lower" :env="env" size="1" icon="play3" @activate="$emit('lower')" :title="wMsg('litToSub')"/>
     <select class="left" v-model="state.left" :title="wMsg('litLeft')">
       <option v-for="opt in config.left" :value="opt.tag" :label="opt.title" :title="opt.help">{{opt.title}}</option>
@@ -27,12 +27,12 @@
 <script>
 const Com = require('./common.js')
 const Interact = require('interactjs')
-import WylibButton from './button.vue'
+import Button from './button.vue'
 var dragTarget = null		//Communicate with each other about drag/drop through this
 
 export default {
   name: 'wylib-logitem',
-  components: {'wylib-button': WylibButton},
+  components: {'wylib-button': Button},
   props: {
     state:	{type: Object, default: () => ({})},
     config:	Object,
@@ -43,7 +43,7 @@ export default {
     dragOver: false,
   }},
   computed: {
-    id() {return 'lit_' + this._uid + '_'},
+//    id() {return 'lit_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     notFunction() {return (this.state.not ? 'Not' : 'Is')},

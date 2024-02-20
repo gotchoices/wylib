@@ -4,7 +4,7 @@
 //TODO:
 //- 
 <template>
-    <g :transform="transform">
+    <g :transform="transform" ref=root>
       <g class="wylib-svnode" v-html="state.body" :style="objStyle"/>
     </g>
 </template>
@@ -53,7 +53,7 @@ export default {
 
   mounted: function() {
 //console.log("Node Mount:", this.state.tag, this.state, this.query)
-    Interact(this.$el).draggable({
+    Interact(this.$refs.root).draggable({
       inertia: true,
       onmove: event => {this.$emit('drag', event, this.state)},
       onend: event => {this.$emit('dragend', event, this.state)}

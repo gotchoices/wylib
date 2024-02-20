@@ -2,7 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 // TODO:
-//X- Behaves analogously to a popup window as far as report module needs
 //- Can this auto size its popup window based on content size?
 //- Can reports/popups remember their geometry from previous runs?
 //- Is a report menu needed for anything?
@@ -41,7 +40,7 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id() {return 'report_' + this._uid + '_'},
+    id() {return 'report_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
 //    tagTitle() {return this.tag || this.title},
@@ -51,7 +50,7 @@ export default {
   },
   methods: {
     run(ev) {
-console.log("Run report:", ev)
+//console.log("Run report:", ev)
     },
     reload(req, data) {
 //console.log("Reloading iframe:", this.state.src)
@@ -93,7 +92,7 @@ console.log("Run report:", ev)
     } else if (!this.ready && conf) {
 //console.log("Report restoring from config:", conf, 'rt:', conf.repTag)
       if (this.bus) this.$nextTick(()=>{
-        this.bus.master.$emit('report', conf)
+        this.bus.mom('report', conf)
       })
     }
 //console.log("Report now:", this.state?.config?.repTag)
@@ -101,7 +100,7 @@ console.log("Run report:", ev)
   },
 
 //  beforeUnmount: function() {
-//    this.bus.master.$emit('destroy', this.state.config)		;console.log('Report destroy')
+//    this.bus.mom('destroy', this.state.config)		;console.log('Report destroy')
 //  },
 }
 </script>

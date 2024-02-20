@@ -27,7 +27,12 @@ module.exports = {
       {
         test: /\.vue$/,
         exclude: /(node_modules|bower_components)/,
-        use: { loader: 'vue-loader' }
+        loader: 'vue-loader',
+        options: {
+          compilerOptions: {	//inform vue about x-r custom element in strdoc.vue
+            isCustomElement: tag => tag.startsWith('x-')
+          }
+        }
       },
       {
         test: /\.(less|css)$/,

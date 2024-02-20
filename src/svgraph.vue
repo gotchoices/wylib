@@ -69,7 +69,7 @@ export default {
   data() { return {
     toolX:		0,
     toolY:		0,
-    bus:		new Bus.eventBus(this),
+    bus:		null,
     stateTpt:		{minX:-Canvas, minY:-Canvas, maxX:Canvas, maxY: Canvas, nodes: {}, setting: {}},
   }},
   
@@ -165,6 +165,12 @@ export default {
     },
   },
 
+  created: function() {
+    this.bus = new Bus.eventBus(msg => {
+console.log("From report:", msg)
+    })
+  },
+
   beforeMount: function() {
     Com.stateCheck(this)
     if (this.state.maxX == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
@@ -172,7 +178,6 @@ export default {
     this.menu.forEach(m => {
       if (m.tag && !(m.tag in this.state.setting))
         this.state.setting[m.tag] = m.default
-//        this.$set(this.state.setting, m.tag, m.default)
     })
   },
 

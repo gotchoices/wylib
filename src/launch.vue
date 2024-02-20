@@ -50,7 +50,7 @@ export default {
   }},
 
   computed: {
-    id() {return 'launch_' + this._uid + '_'},
+    id() {return 'launch_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     viewMsg() {
@@ -78,7 +78,7 @@ export default {
       Com.fileReader(ev.target, 1000, (data)=>{
         let spec = {view: this.launchData.import + '(jsonb)', params: [data]}
 console.log("Launch got file import:", data, "spec:", spec)
-        Wyseman.request('import.'+this.id, 'tuple', spec, (res, err) => {
+        Wyseman.request(this.id+'_im', 'tuple', spec, (res, err) => {
           if (err) this.top().error(err)
         })
       })
@@ -87,7 +87,7 @@ console.log("Launch got file import:", data, "spec:", spec)
 
   beforeMount: function() {
     Com.stateCheck(this)
-    Wyseman.register(this.id+'vm', this.view, (data, err) => {
+    Wyseman.register(this.id+'_vm', this.view, (data, err) => {
       if (err) {console.log(err.msg); return}
       this.viewMeta = data
       this.launchData = (this.viewMeta && this.viewMeta.styles) ? this.viewMeta.styles.launch : null

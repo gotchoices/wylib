@@ -87,7 +87,7 @@ export default {
   }},
   inject: ['top'],
   computed: {
-    id() {return 'con_' + this._uid + '_'},
+    id() {return 'con_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     selectedSite()  {return (this.lastSelect == null) ? null : this.sites[this.lastSelect]},
@@ -361,7 +361,6 @@ console.log("  URL ticket:", ticket)
 
 //console.log("Connect sites:", this.sites)
     this.sites.forEach(site=>{				//Create digital in-memory key info for each credential
-//      this.$set(site, 'selected', null)			//GUI needs to react to this
       site.selected - null
 //console.log("Processing saved key:", site)
       if (site.key) Subtle.importKey('jwk', site.key, KeyConfig, true, ['sign']).then((priv)=>{

@@ -2,8 +2,6 @@
 //Copyright WyattERP.org: See LICENSE in the root of this package
 // -----------------------------------------------------------------------------
 //TODO:
-//X- Menu item to save/restore state
-//X- Windows like dbs/dbe shouldn't unpost on outside clicks--only menu windows
 //- Default state doesn't seem to do anything
 //- Get rid of separate topClick for each menu, use bus to unpost menus
 //- Reload window after state reset (send close signal to parent with reopen option?)
@@ -16,7 +14,7 @@
 //- Double click on header to full-size?
 //- 
 <template>
-  <div :id="'win'+_uid" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
+  <div :id="id" ref="root" class="wylib wylib-win" v-show="state.posted" :class="{toplevel: topLevel}" :style="[winStyleS, winStyleF]">
     <div class="header" :title="lang?.help" :style="headerStyle" @click.stop="headerClick">
       <div class="headerbar">
         <wylib-button v-if="topLevel" icon="menu" :env="env" :toggled="winMenu.posted" @activate="winMenu.posted = !winMenu.posted" :title="wm.h.winMenu"/>
@@ -104,10 +102,8 @@ export default {
     popWin:		null,
     dirty:		null,
     printable:		false,
-    repBus:		new Bus.eventBus(this),
+    repBus:		null,
     winMenu:		{client:{}, posted: false},
-//    client:		{},			//Fixme: needed?
-//    modal: 		{posted: false},	//Fixme: what is this?
     stateTpt:		{x: null, y: null, posted: false, pinned: false, layer: 10, minim: false, dialogs:{}, reports:{}, height: null, width: null, fresh: true},
   }},
   inject: ['app'],
@@ -120,7 +116,7 @@ export default {
       return {}
   },
   computed: {
-    id() {return 'win_' + this._uid + '_'},
+    id() {return 'win_' + this.$.uid},
     wm() {return this.env.wm},
     pr() {return this.env.pr},
     buttonSize() {
@@ -186,12 +182,12 @@ export default {
       this.state.minim = !this.state.minim
     },
     print() {
-      let frame = this.$el.querySelector('iframe')
+      let frame = this.$refs.root?.querySelector('iframe')
 //console.log("Found iframe:", frame)
       if (frame) frame.contentWindow.print()
     },
     popup() {			// Generate printable version of a window
-      let pop = this.popWin, body, style, popId = this.id+'popUp'
+      let pop = this.popWin, body, style, popId = this.id+'_pop'
 console.log("Clone to popup:", popId)
       if (!pop || pop.closed) {
         pop = this.popWin = window.open('', popId, 'height=9in,width=7in')
@@ -222,11 +218,6 @@ console.log("Clone to popup:", popId)
       else
         this.saveStateAs()
     },
-//    storeState() {		//Redundant with stored app state?
-//console.log("Storing window state:", this.stateTag, JSON.stringify(this.state))
-//      if (this.topLevel && this.stateTag)
-//        Local.set(this.stateTag, this.state)
-//    },
     defaultSize() {
       this.state.width = this.state.height = null
       this.top.geometry()
@@ -275,7 +266,6 @@ console.log("Clone to popup:", popId)
         winState.client.config = config		//;console.log("Report config:", config, popUp)
       } else {
         winState = {posted: false, x:25, y:25, client:{src, config, name:repTag}, ready}
-//        this.$set(this.state.reports, repTag, winState)	//Create new report record
         this.state.reports[repTag] = winState		//Create new report record
       }
       if (popUp) {			//Generate browser popup
@@ -299,10 +289,9 @@ console.log("Clone to popup:", popId)
 
     closeRep(repTag, reopen, notPosted) {
       let oldState = this.state.reports[repTag]
-console.log("closeRep:", repTag, oldState, reopen, notPosted)
+//console.log("closeRep:", repTag, oldState, reopen, notPosted)
       if (notPosted && oldState.posted) return		//Ignore if a regular report is currently posted
       delete this.state.reports[repTag]
-//      this.$delete(this.state.reports, repTag)
       if (reopen)
         this.reportWin(repTag, oldState.src, Com.clone(oldState.client.config))
       if (oldState && oldState.popWin) oldState.popWin.close()
@@ -334,38 +323,17 @@ console.log("closeRep:", repTag, oldState, reopen, notPosted)
     Com.stateCheck(this)
 //    if (this.topLevel) console.log("Win state:", this.state)
 
-//    if (this.topLevel) this.$on('customize', (lang, tag, print, dirty)=>{	//Allow child to set the window's title and tagging ID
-//console.log("Customize", this.id, lang, tag, print, dirty)
-//      this.lang = lang
-//      if (tag) this.stateTag = tag
-//      this.printable = print
-//      if (dirty) this.dirty = dirty
-//
-//      State.listen(this.id+'sl', this.stateTag, (menuData) => {	//Handle response from the database containing stored states for this window
-//console.log("Process:", this.id, this.restoreMenu.length, "Data:", menuData);
-//        let menuItems = menuData.map(el=>{
-//          return Object.assign(el, {call:()=>{
-//            Object.assign(this.state, Com.clone(el.data))
-//            Com.stateCheck(this)
-//            this.lastLoadIdx = el.idx
-//            this.lastLoadName = el.lang.title
-//          }})
-//        })
-//        this.restoreMenu.splice(0, this.restoreMenu.length, ...menuItems)
-//console.log("WMC:", 1, this.winMenuConfig)
-//      }, this.top.error)
-//    })
-
-    this.$on('report', (config)=>{
-      let { action, repTag, info } = config
-//console.log("Win got message to relaunch report: ", config)
-      this.top.submitDialog(repTag, info)
+    this.repBus = new Bus.eventBus((msg, data) => {
+      if (msg == 'report') this.$nextTick(() => {	//console.log("Win asked to relaunch report: ", data.repTag)
+        let { action, repTag, info } = data		//;console.log("Relaunch:", repTag)
+        this.top.submitDialog(repTag, info)
+      })
     })
   },
 
   mounted: function() {
-    let wId = '#win'+this._uid
-    Interact(this.$el).resizable({		//Set up moving/resizing of windows
+    let wId = '#'+this.id
+    Interact(this.$refs.root).resizable({		//Set up moving/resizing of windows
       inertia: true,
       margin: 7,
       edges: {top:true, left: true, right: true, bottom: true},
