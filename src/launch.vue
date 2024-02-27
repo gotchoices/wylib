@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="subwindows">
-      <wylib-win v-for="win,key in state.windows" topLevel=true :key="key" :state="win" :env="env" @close="r=>{closeWin(key,r)}">
+      <wylib-win v-for="win,key in state.windows" topLevel=true :key="key" :state="win" :env="env" @close="r=>{closeWin(win,r)}">
         <wylib-dbp :state="win.client" :env="env"/>
       </wylib-win>
     </div>
@@ -73,11 +73,13 @@ export default {
       let newState = {posted: true, client: {dbView: this.view}}
       Com.addWindow(this.state.windows, newState, this, true)
     },
-    closeWin(idx, reopen) {Com.closeWindow(this.state.windows, idx, this, reopen)},
+    closeWin(win, reopen) {
+      Com.closeWindow(this.state.windows, win, this, reopen)
+    },
     importFile(ev) {
       Com.fileReader(ev.target, 1000, (data)=>{
         let spec = {view: this.launchData.import + '(jsonb)', params: [data]}
-console.log("Launch got file import:", data, "spec:", spec)
+//console.log("Launch got file import:", data, "spec:", spec)
         Wyseman.request(this.id+'_im', 'tuple', spec, (res, err) => {
           if (err) this.top().error(err)
         })

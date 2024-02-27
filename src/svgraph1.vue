@@ -215,11 +215,6 @@ export default {
       onmove: (event) => {this.toolX += event.dx; this.toolY += event.dy},
       ignoreFrom: '.nodrag'
     })
-//    this.$on('bump', ()=>{this.bump()})
-//    this.$on('change', ()=>{
-//console.log("Change:", this.state.autoBump)
-//      if (this.state.autoBump) this.bump()
-//    })
   },
 }
 </script>

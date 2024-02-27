@@ -51,7 +51,7 @@ module.exports = {
     return clone
   },
 
-  addWindow(winObj, template, ctx, clone, placement) {	//Create a new subwindow in an array of config objects
+  addWindow(wins, template, ctx, clone, placement) {	//Create a new subwindow in an array of config objects
 //console.log("Add Window", template, placement)
     template.x = null; template.y = null
     var newState = clone ? this.clone(template) : template
@@ -60,19 +60,19 @@ module.exports = {
       newState.x = placement.x || (Math.random() - 0.5) * 50 + 150
       newState.y = placement.y || (Math.random() - 0.5) * 100 + 250
     }
-    for(var newIndex = 0; newIndex in winObj; newIndex++);	// console.log('test', newIndex);
-    winObj[newIndex] = newState
+    for(var newIndex = 0; newIndex in wins; newIndex++);
+    wins[newIndex] = newState
+    newState.index = newIndex
 //console.log(" at:", newIndex)
     return newIndex
   },
 
-  closeWindow(winObj, idx, ctx, reopen) {
-    let { x, y, template } = winObj[idx]
-//console.log("Close Window", idx, reopen)
+  closeWindow(wins, win, ctx, reopen) {		//console.log("Close Window", wins, reopen)
+    let { x, y, template, index } = win
     if (reopen && template)
-      this.addWindow(winObj, template, ctx, false, {x, y})	//Force to open in a new slot
-    delete winObj[idx]
-//console.log(" after:", winObj)
+      this.addWindow(wins, template, ctx, false, {x, y})	//Force to open in a new slot
+    delete wins[index]
+//console.log(" after:", wins)
   },
 
   fileReader(target, timeout, cb) {		//Read a JSON file

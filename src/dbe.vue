@@ -20,7 +20,7 @@
       <div ref="headStatus" class="wylib-dbe headstatus" :title="wm.h.dbePrimary">PK:<input disabled :value="keyValues" :size="keyEntSize"/></div>
     </div>
     <div class="subwindows">
-      <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" :env="env" @close="r=>{closeWin(key, r)}">
+      <wylib-win v-for="sub,key in state.subs" topLevel=true :key="key" :state="sub" :env="env" @close="r=>{closeWin(sub, r)}">
         <wylib-dbp :state="sub.client" :env="env" :bus="subBus" :master="keyMaster"/>
       </wylib-win>
     </div>
@@ -270,8 +270,8 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
 //console.log("Open preview window:", view)
       Com.addWindow(this.state.subs, {posted: true, client: {dbView: view}}, this, true)
     },
-    closeWin(idx, reopen) {
-      Com.closeWindow(this.state.subs, idx, this, reopen)
+    closeWin(sub, reopen) {
+      Com.closeWindow(this.state.subs, sub, this, reopen)
     },
 
     reportQuery(request, data, rptKey, cb) {	//Handle editor requests from a launched report

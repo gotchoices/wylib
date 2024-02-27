@@ -68,33 +68,28 @@ export default {
         let conf = this.config[field]
           , col = this.state.columns.find(e => (e.field == field))
           , visible = col?.visible ?? true
-        if (!col) {					//Add any missing column using defaults
-          col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible}
-          this.state.columns.push(col)
-        }
-//console.log("field:", col.field, col.width, conf.title, visible)
+        if (!col) continue
+//console.log("field:", field, col?.width, conf.title, visible)
         if (visible) cols.push({	//Create the missing column
           id:		field,	field,		sortable:	true,	
-          order:	col.order,		width:		col.width,
-          name:		conf.title,		toolTip:	col.field + '\n' + conf.help,	
+          order:	col?.order,		width:		col?.width ?? 4,
+          name:		conf.title,		toolTip:	field + '\n' + conf.help,	
           minWidth:	this.pr.mlbMinWidth,	
           cssClass:	conf.just ? 'align-' + conf.just : '',
           header: {
-            buttons: [{cssClass: 'slick-header-column-order slick-header-column-field-' + col.field}]
+            buttons: [{cssClass: 'slick-header-column-order slick-header-column-field-' + field}]
           }
         })
       }
-      this.state.columns.forEach((col,idx)=>{		//Get rid of any columns not described in config
-//console.log("drop: ", col.field)
-        if (!(col.field in this.config)) this.state.columns.splice(idx,1)
-      })
       cols.sort((a,b) => {return (a.order - b.order)})
 //console.log("sorted: ", cols)
       return cols;
     },
     gridWidth() {
       if (this.state.columns === undefined) return 0	//If we are too early to have data yet
-      let wid = this.state.columns.reduce((acc, el)=>{return acc + (el.visible ? el.width : 0)}, 0)
+      let wid = this.state.columns.reduce((acc, el) => {
+        return acc + (el.visible ? el.width : 0)
+      }, 0)
 //console.log("Width: ", wid)
       return wid + 4 + 'px'
     },
@@ -194,12 +189,15 @@ console.log("Context Menu: " + e.target)
     },
 
     see(line) {					//Make a certain line visible
+      let i = this.gridInstance
+//console.log("Mlb see:", line)
+      if (!i) return
       if (line) 
-        this.gridInstance?.scrollRowIntoView(line, false)
+        i.scrollRowIntoView(line, false)
       else if (this.state.see == 'top')
-        this.gridInstance?.scrollRowIntoView(0, false)
+        i.scrollRowIntoView(0, false)
       else
-        this.gridInstance?.scrollRowIntoView(this.data.length, true)
+        i.scrollRowIntoView(this.data.length, true)
     },
 
     advance(delta = 1) {			//Move current line forward or backward
@@ -229,6 +227,24 @@ console.log("Context Menu: " + e.target)
 //console.log("  maxLen:", maxLen, fontSize, this.pr.mlbMaxWidth)
       this.state.columns[idx].width = Math.min((maxLen+1) * fontSize * 0.48, this.pr.mlbMaxWidth)	//Estimate of width/font size
     },
+
+    checkFields() {			//Compare fields in state with fields in config
+//console.log("Check fields:")
+      for (let field in this.config) {
+        let conf = this.config[field]
+          , col = this.state.columns.find(e => (e.field == field))
+          , visible = col?.visible ?? true
+        if (!col) {					//Add any missing column using defaults
+//console.log(" add:", field)
+          col = {field, order:conf.order, width:conf.width || this.pr.mlbDefWidth, visible}
+          this.state.columns.push(col)
+        }
+      }
+      this.state.columns.forEach((col,idx)=>{		//Get rid of any columns not described in config
+//console.log("  drop: ", col.field)
+        if (!(col.field in this.config)) this.state.columns.splice(idx,1)
+      })
+    },
   },
 
   watch: {
@@ -249,9 +265,17 @@ console.log("Context Menu: " + e.target)
         this.$emit('sort', this.state.sortColumns)
       }
     },
+    'state.columns': function (val) {
+      this.checkFields()
+    },
+    'config': function (val) {
+      this.checkFields()
+    },
     'slickColumns': function (val) {
+      let i = this.gridInstance
 //console.log("Watched slickColumns changed")
-      this.gridInstance.setColumns(this.slickColumns)
+      if (!i) return
+      i.setColumns(this.slickColumns)
       let headers = this.$refs.gridTable.querySelector('.slick-header')
       this.state.columns.forEach( col => {	//Find and remember all the divs holding sort order numbers
         let field = col.field
@@ -261,7 +285,8 @@ console.log("Context Menu: " + e.target)
       })
     },
     'gridWidth': function (val) {
-      this.$refs.gridTable.style.width = this.gridWidth
+      let gt = this.$refs.gridTable
+      if (gt?.style) gt.style.width = this.gridWidth
     },
 
     data: function (val) {		//Reload grid when data changes
@@ -272,23 +297,27 @@ console.log("Context Menu: " + e.target)
     },
   },
 
-  beforeMount: function() {
-//console.log("Mlb before, state:", this.id, this.state);
-    Com.stateCheck(this)
+  created: function() {			//console.log("Mlb created:")
+    this.checkFields()
+  },
+
+  beforeMount: function() {		//console.log("Mlb before, state:", this.id, this.state, this.$refs)
 
     if (this.bus) this.bus.register(this.id, (msg, data) => {
       if (msg == 'advance') return this.advance(data)
       else if (msg == 'autosize') return this.autoSize(data)
     })
-    for (let field in this.config) {
-      let con = this.config[field]
-      let visible = con.visible === undefined ? true: con.visible
-      if (!this.state.columns.find(e => (e.field == field)))	//Make sure we have a column for all known fields
-        this.state.columns.push({field, order:con.order, width:con.width || this.pr.mlbDefWidth, visible})
-    }
+//    for (let field in this.config) {
+//      let con = this.config[field]
+//      let visible = con.visible === undefined ? true: con.visible
+//      if (!this.state.columns.find(e => (e.field == field)))	//Make sure we have a column for all known fields
+//        this.state.columns.push({field, order:con.order, width:con.width || this.pr.mlbDefWidth, visible})
+//    }
   },
 
   mounted: function() {
+//console.log("Mlb mounted, state:", this.id, this.state, this.$refs);
+    Com.stateCheck(this)
     elementResize.listenTo(this.$refs.root, this.winSizeHandler)	//Event when our component div size gets changed
   
     this.$refs.gridTable.style.height = '200px'			//Init to some known height, for now

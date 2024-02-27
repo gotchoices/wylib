@@ -35,10 +35,10 @@
       <wylib-win v-if="topLevel" :state="winMenu" :env="env" pinnable=true @close="winMenu.posted=false">
         <wylib-menu v-if="winMenu.posted" :state="winMenu.client" :env="env" :config="winMenuConfig()" @done="winMenu.posted=winMenu.pinned" :lang="wm.winMenu"/>
       </wylib-win>
-      <wylib-win v-for="dia,key in state.dialogs" topLevel=true :key="key" :state="dia" @close="r=>{closeDia(key,r)}" :env="env">
-        <wylib-dialog :state="dia.client" :env="env" @submit="(...a)=>{dialogSubmit(key,...a)}"/>
+      <wylib-win v-for="dia,key in state?.dialogs" topLevel=true :key="key" :state="dia" @close="r=>{closeDia(dia,r)}" :env="env">
+        <wylib-dialog :state="dia.client" :env="env" @submit="(...a)=>{dialogSubmit(dia,...a)}"/>
       </wylib-win>
-      <wylib-win v-for="rep,key in state.reports" topLevel=true :key="key" :state="rep" :env="env" @close="r=>{closeRep(key,r)}" @report="(v,a,i,b)=>{top.actionLaunch(v,a,i,b)}">
+      <wylib-win v-for="rep,key in state?.reports" topLevel=true :key="key" :state="rep" :env="env" @close="r=>{closeRep(key,r)}" @report="(v,a,i,b)=>{top.actionLaunch(v,a,i,b)}">
         <wylib-report :bus="repBus" :render="rep.posted" :ready="rep.ready" :state="rep.client" :env="env"/>
       </wylib-win>
       <wylib-modal v-if="topLevel && modal.posted" :state="modal" :env="env" v-slot="ws">
@@ -136,12 +136,12 @@ export default {
       borderWidth:	this.pr.winBorderWidth + 'px',
       opacity:		this.pr.winOpacity,
       borderRadius:	this.pr.winBorderRad + 'px',
-      zIndex:		this.topLevel ? this.state.layer : MenuLayer,
+      zIndex:		this.topLevel ? this.state?.layer : MenuLayer,
     }},
     winStyleF() {return {		//Faster moves with these separate?
-      transform:	'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
-      height:		this.state.minim ? (this.headerHeight + 6) + 'px' : (this.state.height ? this.state.height + 'px': null),
-      width:		this.state.width ? this.state.width + 'px' : null,
+      transform:	'translate(' + this.state?.x + 'px, ' + this.state?.y + 'px)',
+      height:		this.state?.minim ? (this.headerHeight + 6) + 'px' : (this.state?.height ? this.state.height + 'px': null),
+      width:		this.state?.width ? this.state.width + 'px' : null,
     }},
     headerStyle() {return {
       borderRadius:	(this.pr.winBorderRad - 1) + 'px', 
@@ -244,13 +244,14 @@ console.log("Clone to popup:", popId)
       this.state.y += event.deltaRect.top
     },
 
-//    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},	//Obsolete?
-    closeDia(idx, reopen) {Com.closeWindow(this.state.dialogs, idx, this, reopen)},
-    dialogSubmit(dialogIndex, ev, buttonTag, dialogTag, options) {
-//console.log("Dialog submit", dialogIndex, dialogTag, buttonTag, options, ev)
+    closeDia(dia, reopen) {
+      Com.closeWindow(this.state.dialogs, dia, this, reopen)
+    },
+    dialogSubmit(dia, ev, buttonTag, dialogTag, options) {
+//console.log("Dialog submit", dia, dialogTag, buttonTag, options, ev)
       if (this.top)
-        if (this.top.submitDialog(dialogTag, {buttonTag, options, dialogIndex, popUp:event.shiftKey}))
-          this.closeDia(dialogIndex)
+        if (this.top.submitDialog(dialogTag, {buttonTag, options, dia, popUp:event.shiftKey}))
+          this.closeDia(dia)
     },
 
     reportWin(repTag, src, config) {
@@ -316,7 +317,6 @@ console.log("Clone to popup:", popId)
   created: function() {
     if (this.topLevel) this.top = new TopHandler(this)
 //console.log("Win created; top:", this.id, this.topLevel, this.top)
-//    this.$on('swallow', this.swallowMenu)
   },
 
   beforeMount: function() {		//Create any state properties that don't yet exist

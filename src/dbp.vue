@@ -96,8 +96,8 @@ export default {
       {idx: 'all', lang: this.wm.dbpLoadAll,  call: this.loadAll,      icon: 'download2'},
       {idx: 'rld', lang: this.wm.dbpReload,   call: ev=>this.reload(), icon: 'spinner',   shortcut: true},
       {idx: 'clr', lang: this.wm.dbpClear,    call: ev=>this.clear(),  icon: 'sun'},
-      {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter.posted},
-      {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit.posted},
+      {idx: 'fil', lang: this.wm.dbpFilter,   call: this.loadBy,       icon: 'filter',    shortcut: true, toggled: this.state.filter?.posted},
+      {idx: 'edi', lang: this.wm.dbe,         call: this.editTog,      icon: 'pencil',    shortcut: true, toggled: this.state.edit?.posted},
       {idx: 'ald', lang: this.wm.dbpAutoLoad, call: this.autoTog,      icon: 'truck',	  type: 'checkbox', toggled: this.state.autoLoad, input: this.autoLoadValue},
       {idx: 'sum', lang: this.wm.dbpShowSum,  call: this.sumTog,       icon: 'circle',	  type: 'checkbox', toggled: this.state.showSum, input: this.showSumValue},
       {idx: 'lim', lang: this.wm.dbpLimit,    call: undefined,         icon: 'meter',	  type: 'text', input: this.setLimit},
@@ -234,7 +234,7 @@ export default {
 
     load(spec) {
       if (!spec) {
-        if (this.viewMeta.styles && this.viewMeta.styles.where)
+        if (this.viewMeta?.styles && this.viewMeta?.styles?.where)
           spec = {where: this.viewMeta.styles.where}
       }
       let loadSpec = Object.assign({view: this.state.dbView, fields: '*', limit: this.state.limit}, spec)
@@ -272,7 +272,7 @@ export default {
     },
 
     loadBy() {
-      this.state.filter.posted = !this.state.filter.posted
+      this.state.filter.posted = !this.state.filter?.posted
     },
 
     colMenuHandler(e, index, x, y) {
@@ -430,7 +430,7 @@ export default {
 //console.log('Dbp mounted state:', this.id, this.state)
     this.$nextTick(() => {
       if (this.state.edit && this.state.edit.posted) this.editPosts = 1		//What was posted before we quit
-      if (this.state.filter && this.state.filter.posted) this.filtPosts = 1
+      if (this.state.filter?.posted) this.filtPosts = 1
 //console.log('Was loaded, reload?', this.id, this.state.loaded, this.state.lastLoad)
       if (this.state.loaded > 0)		//If state says we had data loaded before, reload now
         this.reload()

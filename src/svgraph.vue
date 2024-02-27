@@ -166,9 +166,7 @@ export default {
   },
 
   created: function() {
-    this.bus = new Bus.eventBus(msg => {
-console.log("From report:", msg)
-    })
+    this.bus = new Bus.eventBus()
   },
 
   beforeMount: function() {

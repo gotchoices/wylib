@@ -45,8 +45,7 @@ export default {
     haveShortcut() {return this.config.filter(c => c.shortcut)},
   },
 
-  beforeMount: function() {
-//console.log("Menudock state: ", JSON.stringify(this.state, null, 2))
+  beforeMount: function() {		//console.log("Menudock state: ", this.state)
     Com.stateCheck(this)
     this.top().custom(this.lang)
   },

@@ -237,7 +237,7 @@ module.exports = function topHandler(context, amSlave) {
   }
 
   this.dialog = function(message, dews, data, cb, tag='dialog', buttons=this.diaButs2) {
-    if (this.context.state && this.context.state.dialogs) {
+    if (this.context?.state && this.context.state.dialogs) {
 //console.log("Dialog launch", tag, dews, data)
       dews.forEach(dew=>{			//;console.log(" dialog dew", dew)
         if (!(dew.field in data)) data[dew.field] = dew.styles?.initial || dew.values?.[0]?.value
@@ -252,6 +252,7 @@ module.exports = function topHandler(context, amSlave) {
 //console.log("TopHandler got registration", cb)
     this.postCB = cb
   }
+
   this.posted = function() {			//Modal dialog should call this when it posts
 //console.log("TopHandler sees posted", this.postCB)
     if (this.postCB) this.postCB()
@@ -261,7 +262,8 @@ module.exports = function topHandler(context, amSlave) {
     if (typeof action == 'string') {
       return notImplemented()			//Fixme: fetch action metadata, and call actionLaunch recursively
     }
-    let { buttonTag, options, dialogIndex, popUp} = info
+    let { buttonTag, options, dia, popUp} = info
+      , dialogIndex = dia?.index
       , name = action.name
       , actTag = ['action', view, name].join(':')	//tag unique to this action
       , getKeys = () => {				//Try to get keys from dbe message bus, or fall back to key value in info

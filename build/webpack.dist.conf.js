@@ -19,7 +19,7 @@ const webpackConfig = {
   module: Common.module
 }
 
-if (process.env.ANALYZE)
+if (process.env.ANALYZE)	//Will cause webpack to never terminate!
   webpackConfig.plugins.push(new BundleAnalyzerPlugin({
     analyzerHost: '0.0.0.0',	//export ANALYZE=true and then
     analyzerPort: 8881		//browse here to see webpack contents

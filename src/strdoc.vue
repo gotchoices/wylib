@@ -131,7 +131,7 @@ export default {
     crossVals:		{},
     spellCheck:		true,
     subBus:		this.bus,
-    stateTpt:		{title: null, text:null, name:null, sections:[], source:null, edit:false, resource:null},
+    stateTpt:		{title: null, text:null, name:null, sections:[], source:null, edit:false, resource:null, dock:{}},
   }},
   inject: ['top'],
   computed: {
@@ -537,12 +537,7 @@ console.log("dragStart:", this.index, this.secNumber)
           this.dirty = true
         }
       })
-//      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
-//      this.$on('dirty', ()=>{this.dirty = true})
     }
-//    this.$on('append', (subs)=>{
-//      this.state.sections.push(...subs)
-//    })
     if (this.subBus) this.subBus.register(this.id, (msg, data) => {	//Children (and parent) listen
 //console.log("Got bus message:", this.secNumber, msg, data, this.state)
       if (msg == 'edit') this.state.edit = true

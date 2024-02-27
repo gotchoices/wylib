@@ -6,7 +6,7 @@
 <template>
   <path class="wylib-svedge"
     :marker-end="markEnd" :marker-start="markStart"
-    :d="pathData" :stroke="state.color" stroke-width="state.stroke" fill="none""
+    :d="pathData" :stroke="state.color" stroke-width="state.stroke" fill="none"
   />
 </template>
 
@@ -39,7 +39,6 @@ export default {
       this.state.markStart ? `url(${this.state.markStart})` : null
     },
     pathData() {
-//console.log("PD:", this.state)
       let src = this.state.source, tgt = this.state.target
         , p1 = `M${src.end.x},${src.end.y}`
         , p2 = src.aim ? ` C${src.aim.x},${src.aim.y}` : ''

@@ -2815,8 +2815,8 @@ var Wyseman = __webpack_require__(/*! ./wyseman.js */ "./src/wyseman.js");
         }
       }, this, true);
     },
-    closeWin: function closeWin(idx, reopen) {
-      Com.closeWindow(this.state.subs, idx, this, reopen);
+    closeWin: function closeWin(sub, reopen) {
+      Com.closeWindow(this.state.subs, sub, this, reopen);
     },
     reportQuery: function reportQuery(request, data, rptKey, cb) {
       var _this12 = this;
@@ -3080,7 +3080,9 @@ var FileSaver = __webpack_require__(/*! file-saver */ "file-saver");
       return len;
     },
     dockConfig: function dockConfig() {
-      var _this = this;
+      var _this = this,
+        _this$state$filter,
+        _this$state$edit;
       return [{
         idx: 'lod',
         lang: this.wm.dbpLoad,
@@ -3115,14 +3117,14 @@ var FileSaver = __webpack_require__(/*! file-saver */ "file-saver");
         call: this.loadBy,
         icon: 'filter',
         shortcut: true,
-        toggled: this.state.filter.posted
+        toggled: (_this$state$filter = this.state.filter) === null || _this$state$filter === void 0 ? void 0 : _this$state$filter.posted
       }, {
         idx: 'edi',
         lang: this.wm.dbe,
         call: this.editTog,
         icon: 'pencil',
         shortcut: true,
-        toggled: this.state.edit.posted
+        toggled: (_this$state$edit = this.state.edit) === null || _this$state$edit === void 0 ? void 0 : _this$state$edit.posted
       }, {
         idx: 'ald',
         lang: this.wm.dbpAutoLoad,
@@ -3362,7 +3364,8 @@ var FileSaver = __webpack_require__(/*! file-saver */ "file-saver");
     load: function load(spec) {
       var _this6 = this;
       if (!spec) {
-        if (this.viewMeta.styles && this.viewMeta.styles.where) spec = {
+        var _this$viewMeta, _this$viewMeta2;
+        if ((_this$viewMeta = this.viewMeta) !== null && _this$viewMeta !== void 0 && _this$viewMeta.styles && (_this$viewMeta2 = this.viewMeta) !== null && _this$viewMeta2 !== void 0 && (_this$viewMeta2 = _this$viewMeta2.styles) !== null && _this$viewMeta2 !== void 0 && _this$viewMeta2.where) spec = {
           where: this.viewMeta.styles.where
         };
       }
@@ -3411,7 +3414,8 @@ var FileSaver = __webpack_require__(/*! file-saver */ "file-saver");
       if (this.viewMeta.styles && this.viewMeta.styles.where) this.dbsBus.notify('load', Com.clone(this.viewMeta.styles.where));
     },
     loadBy: function loadBy() {
-      this.state.filter.posted = !this.state.filter.posted;
+      var _this$state$filter2;
+      this.state.filter.posted = !((_this$state$filter2 = this.state.filter) !== null && _this$state$filter2 !== void 0 && _this$state$filter2.posted);
     },
     colMenuHandler: function colMenuHandler(e, index, x, y) {
       //console.log("Menu handler:", index, x, y)
@@ -3620,8 +3624,9 @@ var FileSaver = __webpack_require__(/*! file-saver */ "file-saver");
     this.top().swallow(this.$refs.headMenu, this.$refs.headStatus);
     //console.log('Dbp mounted state:', this.id, this.state)
     this.$nextTick(function () {
+      var _this15$state$filter;
       if (_this15.state.edit && _this15.state.edit.posted) _this15.editPosts = 1; //What was posted before we quit
-      if (_this15.state.filter && _this15.state.filter.posted) _this15.filtPosts = 1;
+      if ((_this15$state$filter = _this15.state.filter) !== null && _this15$state$filter !== void 0 && _this15$state$filter.posted) _this15.filtPosts = 1;
       //console.log('Was loaded, reload?', this.id, this.state.loaded, this.state.lastLoad)
       if (_this15.state.loaded > 0)
         //If state says we had data loaded before, reload now
@@ -4621,8 +4626,8 @@ var Wyseman = __webpack_require__(/*! ./wyseman.js */ "./src/wyseman.js");
       };
       Com.addWindow(this.state.windows, newState, this, true);
     },
-    closeWin: function closeWin(idx, reopen) {
-      Com.closeWindow(this.state.windows, idx, this, reopen);
+    closeWin: function closeWin(win, reopen) {
+      Com.closeWindow(this.state.windows, win, this, reopen);
     },
     importFile: function importFile(ev) {
       var _this = this;
@@ -4631,7 +4636,7 @@ var Wyseman = __webpack_require__(/*! ./wyseman.js */ "./src/wyseman.js");
           view: _this.launchData["import"] + '(jsonb)',
           params: [data]
         };
-        console.log("Launch got file import:", data, "spec:", spec);
+        //console.log("Launch got file import:", data, "spec:", spec)
         Wyseman.request(_this.id + '_im', 'tuple', spec, function (res, err) {
           if (err) _this.top().error(err);
         });
@@ -5523,7 +5528,7 @@ var Com = __webpack_require__(/*! ./common.js */ "./src/common.js");
     }
   },
   beforeMount: function beforeMount() {
-    //console.log("Menudock state: ", JSON.stringify(this.state, null, 2))
+    //console.log("Menudock state: ", this.state)
     Com.stateCheck(this);
     this.top().custom(this.lang);
   }
@@ -5665,49 +5670,35 @@ var options = {
       //console.log("SlickColumns cols:", this.state.columns)
       if (this.state.columns === undefined) return cols; //If we are too early in the lifecycle to have data yet
       var _loop = function _loop(field) {
-        var _col$visible, _col;
+        var _col$visible, _col$width;
         var conf = _this.config[field],
           col = _this.state.columns.find(function (e) {
             return e.field == field;
           }),
-          visible = (_col$visible = (_col = col) === null || _col === void 0 ? void 0 : _col.visible) !== null && _col$visible !== void 0 ? _col$visible : true;
-        if (!col) {
-          //Add any missing column using defaults
-          col = {
-            field: field,
-            order: conf.order,
-            width: conf.width || _this.pr.mlbDefWidth,
-            visible: visible
-          };
-          _this.state.columns.push(col);
-        }
-        //console.log("field:", col.field, col.width, conf.title, visible)
+          visible = (_col$visible = col === null || col === void 0 ? void 0 : col.visible) !== null && _col$visible !== void 0 ? _col$visible : true;
+        if (!col) return 1; // continue
+        //console.log("field:", field, col?.width, conf.title, visible)
         if (visible) cols.push({
           //Create the missing column
           id: field,
           field: field,
           sortable: true,
-          order: col.order,
-          width: col.width,
+          order: col === null || col === void 0 ? void 0 : col.order,
+          width: (_col$width = col === null || col === void 0 ? void 0 : col.width) !== null && _col$width !== void 0 ? _col$width : 4,
           name: conf.title,
-          toolTip: col.field + '\n' + conf.help,
+          toolTip: field + '\n' + conf.help,
           minWidth: _this.pr.mlbMinWidth,
           cssClass: conf.just ? 'align-' + conf.just : '',
           header: {
             buttons: [{
-              cssClass: 'slick-header-column-order slick-header-column-field-' + col.field
+              cssClass: 'slick-header-column-order slick-header-column-field-' + field
             }]
           }
         });
       };
       for (var field in this.config) {
-        _loop(field);
+        if (_loop(field)) continue;
       }
-      this.state.columns.forEach(function (col, idx) {
-        //Get rid of any columns not described in config
-        //console.log("drop: ", col.field)
-        if (!(col.field in _this.config)) _this.state.columns.splice(idx, 1);
-      });
       cols.sort(function (a, b) {
         return a.order - b.order;
       });
@@ -5834,9 +5825,11 @@ var options = {
       this.gridInstance.resizeCanvas(); //Let slickgrid know about it
     },
     see: function see(line) {
-      var _this$gridInstance, _this$gridInstance2, _this$gridInstance3;
       //Make a certain line visible
-      if (line) (_this$gridInstance = this.gridInstance) === null || _this$gridInstance === void 0 || _this$gridInstance.scrollRowIntoView(line, false);else if (this.state.see == 'top') (_this$gridInstance2 = this.gridInstance) === null || _this$gridInstance2 === void 0 || _this$gridInstance2.scrollRowIntoView(0, false);else (_this$gridInstance3 = this.gridInstance) === null || _this$gridInstance3 === void 0 || _this$gridInstance3.scrollRowIntoView(this.data.length, true);
+      var i = this.gridInstance;
+      //console.log("Mlb see:", line)
+      if (!i) return;
+      if (line) i.scrollRowIntoView(line, false);else if (this.state.see == 'top') i.scrollRowIntoView(0, false);else i.scrollRowIntoView(this.data.length, true);
     },
     advance: function advance() {
       var delta = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
@@ -5880,6 +5873,38 @@ var options = {
         _iterator.f();
       }
       this.state.columns[idx].width = Math.min((maxLen + 1) * fontSize * 0.48, this.pr.mlbMaxWidth); //Estimate of width/font size
+    },
+    checkFields: function checkFields() {
+      var _this5 = this;
+      var _loop3 = function _loop3(field) {
+        var _col$visible2, _col;
+        var conf = _this5.config[field],
+          col = _this5.state.columns.find(function (e) {
+            return e.field == field;
+          }),
+          visible = (_col$visible2 = (_col = col) === null || _col === void 0 ? void 0 : _col.visible) !== null && _col$visible2 !== void 0 ? _col$visible2 : true;
+        if (!col) {
+          //Add any missing column using defaults
+          //console.log(" add:", field)
+          col = {
+            field: field,
+            order: conf.order,
+            width: conf.width || _this5.pr.mlbDefWidth,
+            visible: visible
+          };
+          _this5.state.columns.push(col);
+        }
+      };
+      //Compare fields in state with fields in config
+      //console.log("Check fields:")
+      for (var field in this.config) {
+        _loop3(field);
+      }
+      this.state.columns.forEach(function (col, idx) {
+        //Get rid of any columns not described in config
+        //console.log("  drop: ", col.field)
+        if (!(col.field in _this5.config)) _this5.state.columns.splice(idx, 1);
+      });
     }
   },
   watch: {
@@ -5905,21 +5930,30 @@ var options = {
         this.$emit('sort', this.state.sortColumns);
       }
     },
+    'state.columns': function stateColumns(val) {
+      this.checkFields();
+    },
+    'config': function config(val) {
+      this.checkFields();
+    },
     'slickColumns': function slickColumns(val) {
-      var _this5 = this;
+      var _this6 = this;
+      var i = this.gridInstance;
       //console.log("Watched slickColumns changed")
-      this.gridInstance.setColumns(this.slickColumns);
+      if (!i) return;
+      i.setColumns(this.slickColumns);
       var headers = this.$refs.gridTable.querySelector('.slick-header');
       this.state.columns.forEach(function (col) {
         //Find and remember all the divs holding sort order numbers
         var field = col.field,
           sortBox = headers.querySelector('.slick-header-column-field-' + field);
-        if (sortBox) _this5.orderBoxes[field] = sortBox;
+        if (sortBox) _this6.orderBoxes[field] = sortBox;
         //console.log(" field: " + field + " Box: ", this.orderBoxes[field])
       });
     },
     'gridWidth': function gridWidth(val) {
-      this.$refs.gridTable.style.width = this.gridWidth;
+      var gt = this.$refs.gridTable;
+      if (gt !== null && gt !== void 0 && gt.style) gt.style.width = this.gridWidth;
     },
     data: function data(val) {
       //Reload grid when data changes
@@ -5929,32 +5963,27 @@ var options = {
       this.gridInstance.render();
     }
   },
+  created: function created() {
+    //console.log("Mlb created:")
+    this.checkFields();
+  },
   beforeMount: function beforeMount() {
-    var _this6 = this;
-    //console.log("Mlb before, state:", this.id, this.state);
-    Com.stateCheck(this);
+    var _this7 = this;
+    //console.log("Mlb before, state:", this.id, this.state, this.$refs)
+
     if (this.bus) this.bus.register(this.id, function (msg, data) {
-      if (msg == 'advance') return _this6.advance(data);else if (msg == 'autosize') return _this6.autoSize(data);
+      if (msg == 'advance') return _this7.advance(data);else if (msg == 'autosize') return _this7.autoSize(data);
     });
-    var _loop3 = function _loop3(field) {
-      var con = _this6.config[field];
-      var visible = con.visible === undefined ? true : con.visible;
-      if (!_this6.state.columns.find(function (e) {
-        return e.field == field;
-      }))
-        //Make sure we have a column for all known fields
-        _this6.state.columns.push({
-          field: field,
-          order: con.order,
-          width: con.width || _this6.pr.mlbDefWidth,
-          visible: visible
-        });
-    };
-    for (var field in this.config) {
-      _loop3(field);
-    }
+    //    for (let field in this.config) {
+    //      let con = this.config[field]
+    //      let visible = con.visible === undefined ? true: con.visible
+    //      if (!this.state.columns.find(e => (e.field == field)))	//Make sure we have a column for all known fields
+    //        this.state.columns.push({field, order:con.order, width:con.width || this.pr.mlbDefWidth, visible})
+    //    }
   },
   mounted: function mounted() {
+    //console.log("Mlb mounted, state:", this.id, this.state, this.$refs);
+    Com.stateCheck(this);
     elementResize.listenTo(this.$refs.root, this.winSizeHandler); //Event when our component div size gets changed
 
     this.$refs.gridTable.style.height = '200px'; //Init to some known height, for now
@@ -6054,10 +6083,6 @@ var TopHandler = __webpack_require__(/*! ./top.js */ "./src/top.js");
   },
   beforeMount: function beforeMount() {
     Com.stateCheck(this);
-    //    this.$on('submit', (tag)=>{
-    //console.log("Modal got submit:", tag)
-    //      this.state.posted = false
-    //    })
   },
   mounted: function mounted() {
     this.top = new TopHandler();
@@ -6686,7 +6711,8 @@ customElements.define('x-r', CrossRef);
         sections: [],
         source: null,
         edit: false,
-        resource: null
+        resource: null,
+        dock: {}
       }
     };
   },
@@ -7221,12 +7247,7 @@ customElements.define('x-r', CrossRef);
           _this7.dirty = true;
         }
       });
-      //      this.$on('xref', (ev)=>{this.processXrefs(ev)})	//Xref events from sub-sections
-      //      this.$on('dirty', ()=>{this.dirty = true})
     }
-    //    this.$on('append', (subs)=>{
-    //      this.state.sections.push(...subs)
-    //    })
     if (this.subBus) this.subBus.register(this.id, function (msg, data) {
       //Children (and parent) listen
       //console.log("Got bus message:", this.secNumber, msg, data, this.state)
@@ -7299,7 +7320,6 @@ var Color = 'blue';
       this.state.markStart ? "url(".concat(this.state.markStart, ")") : null;
     },
     pathData: function pathData() {
-      //console.log("PD:", this.state)
       var src = this.state.source,
         tgt = this.state.target,
         p1 = "M".concat(src.end.x, ",").concat(src.end.y),
@@ -7862,9 +7882,7 @@ var Canvas = 500;
     }
   },
   created: function created() {
-    this.bus = new Bus.eventBus(function (msg) {
-      console.log("From report:", msg);
-    });
+    this.bus = new Bus.eventBus();
   },
   beforeMount: function beforeMount() {
     var _this2 = this;
@@ -8158,11 +8176,6 @@ var Interact = __webpack_require__(/*! interactjs */ "interactjs");
       },
       ignoreFrom: '.nodrag'
     });
-    //    this.$on('bump', ()=>{this.bump()})
-    //    this.$on('change', ()=>{
-    //console.log("Change:", this.state.autoBump)
-    //      if (this.state.autoBump) this.bump()
-    //    })
   }
 });
 
@@ -8482,21 +8495,23 @@ Prefs.mod('win', {
       return lang;
     },
     winStyleS: function winStyleS() {
+      var _this$state;
       return {
         borderColor: this.pr.winBorderColor,
         background: this.pr.dataBackground,
         borderWidth: this.pr.winBorderWidth + 'px',
         opacity: this.pr.winOpacity,
         borderRadius: this.pr.winBorderRad + 'px',
-        zIndex: this.topLevel ? this.state.layer : MenuLayer
+        zIndex: this.topLevel ? (_this$state = this.state) === null || _this$state === void 0 ? void 0 : _this$state.layer : MenuLayer
       };
     },
     winStyleF: function winStyleF() {
+      var _this$state2, _this$state3, _this$state4, _this$state5, _this$state6;
       return {
         //Faster moves with these separate?
-        transform: 'translate(' + this.state.x + 'px, ' + this.state.y + 'px)',
-        height: this.state.minim ? this.headerHeight + 6 + 'px' : this.state.height ? this.state.height + 'px' : null,
-        width: this.state.width ? this.state.width + 'px' : null
+        transform: 'translate(' + ((_this$state2 = this.state) === null || _this$state2 === void 0 ? void 0 : _this$state2.x) + 'px, ' + ((_this$state3 = this.state) === null || _this$state3 === void 0 ? void 0 : _this$state3.y) + 'px)',
+        height: (_this$state4 = this.state) !== null && _this$state4 !== void 0 && _this$state4.minim ? this.headerHeight + 6 + 'px' : (_this$state5 = this.state) !== null && _this$state5 !== void 0 && _this$state5.height ? this.state.height + 'px' : null,
+        width: (_this$state6 = this.state) !== null && _this$state6 !== void 0 && _this$state6.width ? this.state.width + 'px' : null
       };
     },
     headerStyle: function headerStyle() {
@@ -8662,18 +8677,17 @@ Prefs.mod('win', {
       this.state.x += event.deltaRect.left;
       this.state.y += event.deltaRect.top;
     },
-    //    addDia(...args) {return Com.addWindow(this.state.dialogs, ...args)},	//Obsolete?
-    closeDia: function closeDia(idx, reopen) {
-      Com.closeWindow(this.state.dialogs, idx, this, reopen);
+    closeDia: function closeDia(dia, reopen) {
+      Com.closeWindow(this.state.dialogs, dia, this, reopen);
     },
-    dialogSubmit: function dialogSubmit(dialogIndex, ev, buttonTag, dialogTag, options) {
-      //console.log("Dialog submit", dialogIndex, dialogTag, buttonTag, options, ev)
+    dialogSubmit: function dialogSubmit(dia, ev, buttonTag, dialogTag, options) {
+      //console.log("Dialog submit", dia, dialogTag, buttonTag, options, ev)
       if (this.top) if (this.top.submitDialog(dialogTag, {
         buttonTag: buttonTag,
         options: options,
-        dialogIndex: dialogIndex,
+        dia: dia,
         popUp: event.shiftKey
-      })) this.closeDia(dialogIndex);
+      })) this.closeDia(dia);
     },
     reportWin: function reportWin(repTag, src, config) {
       var _winState,
@@ -8752,7 +8766,6 @@ Prefs.mod('win', {
   created: function created() {
     if (this.topLevel) this.top = new TopHandler(this);
     //console.log("Win created; top:", this.id, this.topLevel, this.top)
-    //    this.$on('swallow', this.swallowMenu)
   },
   beforeMount: function beforeMount() {
     var _this8 = this;
@@ -9244,7 +9257,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       state: sub,
       env: $props.env,
       onClose: function onClose(r) {
-        $options.closeWin(key, r);
+        $options.closeWin(sub, r);
       }
     }, {
       "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -9582,7 +9595,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       state: win,
       env: $props.env,
       onClose: function onClose(r) {
-        $options.closeWin(key, r);
+        $options.closeWin(win, r);
       }
     }, {
       "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -10463,8 +10476,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     d: $options.pathData,
     stroke: $props.state.color,
     "stroke-width": "state.stroke",
-    fill: "none",
-    "\"": ""
+    fill: "none"
   }, null, 8 /* PROPS */, _hoisted_1);
 }
 
@@ -10862,7 +10874,7 @@ var _hoisted_7 = {
   "class": "subwindows"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _$data$lang, _$data$lang2;
+  var _$data$lang, _$data$lang2, _$props$state, _$props$state2;
   var _component_wylib_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("wylib-button");
   var _component_wylib_menu = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("wylib-menu");
   var _component_wylib_win = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("wylib-win");
@@ -10947,13 +10959,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8 /* PROPS */, ["state", "env", "config", "lang"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["state", "env"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($props.state.dialogs, function (dia, key) {
+  }, 8 /* PROPS */, ["state", "env"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)((_$props$state = $props.state) === null || _$props$state === void 0 ? void 0 : _$props$state.dialogs, function (dia, key) {
     return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_wylib_win, {
       topLevel: "true",
       key: key,
       state: dia,
       onClose: function onClose(r) {
-        $options.closeDia(key, r);
+        $options.closeDia(dia, r);
       },
       env: $props.env
     }, {
@@ -10965,13 +10977,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             for (var _len = arguments.length, a = new Array(_len), _key = 0; _key < _len; _key++) {
               a[_key] = arguments[_key];
             }
-            $options.dialogSubmit.apply($options, [key].concat(a));
+            $options.dialogSubmit.apply($options, [dia].concat(a));
           }
         }, null, 8 /* PROPS */, ["state", "env", "onSubmit"])];
       }),
       _: 2 /* DYNAMIC */
     }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["state", "onClose", "env"]);
-  }), 128 /* KEYED_FRAGMENT */)), ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($props.state.reports, function (rep, key) {
+  }), 128 /* KEYED_FRAGMENT */)), ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)((_$props$state2 = $props.state) === null || _$props$state2 === void 0 ? void 0 : _$props$state2.reports, function (rep, key) {
     return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_wylib_win, {
       topLevel: "true",
       key: key,
@@ -11196,7 +11208,7 @@ module.exports = {
     }
     return clone;
   },
-  addWindow: function addWindow(winObj, template, ctx, clone, placement) {
+  addWindow: function addWindow(wins, template, ctx, clone, placement) {
     //Create a new subwindow in an array of config objects
     //console.log("Add Window", template, placement)
     template.x = null;
@@ -11207,23 +11219,24 @@ module.exports = {
       newState.x = placement.x || (Math.random() - 0.5) * 50 + 150;
       newState.y = placement.y || (Math.random() - 0.5) * 100 + 250;
     }
-    for (var newIndex = 0; (newIndex in winObj); newIndex++); // console.log('test', newIndex);
-    winObj[newIndex] = newState;
+    for (var newIndex = 0; (newIndex in wins); newIndex++);
+    wins[newIndex] = newState;
+    newState.index = newIndex;
     //console.log(" at:", newIndex)
     return newIndex;
   },
-  closeWindow: function closeWindow(winObj, idx, ctx, reopen) {
-    var _winObj$idx = winObj[idx],
-      x = _winObj$idx.x,
-      y = _winObj$idx.y,
-      template = _winObj$idx.template;
-    //console.log("Close Window", idx, reopen)
-    if (reopen && template) this.addWindow(winObj, template, ctx, false, {
+  closeWindow: function closeWindow(wins, win, ctx, reopen) {
+    //console.log("Close Window", wins, reopen)
+    var x = win.x,
+      y = win.y,
+      template = win.template,
+      index = win.index;
+    if (reopen && template) this.addWindow(wins, template, ctx, false, {
       x: x,
       y: y
     }); //Force to open in a new slot
-    delete winObj[idx];
-    //console.log(" after:", winObj)
+    delete wins[index];
+    //console.log(" after:", wins)
   },
   fileReader: function fileReader(target, timeout, cb) {
     var _loop = function _loop() {
@@ -12268,9 +12281,10 @@ module.exports = function topHandler(context, amSlave) {
     return data; //Caller can also get reference to data here, in addition to callback
   };
   this.dialog = function (message, dews, data, cb) {
+    var _this$context;
     var tag = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 'dialog';
     var buttons = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : this.diaButs2;
-    if (this.context.state && this.context.state.dialogs) {
+    if ((_this$context = this.context) !== null && _this$context !== void 0 && _this$context.state && this.context.state.dialogs) {
       //console.log("Dialog launch", tag, dews, data)
       dews.forEach(function (dew) {
         var _dew$styles, _dew$values;
@@ -12313,8 +12327,9 @@ module.exports = function topHandler(context, amSlave) {
     }
     var buttonTag = info.buttonTag,
       options = info.options,
-      dialogIndex = info.dialogIndex,
+      dia = info.dia,
       popUp = info.popUp,
+      dialogIndex = dia === null || dia === void 0 ? void 0 : dia.index,
       name = action.name,
       actTag = ['action', view, name].join(':'),
       getKeys = function getKeys() {
