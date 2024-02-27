@@ -1,5 +1,9 @@
 Change Log:
 
+1.1.0	2024-Feb
+	- Add load maximum to previews
+	- Migrate to Vue 3
+
 1.0.34	2023-Sep
 	- Improve preferences module
 	- Can select preferred language
