@@ -1,6 +1,6 @@
 Change Log:
 
-1.1.0	2024-Feb
+1.2.0	2024-Feb
 	- Add load maximum to previews
 	- Migrate to Vue 3
 
