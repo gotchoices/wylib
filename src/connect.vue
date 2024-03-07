@@ -336,7 +336,7 @@ console.log("Error installing Key:", err.message)
       listen: this.db,
       saveKey: jKey => {
         Local.set(LastKey, {host:jKey.host, port:jKey.port, user:jKey.user})
-console.log("saveKey:", jKey, JSON.stringify(jKey.priv))
+//console.log("saveKey:", jKey, JSON.stringify(jKey.priv))
       }
     })		//Websocket connection handler
     Wyseman.langDefs(this.env.wm, WmDefs)
@@ -351,7 +351,7 @@ console.log("saveKey:", jKey, JSON.stringify(jKey.priv))
 
     if (parms) {				//In case a ticket was specified in our URL
       let ticket = (({token,host,port,user}) => ({token,host,port,user}))(parms)	//Reduce to object with only the allowed attributes
-console.log("  URL ticket:", ticket)
+//console.log("  URL ticket:", ticket)
       if (!ticket.host) ticket.host = location.hostname
       if (ticket.token && ticket.host && ticket.port) {
         let conSite = this.installKey({ticket})

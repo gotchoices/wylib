@@ -211,6 +211,7 @@ export default {
   },
 
   mounted: function() {
+//console.log("SVGraph Mounted:", this.state)
     Interact(this.$refs.tools).draggable({
       onmove: (event) => {this.toolX += event.dx; this.toolY += event.dy},
       ignoreFrom: '.nodrag'

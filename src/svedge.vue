@@ -25,6 +25,7 @@ export default {
   },
   data() { return {
     stateTpt:	{
+      id: null,
       color: Color, 
       stroke: 1, 
       source: {tag: null, end: null, aim: null},
@@ -40,34 +41,42 @@ export default {
     },
     pathData() {
       let src = this.state.source, tgt = this.state.target
-        , p1 = `M${src.end.x},${src.end.y}`
-        , p2 = src.aim ? ` C${src.aim.x},${src.aim.y}` : ''
-        , p3 = tgt.aim ? ` ${tgt.aim.x},${tgt.aim.y}` : ''
-        , p4 = ` ${tgt.end.x},${tgt.end.y}`
+        , aims = src.aim && tgt.aim
+        , p1 = `M${src.end.x ?? 0}, ${src.end.y ?? 0}`
+        , p2 = aims ? ` C${src.aim.x},${src.aim.y}` : ''
+        , p3 = aims ? ` ${tgt.aim.x},${tgt.aim.y}` : ''
+        , p4 = ` ${tgt.end.x}, ${tgt.end.y}`		//;console.log("pD:", src, tgt, p1, p2, p3, p4)
       return p1 + p2 + p3 + p4
     },
   },
 
   methods: {
-    closest(base, ends, point) {			//Find closest vertex from a list of relative endpoints, to an absolute point
-      let x = 0, y = 0, lenMin = Number.MAX_SAFE_INTEGER	//Base(state) and point contain absolute coordinates
-//console.log("Closest:", base, ends, point)			//ends are relative to base
+    closest(base, ends, point) {	//Find closest vertex from a list of relative endpoints, to an absolute point
+      let x = 0				//Base(state) and point contain absolute coordinates
+        , y = 0				//ends are relative to base
+        , lenMin = Number.MAX_SAFE_INTEGER	//console.log("Closest:", base, ends, point)
       ends.forEach(e => {
-        let len = Math.sqrt(Math.pow(base.x + e.x - point.x,2) + Math.pow(base.y + e.y - point.y,2))
-        if (len < lenMin) {x = e.x; y = e.y; lenMin = len}	//if smallest distance yet, remember it
+        let len = Math.sqrt(
+          Math.pow(base.x + e.x - point.x,2) + Math.pow(base.y + e.y - point.y,2)
+        )
+        if (len < lenMin) {			//if smallest distance yet, remember it
+          x = e.x
+          y = e.y
+          lenMin = len
+        }
       })
       return {x, y}					//Return closest point, relative to base
     },
 
     request(thisSide, otherSide, defPoint) {		//Request end point(s) from connecting node
-//console.log("Edge request:", thisSide)
+//console.log("Edge req T:", thisSide, "O:", otherSide, "D:", defPoint)
       let result, aimOff, endOff
       if (this.query) {					//If app-defined endpoint query provided
         result = this.query(thisSide, otherSide, this.state)	//Ask the application
       } else {
         thisSide.end = defPoint
       }
-//console.log("Edge result:", defPoint, result)
+//console.log("  result:", defPoint, result)
       if (!result) {					//No endpoints found
         return
 
@@ -97,14 +106,14 @@ export default {
   },
 
   created: function() {
-    let { uuid, source, target } = this.state
+    let { id, source, target } = this.state
 //console.log("Edge created:", this.state)
 
     if (this.bus) {			//Listen for updates to our end nodes' positions
-      this.bus.register(uuid, source.tag, (pos) => {
+      this.bus.register(id, source.tag, (pos) => {
         this.request(source, target, pos)
       })
-      this.bus.register(uuid, target.tag, (pos) => {
+      this.bus.register(id, target.tag, (pos) => {
         this.request(target, source, pos)
       })
     }
@@ -121,6 +130,5 @@ export default {
 
 //  mounted: function() {
 //console.log("Edge Mount:", this.state)
-//  }
 }
 </script>

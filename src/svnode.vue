@@ -48,7 +48,8 @@ export default {
   beforeMount: function() {
 //console.log("Node beforeMount:", this.state.x, this.state.y)
     Com.stateCheck(this)
-    if (this.state.x == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
+    if (this.state.x === null || this.state.x === undefined)	//Recover from garbage in stored state
+      Object.assign(this.state, this.stateTpt)
   },
 
   mounted: function() {

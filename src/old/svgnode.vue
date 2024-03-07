@@ -95,8 +95,9 @@ export default {
     },
     hubs() {				//Generate SVG code for appendages where connecting arrows should terminate
       var code = {}
-      this.state.links.forEach(lk => {		//For each node I point to
-        if ('hub' in lk) {code[lk.index] = lk.hub()}
+//console.log("svg hubs:", this.state.links)
+      this.state.links?.forEach(lk => {		//For each node I point to
+        if (typeof lk == 'object' && 'hub' in lk) {code[lk.index] = lk.hub()}
       })
       return code
     },

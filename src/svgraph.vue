@@ -64,13 +64,13 @@ export default {
     state:		{type: Object, default: null},
     edge:		{type: Function, default: null},
     env:		{type: Object, default: Com.envTpt},
-    menu:		{type: Array, default: null},
+    menu:		{type: Array, default: []},
   },
   data() { return {
     toolX:		0,
     toolY:		0,
     bus:		null,
-    stateTpt:		{minX:-Canvas, minY:-Canvas, maxX:Canvas, maxY: Canvas, nodes: {}, setting: {}},
+    stateTpt:		{minX:-Canvas, minY:-Canvas, maxX:Canvas, maxY: Canvas, nodes: {}, edges: {}, setting: {}},
   }},
   
   computed: {
@@ -91,7 +91,7 @@ export default {
     border() {				//Outline the normal drawing area
       return `M ${this.state.minX} ${this.state.minY} H ${this.state.maxX} V ${this.state.maxY} H ${this.state.minX} V ${this.state.minY}`
     },
-    crossHair() {			//Outline the normal drawing area
+    crossHair() {			//Show the origin
       return `M -10,0 H 10 M 0,-10 V 10`
     },
 //    boundBox() {return {
@@ -104,13 +104,17 @@ export default {
   
   methods: {
     iconSvg(icon) {return Icons(icon)},
+
     dragHandler(event, state) {		//Called when dragging nodes
-//console.log("Move handler", this.state.minX, this.state.maxX, this.$el.getBoundingClientRect().width, ratio)
-      let ratio = (this.state.maxX - this.state.minX) / this.$el.getBoundingClientRect().width	//Scale moves by the current scale of the svg
+      let svgRect = this.$refs.svg.getBoundingClientRect()
+        , viewBox = this.$refs.svg.viewBox.baseVal
+        , ratio = viewBox.height / svgRect.height
+//console.log("Move handler", svgRect, viewBox, ratio)
       state.x += (event.dx * ratio)
       state.y += (event.dy * ratio)
       this.$emit('drag', event, state)
     },
+
     dropHandler(event, state) {
       this.$emit('drop', event, state)
     },
@@ -173,7 +177,7 @@ export default {
     Com.stateCheck(this)
     if (this.state.maxX == null) Object.assign(this.state, this.stateTpt)	//Recover from garbage in stored state
 //console.log("SVGraph beforeMount:", this.state, this.state.setting)
-    this.menu.forEach(m => {
+    this.menu?.forEach(m => {
       if (m.tag && !(m.tag in this.state.setting))
         this.state.setting[m.tag] = m.default
     })
