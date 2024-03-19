@@ -21,7 +21,6 @@ const Com = require('./common.js')
 
 export default {
   name: 'wylib-mdew',
-//  components: {'wylib-dew': Dew},
   props: {
     state:	{type: Object, default: () => ({})},
     data:	{type: Object, default: () => ({})},
@@ -92,25 +91,34 @@ export default {
   },
   
   methods: {
-    wmLang(tag, type='title') {return this.wm[tag] ? this.wm[tag][type] : tag},
-    togOption() {this.state.optional = !this.state.optional},
-    submit(ev) {this.$emit('submit', ev)},
-    input(value, field, dirty, valid, extra) {		//An input has been changed
+    wmLang(tag, type='title') {
+      return this.wm[tag] ? this.wm[tag][type] : tag
+    },
+    
+    togOption() {
+      this.state.optional = !this.state.optional
+    },
+    
+    submit(ev) {
+      this.$emit('submit', ev)
+    },
+    
+    modify(value, field, dirty, valid, extra) {		//An input has been changed
       this.dirtys[field] = dirty
       this.valids[field] = valid
       this.userData[field] = value
-//console.log("Mdew input:", field, value, dirty, valid, this.dirty, this.valid, extra)
-      this.$emit('input', value, field, this.dirty, this.valid)
+//console.log("Mdew modify:", value, field, dirty, valid, this.dirty, this.valid, extra)
+      this.$emit('modify', value, field, this.dirty, this.valid)
 
       if (extra) Object.keys(extra).forEach(key => {		//Widget is attempting to set other related fields
-        this.dewBus.notify('input', {field: key, value: extra[key]})	//Notify all fields, let them decide
+        this.dewBus.notify('modify', {field: key, value: extra[key]})	//Notify all fields, let them decide
       })
     },
   },
 
   created: function() {
     this.dewBus = new Bus.messageBus(msg => {
-console.log("dew->mdew Message:", msg)
+//console.log("dew->mdew Message:", msg)
     })
   },
 
@@ -172,7 +180,8 @@ console.log("dew->mdew Message:", msg)
             nonull:	item.nonull, 
             bus:	this.dewBus, 
             env:	this.env,
-            on:		{input: this.input, submit: this.submit},
+            onModify:	this.modify,
+            onSubmit:	this.submit,
           })
           tabItems.push(h('td', {class: "label"}, item.lang ? item.lang?.title + ':' : null))
           tabItems.push(h('td', {colspan:(xspan * 2 - 1), rowspan:yspan}, [dew]))
@@ -187,8 +196,8 @@ console.log("dew->mdew Message:", msg)
           class:	"wylib-mdew-option",
           title:	this.wmLang('mdewMore','help'),
           style:	this.optStyle,
+          onClick:	this.togOption
 //          domProps:{innerHTML: this.wmLang('mdewMore')},
-          on: {click: this.togOption}
         })
         rowOpts = {class: {				//All rows optional from here on
           'wylib-mdew-hide': this.hideOpts

@@ -13,7 +13,7 @@
 //- 
 
 <script>
-import { h, isReactive } from 'vue'
+import { h, resolveComponent } from 'vue'
 import Win from './win.vue'
 import Calc from './calc.vue'
 import File from './file.vue'
@@ -33,7 +33,7 @@ const shortTpts = {
 
 export default {
   name: 'wylib-dew',
-  components: {'wylib-calc': Calc, 'wylib-scm': Scm, 'wylib-file': File},
+  components: {'wylib-calc': Calc, 'wylib-scm': Scm, 'wylib-file': File, 'wylib-win': Win},
   props: {
     state:	{type: Object, default: () => ({})},	//Configuration
     config:	{type: Object, default: () => ({input: 'ent'})},
@@ -82,7 +82,7 @@ export default {
       return (this.config.input == 'inf' || this.config.state == 'readonly' || this.config.hide || false)
     },
 
-    mapValue() {
+    mapValue() {		//Field value as it will display to the user
 //console.log("mapValue", this.field, this.value, typeof this.value)
       let val = this.value 
         , mapped = (val === null || val === undefined) ? null :
@@ -168,25 +168,35 @@ export default {
         if (!this.nonull && !value) value = null		//Map '' to null if allowed
         this.userValue = value
       }
-      this.$emit('input', value, this.field, this.dirty, this.valid)
+//console.log("Dew emit:", value, this.field, this.dirty, this.valid)
+      this.$emit('modify', value, this.field, this.dirty, this.valid)
     },
+
     submit() {						//console.log("Dew submit:")
       this.$emit('submit', this.userValue, this.field, this.dirty, this.valid)
     },
+
     focus() {			//Focus cursor on this entry field
 //console.log("Focusing:", this.$refs, this.field)
       this.$refs.input.focus()
     },
+
     set(val) {
-      return({value: this.userValue = val, field: this.field, dirty: this.dirty, valid: this.valid})
+      return({
+        value: this.userValue = val, 
+        field: this.field, 
+        dirty: this.dirty, 
+        valid: this.valid
+      })
     },
+
     clear() {
       return this.set(this.config.initial)
     },
 
     specResult: function(res, extra) {		//console.log('specResult:', res, extra)
       this.set(res)
-      this.$emit('input', res, this.field, this.dirty, this.valid, extra)
+      this.$emit('modify', res, this.field, this.dirty, this.valid, extra)
       this.submit()
     },
 
@@ -232,16 +242,19 @@ export default {
         return this.clear()
       else if (msg == 'set')			//User value = current top-down value
         return this.set(this.mapValue)
-      else if (msg == 'input') {		//Simulate user input of specified field
-        let {field, value} = data		//console.log(' force:', data, this.config)
-        if (field == this.field || field == this.config.alias)
-          return this.set(value)
+      else if (msg == 'modify') {		//Simulate user input of specified field
+        let {field, value} = data
+        if (field == this.field || field == this.config.alias) { console.log(' force:', field, this.field, data)
+          this.userValue = value
+          this.$emit('modify', value, this.field, this.dirty, this.valid)
+//          return this.set(value)
+        }
       }
     })
   },
 
   mounted: function() {
-//console.log(" Dew mounted:", this.field, this.state, isReactive(this.state), this.config, isReactive(this.config))
+//console.log(" Dew mounted:", this.field, this.state, this.value, this.config)
     if (this.config.special == 'cal')
       this.datePicker = new DatePicker(this.$refs.input)
     if (this.config.focus && this.top) this.top().onPosted(() => {this.focus()})
@@ -257,16 +270,16 @@ export default {
       , input = cf.input ?? 'ent'
       , domProps = {value: this.userValue}
       , attrs = Object.assign({}, {autofocus: cf.focus, disabled: this.disabled}, cf.attr)
-      , on = {input: this.input}
+      , ons = {onInput: this.input}
       , style = this.genStyle
       , ref = 'input'
-      , conf = (p) => Object.assign({on, style, ref}, attrs, domProps, p)
+      , conf = (p) => Object.assign({style, ref}, ons, attrs, domProps, p)
 //console.log("Dew render:", this.field, input, 'c:', cf, typeof this.userValue)
     if (input == 'mle') {			//Multi-line entry / textarea
       entry = h('textarea', conf({rows: this.height, cols: this.width}))
     } else if (input == 'chk') {		//Checkbox
       domProps = {checked: this.userValue}
-      on = {change: ev=>this.input(ev, ev.target.checked)}
+      ons = {onChange: ev=>this.input(ev, ev.target.checked)}
       entry = h('div', {class: 'check', style}, [
           h('input', conf({type: 'checkbox'}))
         ]
@@ -286,39 +299,43 @@ export default {
 //console.log("button lang:", this.lang)
       let txt = (this.lang?.title ?? this.lang ?? 'Reset')
         , innerHTML = txt.split(' ')[0]
-      Object.assign(on, {click: ev=>this.input(ev, true)})
+      Object.assign(ons, {onClick: ev=>this.input(ev, true)})
       domProps = {innerHTML}
       entry = h('button', conf())
 
     } else {					//Text or other input type
-      let type = Com.unabbrev(input, ['text', 'number'])
-      Object.assign(attrs, {type: input == 'ent' ? 'text' : type, placeholder: this.hint})
-      Object.assign(on, {keyup: ev => {
+      Object.assign(ons, {onKeyup: ev => {
         if (ev.code == 'Enter') this.submit()
       }})
-//console.log("R:", this.field, 'A:', attrs, conf, on)
-      entry = input 
-        ? h('input', conf({class: ['text', !cf.special ? '' : 'special']}))
-        : null
+      let type = Com.unabbrev(input, ['text', 'number'])
+        , c = conf({
+          class: ['text', !cf.special ? '' : 'special'],
+          type: input == 'ent' ? 'text' : type,
+          placeholder: this.hint
+        })
+//console.log("R:", this.field, 'A:', attrs, c, ons)
+      entry = input ? h('input', c) : null
     }
     kids = [entry]
 //console.log("R:", this.field, typeof cf.special, cf.special)
     if (!!cf.special) {
       let spButton = h('input', {
           type: 'button',
-          class: 'special button'
+          class: 'special button',
+          onClick: this.special
         })
       kids.push(spButton)
 //console.log("M:", st, 'm:', JSON.stringify(st.menu))
       if (st.menu?.posted) {		//Is the special menu posted?
-        let client = h(st.menu.component, {
+        let comp = resolveComponent(st.menu.component)
+          , client = h(comp, {
               state: st.menu.client,
               data: cf.data,
               handle: (...v) => this.specResult(...v),
               env: this.env,
-              on: {done: (...v) => {			//console.log('dew; spf done:', ...v)
+              onDone: (...v) => {			//console.log('dew, spf done:', ...v)
                 st.menu.posted = st.menu.pinned
-              }}
+              }
             })
           , menWin = h(Win, {
               state: st.menu,
@@ -326,7 +343,9 @@ export default {
               fullHeader: false,
               pinnable: true,
               env: this.env
-            }, [client])
+            }, {
+              default: () => [client]
+            })
 //console.log("P:", st.menu.component)
         kids.push(menWin)
       }

@@ -27,15 +27,12 @@ const FileSaver = require('file-saver')
 export default {
   name: 'wylib-file',
   props: {
-//    state:	{type: Object, default: () => ({})},
     data:	null,
-    env:	{type: Object, default: Com.envTpt},
+    env:	{type: Object, default: () => Com.envTpt},
     handle:	null
   },
 //  data() { return {
-//    stateTpt:	{grid: {columns: []}},
 //  }},
-//  inject: ['top'],
 
   computed: {
     wm() {return this.env.wm},

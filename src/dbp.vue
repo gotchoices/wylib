@@ -55,7 +55,7 @@ export default {
     env:	{type: Object, default: Com.envTpt},
   },
   data() { return {
-    viewMeta:	null,
+    viewMeta:	{},
     gridData:	[],
     lastMenu:	null,
     mlbBus:	null,

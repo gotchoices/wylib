@@ -341,7 +341,7 @@ console.log("Clone to popup:", popId)
       ignoreFrom: wId + ' .subwindows',
 //      allowFrom: wId + '> .content',
       onmove: this.sizeHandler,
-      onend: () => this.top.geometry()
+      onend: () => this.top?.geometry()
     }).draggable({
 //      ignoreFrom: '.wylib-win-nodrag',	//Do we need this?
       allowFrom: '.wylib-win .handle',

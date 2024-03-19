@@ -24,7 +24,7 @@
         <wylib-dbp :state="sub.client" :env="env" :bus="subBus" :master="keyMaster"/>
       </wylib-win>
     </div>
-    <wylib-mdew ref="mdew" :state="state.mdew" :env="env" :config="mdewConfig" :data="dbData" @input="change" :bus="mdewBus"/>
+    <wylib-mdew ref="mdew" :state="state.mdew" :env="env" :config="mdewConfig" :data="dbData" @modify="modify" :bus="mdewBus"/>
   </div>
 </template>
 
@@ -49,7 +49,7 @@ export default {
   },
   inject: ['top'],		//My toplevel window
   data() { return {
-    viewMeta:	null,
+    viewMeta:	{},
     dbData:	{},		//Data as fetched from the database
     dirty:	false,
     valid:	false,
@@ -124,7 +124,7 @@ export default {
     },
     pKey() {		//object describing current PK fields and their values
       let ret = {}
-      if (this.viewMeta) this.viewMeta.pkey.forEach(fld => {ret[fld] = this.dbData[fld]})
+      if (this.viewMeta) this.viewMeta.pkey?.forEach(fld => {ret[fld] = this.dbData[fld]})
       this.state.key = ret	//side effect
 //console.log("Dbe pKey:", ret)
       return ret
@@ -240,10 +240,10 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
       this.subBus.notify('clear')		//Clear any subordinate previews
     },
 
-    change(value, field, dirty, valid) {	//Respond to changes on the data inputs
+    modify(value, field, dirty, valid) {	//Respond to changes on the data inputs
       this.dirty = dirty			//dirty, valid state of whole mdew
       this.valid = valid
-//console.log("Dbe input:", field, value, dirty, valid)
+//console.log("Dbe modify:", value, field, dirty, valid)
     },
 
     dataRequest(action, options, modifies = true, cb) {
@@ -261,7 +261,9 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
           if (cb) cb(data)
           this.state.loaded = true
 //console.log("Loaded:", this.viewMeta.pkey)
-          this.$nextTick(()=>{this.subBus.notify('load', this.pKey)})	//Tell child dbp to update itself
+          this.$nextTick(()=>{			//Tell child dbp to update itself
+            this.subBus.notify('load', this.pKey)
+          })
         }
       })
     },
@@ -347,7 +349,7 @@ console.log("Update data:", ev, JSON.stringify(fields).slice(0,128) + '...')
 //console.log("Dbe created; top:", this.top())
     this.metaListen()
     this.mdewBus = new Bus.messageBus((msg) => {
-console.log("mdew->dbe message:", msg)
+//console.log("mdew->dbe message:", msg)
     })
     this.subBus = new Bus.messageBus(this.reportQuery)
   },

@@ -10,7 +10,7 @@
 <template>
   <div class="wylib wylib-dialog">
     <div v-if="message && reason" class="title" v-html="reason + ': ' + message" :title="help"/>
-    <wylib-mdew v-if="state.dews" :config="state.dews" :env="env" :data="state.data" @input="change" @submit="submit"/>
+    <wylib-mdew v-if="state.dews" :config="state.dews" :env="env" :data="state.data" @modify="modify" @submit="submit"/>
     <div v-if="buttons" class="buttons">
       <button v-for="but in buttons" :disabled="!but.able" :key="but.tag" @click="submit($event,but.tag)" v-html="but?.lang?.title ?? '?'" :title="but?.lang?.help ?? 'Confirm'"/>
     </div>
@@ -90,7 +90,8 @@ export default {
 
       this.$emit('submit', ev, butTag, this.state.tag, data)		//dialog in pop uses this
     },
-    change(value, field, dirty, valid) {	//When data changed
+
+    modify(value, field, dirty, valid) {		//When data changed
       let checked = true
 //console.log("Dialog press:", field, value, dirty, valid, this.state.data[field])
       this.state.data[field] = value

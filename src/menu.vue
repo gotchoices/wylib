@@ -34,7 +34,7 @@
             />
             <wylib-dew v-else-if="fld=='dew'" :env="env"
               :field="item.idx" :config="item.config" :values="item.values" :lang="item.lang"
-              :value="item.input()" @input="(va,ix,d,v)=>{item.input(va, ix, d, v)}"
+              :value="item.input()" @modify="(va,ix,d,v)=>{item.input(va, ix, d, v)}"
             />
 <!-- Just use a dew for file?  Input code below looks invalid anyway!
             <input v-else-if="fld=='input' && (item.input!=undefined) && item.type == 'file'" 
