@@ -133,7 +133,7 @@ export default {
     mlbConfig() {				//Make the column description format mlb expects
       let colConfigs = {}, foundDisplay = false
 //console.log("mlbConfig:", this.state.dbView, this.viewMeta)
-      if (this.viewMeta) this.viewMeta.columns.forEach((meta) => {		//For each column element
+      if (this.viewMeta) this.viewMeta.columns?.forEach((meta) => {		//For each column element
         let defWidth
           , key = meta.col
         if (meta?.styles?.size) {
